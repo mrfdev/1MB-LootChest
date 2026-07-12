@@ -260,7 +260,7 @@ public class Main extends SimpleJavaPlugin {
 							int number = configs.partNumber;
 							if (configs.partEnable) {
 								for(Map.Entry<Location, Particle> entry: part.entrySet()) {
-									boolean loaded = entry.getKey().getWorld().isChunkLoaded((int)entry.getKey().getX()/16, (int)entry.getKey().getZ()/16) ;
+									boolean loaded = entry.getKey().getWorld().isChunkLoaded(entry.getKey().getBlockX() >> 4, entry.getKey().getBlockZ() >> 4);
 									if (loaded && entry.getValue()!=null)
 											try{
 												entry.getValue().display(radius, radius, radius, speed, number, entry.getKey(), entry.getKey().getWorld().getPlayers());
@@ -283,7 +283,7 @@ public class Main extends SimpleJavaPlugin {
 						int number = configs.partNumber;
 						if (configs.partEnable) {
 							for(Map.Entry<Location, Particle> entry: part.entrySet()) {
-								boolean loaded = entry.getKey().getWorld().isChunkLoaded((int)entry.getKey().getX()/16, (int)entry.getKey().getZ()/16) ;
+								boolean loaded = entry.getKey().getWorld().isChunkLoaded(entry.getKey().getBlockX() >> 4, entry.getKey().getBlockZ() >> 4);
 								if (loaded && entry.getValue()!=null)
 									entry.getValue().display(radius, radius, radius, speed, number, entry.getKey(), entry.getKey().getWorld().getPlayers());
 								

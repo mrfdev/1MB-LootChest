@@ -375,7 +375,9 @@ public class Lootchest {
 	 */
 	public void despawn(){
 		Location startLocation = getActualLocation();
-		boolean loaded = startLocation.getWorld().isChunkLoaded((int)startLocation.getX()/16, (int)startLocation.getZ()/16) ;
+		int chunkX = startLocation.getBlockX() >> 4;
+		int chunkZ = startLocation.getBlockZ() >> 4;
+		boolean loaded = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
 		if(LootChestUtils.isWorldLoaded(getWorld()) && isGoodType(startLocation.getBlock())) {
 			Block chest = startLocation.getBlock();
 			((InventoryHolder) chest.getLocation().getBlock().getState()).getInventory().clear();
@@ -383,9 +385,9 @@ public class Lootchest {
 			Main.getInstance().getPart().remove(getParticleLocation());
 			hologram.remove();
 		}
-		boolean loaded2 = startLocation.getWorld().isChunkLoaded((int)startLocation.getX()/16, (int)startLocation.getZ()/16) ;
+		boolean loaded2 = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
 		if(loaded != loaded2) {
-			startLocation.getWorld().unloadChunk((int)startLocation.getX()/16, (int)startLocation.getZ()/16);
+			startLocation.getWorld().unloadChunk(chunkX, chunkZ);
 		}
 	}
 
@@ -517,7 +519,7 @@ public class Lootchest {
 			return false;
 		}
 		Location actualLocation = getActualLocation();
-		boolean chunkWasLoaded = actualLocation.getWorld().isChunkLoaded((int)actualLocation.getX()/16, (int)actualLocation.getZ()/16) ;
+		boolean chunkWasLoaded = actualLocation.getWorld().isChunkLoaded(actualLocation.getBlockX() >> 4, actualLocation.getBlockZ() >> 4);
 		
 		Location globalLocation = getPosition();
 		Location spawnLoc = globalLocation.clone();
@@ -568,8 +570,22 @@ public class Lootchest {
 			new FallingPackageEntity(startLocation, chunkWasLoaded, spawnLoc);
 		}
 		createchest(newBlock, spawnLoc);
+		resendContainerBlock(newBlock);
 		
 		return true;
+	}
+
+	private void resendContainerBlock(Block block) {
+		Location location = block.getLocation();
+		Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+			Block current = location.getBlock();
+			if (!isGoodType(current)) {
+				return;
+			}
+			for (Player player : current.getWorld().getPlayers()) {
+				player.sendBlockChange(location, current.getBlockData());
+			}
+		});
 	}
 
 	public Location getParticleLocation() {
