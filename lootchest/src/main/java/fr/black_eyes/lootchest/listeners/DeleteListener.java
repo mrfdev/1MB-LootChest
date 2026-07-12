@@ -24,6 +24,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -100,42 +101,39 @@ public class DeleteListener implements Listener  {
 			}
 		}
 
-		if (e.getAction() == Action.RIGHT_CLICK_BLOCK ){
-			if(openInvs.containsKey(p)) {
-				openInvs.remove(p);
-			} else {
-				openInvs.put(p, b.getLocation());
-			}
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
+			openInvs.put(p, b.getLocation());
 		}
 
 
     }
    
     
-    @EventHandler
-    public void oncloseInventory(InventoryCloseEvent e) {
-    	Inventory inv = e.getInventory();
-    	Player p = (Player) e.getPlayer();
+	@EventHandler
+	public void oncloseInventory(InventoryCloseEvent e) {
+		Inventory inv = e.getInventory();
+		Player p = (Player) e.getPlayer();
 		// if current player has openned a lootchest inv
-    	if(openInvs.containsKey(p)) {
+		if(openInvs.containsKey(p)) {
 			Location loc = openInvs.get(p).clone();
 			// we still check if the inv is a lootchest
-    		Lootchest key = LootChestUtils.isLootChest(loc);
+			Lootchest key = LootChestUtils.isLootChest(loc);
 			openInvs.remove(p);
-			if(key == null) return;
+			if(key == null) {
+				return;
+			}
 			if((Main.configs.removeEmptyChests && LootChestUtils.isEmpty(inv)) || Main.configs.removeChestAfterFirstOpening) {
 				// if we should break chest naturally, drop an item of key.getType() at the location of the chest
 				if(Main.configs.destroyNaturallyInsteadOfRemovingChest)
 					loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
-				key.despawn();
-				key.spawn( false);
+				key.despawnAtValidatedLocation(loc);
+				key.spawn(false);
 			}
 			if(LootChestUtils.isEmpty(inv)) {
 				sendChestTakeMessageIfEnabled(key, p);
 			}
-
-    	}
-    }
+		}
+	}
     
     @EventHandler
     public void onChestBreak(BlockBreakEvent e) {
@@ -163,7 +161,7 @@ public class DeleteListener implements Listener  {
 			}
 			// Paper restores cancelled block breaks after event handlers return.
 			Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
-				key.despawn();
+				key.despawnAtValidatedLocation(block.getLocation());
 				key.spawn(false);
 			});
 
