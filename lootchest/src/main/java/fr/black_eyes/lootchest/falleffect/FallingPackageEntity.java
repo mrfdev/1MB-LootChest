@@ -82,7 +82,9 @@ public final class FallingPackageEntity {
                 //ex.printStackTrace();
             }
             if (armorstandFall != null) {
-                Utils.logInfo("&aUsing falling package adapter: v_" + version);
+                if (Main.configs.debug) {
+                    Utils.logInfo("&aUsing falling package adapter: v_" + version);
+                }
                 armorstandFall.sendPacketToAll();
             } else {
                 this.armorstand = false;

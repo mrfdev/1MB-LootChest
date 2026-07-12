@@ -32,6 +32,7 @@ public final boolean saveDataFileDuringReload,
 		saveChestLocationsAtEverySpawn,
 		removeEmptyChests,
 		checkForUpdates,
+		debug,
 		consoleMessages,
 		preventChestSpawnInProtectedPlaces,
 		removeChestAfterFirstOpening,
@@ -119,6 +120,7 @@ public Config(FileConfiguration config) {
 	usehologram = config.getBoolean("UseHologram") && !Bukkit.getVersion().contains("1.7");
 	removeEmptyChests = config.getBoolean("RemoveEmptyChests");
 	checkForUpdates = config.getBoolean("CheckForUpdates");
+	debug = config.getBoolean("Debug");
 	consoleMessages = config.getBoolean("ConsoleMessages");
 	preventChestSpawnInProtectedPlaces = config.getBoolean("Prevent_Chest_Spawn_In_Protected_Places");
 	removeChestAfterFirstOpening = config.getBoolean("RemoveChestAfterFirstOpening");
