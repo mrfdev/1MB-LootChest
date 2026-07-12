@@ -44,7 +44,7 @@ public class CreateCommand extends SubCommand {
 		} else {
 			Lootchest newChest = new Lootchest(chest, chestName);
 			Main.getInstance().getLootChest().put(chestName, newChest);
-			newChest.spawn(true);
+			newChest.activateExistingContainer(chest);
 			newChest.updateData();
 			Utils.msg(sender, "chestSuccefulySaved", Constants.CHEST_PLACEHOLDER, chestName);
 			uiHandler.openUi(player, UiHandler.UiType.MAIN, newChest);
