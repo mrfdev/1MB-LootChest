@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.listeners;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +34,6 @@ import fr.black_eyes.lootchest.BungeeChannel;
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import fr.black_eyes.lootchest.LootChestUtils;
 
 
@@ -80,7 +81,7 @@ public class DeleteListener implements Listener  {
 			//cancel event
 			e.setCancelled(true);
 			//send message
-			Utils.msg(p, "CantBreakBlockBecauseProtected", "[Time]", ""+protectionTime/1000);
+			Messages.msg(p, "CantBreakBlockBecauseProtected", "[Time]", ""+protectionTime/1000);
 			return;
 		}
 
@@ -96,7 +97,7 @@ public class DeleteListener implements Listener  {
 			}
 			if(cpt !=0) {
 				e.setCancelled(true);
-				Utils.msg(p, "CantOpenLootchestBecauseMonster", "[Number]", cpt+"");
+				Messages.msg(p, "CantOpenLootchestBecauseMonster", "[Number]", cpt+"");
 				return;
 			}
 		}
@@ -173,7 +174,7 @@ public class DeleteListener implements Listener  {
 	private void sendChestTakeMessageIfEnabled(Lootchest keys, Player p) {
 		if(keys.isTakeMsgEnabled() && !keys.isTaken()){
 			keys.setTaken(true);
-			String msg = Utils.color(Objects.requireNonNull(Main.getInstance().getConfigFiles().getLang().getString("playerTookChest")).replace("[Player]", p.getName()).replace("[Chest]", keys.getHolo()));
+			String msg = Objects.requireNonNull(Main.getInstance().getConfigFiles().getLang().getString("playerTookChest")).replace("[Player]", p.getName()).replace("[Chest]", keys.getHolo());
 			if(Main.configs.noteBungeeBroadcast) {
 				BungeeChannel.bungeeBroadcast(msg);
 			}
@@ -181,7 +182,7 @@ public class DeleteListener implements Listener  {
 				LootChestUtils.broadcast(msg);
 			}else {
 				for(Player pl : p.getWorld().getPlayers()){
-					pl.sendMessage(msg);
+					Messages.send(pl, msg);
 				}
 			}
 		}

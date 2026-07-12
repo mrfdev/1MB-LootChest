@@ -20,7 +20,6 @@ import fr.black_eyes.lootchest.particles.Particle;
 import fr.black_eyes.lootchest.ui.UiHandler;
 import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
 import fr.black_eyes.simpleJavaPlugin.Updater;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -130,11 +129,11 @@ public class Main extends SimpleJavaPlugin {
 			super.onEnable();
 			simplePluginStarted = true;
 			if(configFiles.getLang() == null) {
-			Utils.logInfo("&cConfig or data files couldn't be initialized, the plugin will stop.");
+			Messages.log("<#f38ba8>Configuration or data files could not be initialized. LootChest will stop.");
 			return;
 		}
-		Utils.logInfo("config files loaded");
-		Utils.logInfo("Server version: " + getCleanBukkitVersion());
+		Messages.log("config files loaded");
+		Messages.log("Server version: " + getCleanBukkitVersion());
 		updateOldConfig();
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
@@ -153,8 +152,8 @@ public class Main extends SimpleJavaPlugin {
 
 		//If we enabled bungee broadcast, but we aren't on a bungee server, not any message will show
         if(configs.noteBungeeBroadcast && !hasBungee()){
-				Utils.logInfo("&cYou enaled bungee broadcast in config but you didn't enable bungeecord in spigot config!");
-				Utils.logInfo("&cSo if this server isn't in a bungee network, no messages will be sent at all on chest spawn!");
+				Messages.log("<#f38ba8>Bungee broadcasting is enabled in LootChest, but proxy support is disabled in the server configuration.");
+				Messages.log("<#f38ba8>Chest spawn messages cannot be delivered across the proxy until it is enabled.");
         	}
  
         if( !useArmorStands && Main.configs.fallBlock.equals("CHEST")) {
@@ -163,20 +162,20 @@ public class Main extends SimpleJavaPlugin {
         }
         
 
-        if(configs.checkForUpdates) {
-        	Utils.logInfo("Checking for update...");
-        	new Updater(this, "lootchest.61564");
-        }
+		if(configs.checkForUpdates) {
+			Messages.log("Checking for update...");
+			new Updater(this, "lootchest.61564");
+		}
 
 		//if 1.7, disable world border check
 		if(getVersion()<=7) {
 			configs.usehologram = false;
 			configs.worldborderCheckForSpawn = false;
-			Utils.logInfo("&eYou're using 1.7 or below, I disabled worldborder check because worldborder is implemented in spigot from 1.8");
-			Utils.logInfo("&eYou're using 1.7 or below, I disabled holograms because it uses armorstands, which are implemented in spigot from 1.8");
+			Messages.log("<#f6c177>World-border checks are unavailable on this server version.");
+			Messages.log("<#f6c177>Holograms are unavailable on this server version.");
 					
 		}
-        Utils.logInfo("Starting particles...");
+        Messages.log("Starting particles...");
         
 		if(configs.partEnable) {
 			//Initialization of particles values, it doesn't spawn them but is used in spawning
@@ -205,7 +204,7 @@ public class Main extends SimpleJavaPlugin {
 				return;
 			}
 			hologramImpl = DecentHologramsAPI.get();
-			Utils.logInfo("&aEmbedded DecentHolograms adapter: " + Version.CURRENT.name());
+			Messages.log("<#a6e3a1>Embedded DecentHolograms adapter: " + Version.CURRENT.name());
 		} catch (RuntimeException | LinkageError e) {
 			configs.usehologram = false;
 			hologramImpl = null;
@@ -234,7 +233,7 @@ public class Main extends SimpleJavaPlugin {
                 cmdHandler.addSubCommand((SubCommand) Class.forName(commandsPackage.replace("/", ".") + command).getConstructor().newInstance());
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                      NoSuchMethodException | ClassNotFoundException e) {
-                Utils.logInfo("&cError while registering command " + command);
+				Messages.log("<#f38ba8>Error while registering command " + command);
             }
         }
 
@@ -297,10 +296,10 @@ public class Main extends SimpleJavaPlugin {
 	private void loadChests() {
 		long countdown = configs.cooldownBeforePluginStart;
     	if(countdown>0) 
-			Utils.logInfo("Chests will load in "+ countdown + " seconds.");
+			Messages.log("Chests will load in "+ countdown + " seconds.");
     	
         this.getServer().getScheduler().runTaskLater(this, () -> {
-            Utils.logInfo("Loading chests...");
+            Messages.log("Loading chests...");
             long current = (new Timestamp(System.currentTimeMillis())).getTime();
             for(String keys : Objects.requireNonNull(configFiles.getData().getConfigurationSection("chests")).getKeys(false)) {
                 String name = configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world");
@@ -312,12 +311,12 @@ public class Main extends SimpleJavaPlugin {
                     getLootChest().put(keys, new Lootchest(keys));
                 }
                 else {
-                    Utils.logInfo("&cCouldn't load chest "+keys +" : the world " + configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world") + " is not loaded.");
+					Messages.log("<#f38ba8>Could not load LootChest " + keys + ": world " + configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world") + " is not loaded.");
                 }
             }
             
-            Utils.logInfo("Loaded "+lootChest.size() + " Lootchests in "+((new Timestamp(System.currentTimeMillis())).getTime()-current) + " miliseconds");
-            Utils.logInfo("Starting LootChest timers asynchronously...");
+            Messages.log("Loaded "+lootChest.size() + " Lootchests in "+((new Timestamp(System.currentTimeMillis())).getTime()-current) + " miliseconds");
+            Messages.log("Starting LootChest timers asynchronously...");
             for (final Lootchest lc : lootChest.values()) {
                 Bukkit.getScheduler().scheduleAsyncDelayedTask(instance, () ->
                         Bukkit.getScheduler().scheduleSyncDelayedTask(instance, () -> {
@@ -328,7 +327,7 @@ public class Main extends SimpleJavaPlugin {
                         }, 0L)
                         , 5L);
             }
-            Utils.logInfo("Plugin loaded");
+            Messages.log("Plugin loaded");
                 }, countdown+20);
 	}
 	
@@ -361,46 +360,46 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("Max_Filled_Slots_By_Default", 0);
 		configFiles.setConfig("SaveDataFileDuringReload", true);
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.enabled", true);
-		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.message", "&6All chests where forced to respawn in world [World]!\n&6Get them guys!");
+		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.message", "<#a6e3a1>All LootChests were force-respawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
 		configFiles.setConfig("EnableLootin", false);
 		//deletion of now unsuported feature
 		configFiles.getConfig().set("Fall_Effect.Let_Block_Above_Chest_After_Fall", null);
-		configFiles.setLang(MENU_MAIN_TYPE, "&1Select Chest Item");
-		configFiles.setLang("notAnInteger", "&c[Number] is not an integer!");
-		configFiles.setLang("blockIsAlreadyLootchest", "&cThis block is already a LootChest!");
-		configFiles.setLang("editedMaxFilledSlots", "&aYou edited the max filled slots of chest &b[Chest]");
-		configFiles.setLang("copiedChest", "&6You copied the chest &b[Chest1] &6into the chest &b[Chest2]");
-		configFiles.setLang("NotEnoughPlayers", "&cThe server needs at least [Number] players to spawn chests");
-		configFiles.setLang("ChestDespawned", "&aChest &b[Chest] &asuccesfuly despacned!");
-		configFiles.setLang("NoChestAtLocation", "&cThe specified lootchest was already destroyed.");
+		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
+		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
+		configFiles.setLang("blockIsAlreadyLootchest", "<#f38ba8>This block is already registered as a LootChest.");
+		configFiles.setLang("editedMaxFilledSlots", "<#a6e3a1>Maximum filled slots updated for <#89dceb>[Chest]<#a6e3a1>.");
+		configFiles.setLang("copiedChest", "<#f6c177>Copied <#89dceb>[Chest1] <#f6c177>into <#89dceb>[Chest2]<#f6c177>.");
+		configFiles.setLang("NotEnoughPlayers", "<#f38ba8>At least <#f9e2af>[Number] players <#f38ba8>are required to spawn LootChests.");
+		configFiles.setLang("ChestDespawned", "<#a6e3a1>Despawned <#89dceb>[Chest]<#a6e3a1>.");
+		configFiles.setLang("NoChestAtLocation", "<#f38ba8>That LootChest is already absent.");
 		if(configFiles.getConfig().isSet("Fall_Effect.Optionnal_Color_If_Block_Is_Wool"))
 			configFiles.setConfig("Fall_Effect.Optionnal_Color_If_Block_Is_Wool", null);
-		configFiles.setLang("AllChestsDespawned", "&aAll chests were despawned!");
-		configFiles.setLang("AllChestsDespawnedInWorld", "&aAll chests were despawned in world [World]!");
-		configFiles.setLang("worldDoesntExist", "&cThe world [World] doesn't exist!");
-		configFiles.setLang("AllChestsReloadedInWorld", "&aAll chests reloaded in world [World]!");
+		configFiles.setLang("AllChestsDespawned", "<#a6e3a1>All LootChests were despawned.");
+		configFiles.setLang("AllChestsDespawnedInWorld", "<#a6e3a1>All LootChests were despawned in <#89dceb>[World]<#a6e3a1>.");
+		configFiles.setLang("worldDoesntExist", "<#f38ba8>World <#89dceb>[World] <#f38ba8>does not exist.");
+		configFiles.setLang("AllChestsReloadedInWorld", "<#a6e3a1>All LootChests were respawned in <#89dceb>[World]<#a6e3a1>.");
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawnall")){
 			List<String> help = configFiles.getLang().getStringList("help");
-			help.add("&a/lc despawnall [world] &b: despawns all chests, optionally in a specific world");
+			help.add("<#a6e3a1>/lc despawnall <#bac2de>[world] <#6c7086>- Despawn all LootChests");
 			configFiles.getLang().set("help", help);
 			configFiles.saveLang();
 		}
 		if(!configFiles.getLang().getStringList("help").toString().contains("copy")){
 			List<String> help = configFiles.getLang().getStringList("help");
-			help.add("&a/lc copy <source> <dest> &b: copy a chest into another");
+			help.add("<#a6e3a1>/lc copy <#bac2de>\\<source> \\<destination> <#6c7086>- Copy one LootChest into another");
 			configFiles.getLang().set("help", help);
 			configFiles.saveLang();
 		}
 		if(!configFiles.getLang().getStringList("help").toString().contains("maxfilledslots")){
 			List<String> help = configFiles.getLang().getStringList("help");
-			help.add("&a/lc maxfilledslots <name> <number> &b: set the max filled slots of a chest");
+			help.add("<#a6e3a1>/lc maxfilledslots <#bac2de>\\<name> \\<number> <#6c7086>- Limit filled slots");
 			configFiles.getLang().set("help", help);
 			configFiles.saveLang();
 		}
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawn ")){
 			  List<String> help = configFiles.getLang().getStringList("help");
-			  help.add("&a/lc despawn <name> &b: despawns a chest");
+			  help.add("<#a6e3a1>/lc despawn <#bac2de>\\<name> <#6c7086>- Despawn a LootChest");
 			  configFiles.getLang().set("help", help);
 			  configFiles.saveLang();
 		}

@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class SetProtectionCommand extends SubCommand {
 	
@@ -28,7 +29,7 @@ public class SetProtectionCommand extends SubCommand {
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
 		lc.setProtectionTime(Integer.parseInt(args[2]));
 		lc.updateData();
-		Utils.msg(sender, "editedProtectionTime", Constants.CHEST_PLACEHOLDER, chestName);
+		Messages.msg(sender, "editedProtectionTime", Constants.CHEST_PLACEHOLDER, chestName);
 	}
 	
 }

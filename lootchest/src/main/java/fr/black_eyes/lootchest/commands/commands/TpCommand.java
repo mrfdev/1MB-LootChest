@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.Location;
@@ -11,7 +13,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class TpCommand extends SubCommand {
 	
@@ -27,7 +28,7 @@ public class TpCommand extends SubCommand {
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
 		Location loc = lc.getActualLocation();
 		player.teleport(loc);
-		Utils.msg(sender, "teleportedToChest", Constants.CHEST_PLACEHOLDER, chestName);
+		Messages.msg(sender, "teleportedToChest", Constants.CHEST_PLACEHOLDER, chestName);
 	}
 	
 }

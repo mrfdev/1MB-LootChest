@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.Main;
+import fr.black_eyes.lootchest.Messages;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -63,20 +63,19 @@ public abstract class SubCommand {
 	@SuppressWarnings("deprecation")
 	public void execute(CommandSender sender, String[] args) {
 		if (isPlayerRequired && !(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Please, run this command in-game");
+			Messages.send(sender, "<#f38ba8>Please run this command in-game.");
 			return;
 		}
 		// -1 because first arg is the command name
 		if (args.length -1 < requiredArgs.size() || args.length -1 > getArgCount()) {
-			sender.sendMessage(ChatColor.RED + getUsage());
+			Messages.send(sender, "<#f38ba8>Usage: <#bac2de>[Usage]", "[Usage]", getUsage());
 			return;
 		}
 		// check each argument
 		for (int i = 1; i < args.length; i++) {
 			ArgType arg = getArgs().get(i-1);
 			if (!arg.isValid(args[i], sender)) {
-				sender.sendMessage(ChatColor.RED + getUsage());
-				//sender.sendMessage(ChatColor.RED + "Invalid argument " + args[i] + " for " + arg.getName());
+				Messages.send(sender, "<#f38ba8>Usage: <#bac2de>[Usage]", "[Usage]", getUsage());
 				return;
 			}
 		}

@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.ui.menu;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
@@ -7,7 +9,6 @@ import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.particles.Particle;
 import fr.black_eyes.lootchest.ui.PagedChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -50,7 +51,7 @@ public class ParticleMenu extends PagedChestUi {
 		chest.updateData();
 		Location loc = chest.getParticleLocation();
 		Main.getInstance().getPart().put(loc, particle);
-		Utils.msg(player, "editedParticle", "[Chest]", chest.getName());
+		Messages.msg(player, "editedParticle", "[Chest]", chest.getName());
 	}
 
 	@Override

@@ -1,9 +1,10 @@
 package fr.black_eyes.lootchest.compatibilties;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import org.bukkit.Location;
 
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -38,7 +39,7 @@ public class Worldguard
 				getregion = cls.getDeclaredMethod("getApplicableRegions",  com.sk89q.worldedit.Vector.class);
 			}
 		} catch (NoSuchMethodException | SecurityException e) {
-			Utils.logInfo("Worldguard hook did not work properly " + e.getMessage());
+			Messages.log("Worldguard hook did not work properly " + e.getMessage());
 		}
 		ApplicableRegionSet set = null;
 		try {
@@ -50,7 +51,7 @@ public class Worldguard
 				set = (ApplicableRegionSet) getregion.invoke(regions, v);
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			Utils.logInfo("Worldguard hook did not work properly " + e.getMessage());
+			Messages.log("Worldguard hook did not work properly " + e.getMessage());
 		}
         if (set != null) {
             return set.size()>0;

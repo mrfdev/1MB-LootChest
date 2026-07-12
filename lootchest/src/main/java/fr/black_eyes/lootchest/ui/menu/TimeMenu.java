@@ -1,11 +1,12 @@
 package fr.black_eyes.lootchest.ui.menu;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.ui.ChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -68,7 +69,7 @@ public class TimeMenu extends ChestUi {
 	 */
 	private void updateTimeDial() {
 		long time = chest.getTime();
-		changeItem(4, nameItem(Mat.TOTEM_OF_UNDYING, Utils.getMsg(time < 0 ? "Menu.time.notInfinite" : "Menu.time.infinite")));
+		changeItem(4, nameItem(Mat.TOTEM_OF_UNDYING, Messages.get(time < 0 ? "Menu.time.notInfinite" : "Menu.time.infinite")));
 		
 		long days = time / 1440;
 		long hours = time % 1440 / 60;
@@ -94,7 +95,7 @@ public class TimeMenu extends ChestUi {
 		int digit1 = number / 10 % 10;
 		int digit2 = number % 10;
 
-		String name = Utils.getMsg(langKey);
+		String name = Messages.get(langKey);
 		//display the digits as items in the UI with the material or a barrier if the digit is 0
 		changeItem(startSlot, digit1 > 0 ? nameItem(mat, name, digit1) : nameItem(Mat.BARRIER, name));
 		changeItem(startSlot + 1, digit2 > 0 ? nameItem(mat, name, digit2) : nameItem(Mat.BARRIER, name));

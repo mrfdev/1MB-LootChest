@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.Bukkit;
@@ -11,7 +13,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 @SuppressWarnings("unused")
 public class RespawnAllCommand extends SubCommand {
@@ -28,7 +29,7 @@ public class RespawnAllCommand extends SubCommand {
 			worldName = args[1];
 		}
 		if(!Lootchest.checkIfEnoughPlayersCommand()){
-			Utils.msg(sender, "NotEnoughPlayers", "[Number]" , ""+Main.configs.minimumNumberOfPlayersForCommandSpawning);
+			Messages.msg(sender, "NotEnoughPlayers", "[Number]" , ""+Main.configs.minimumNumberOfPlayersForCommandSpawning);
 			return;
 		}
 		for (final Lootchest l : Main.getInstance().getLootChest().values()) {
@@ -48,14 +49,14 @@ public class RespawnAllCommand extends SubCommand {
 				BungeeChannel.bungeeBroadcast(message);
 			} else {
 				for (Player p : Bukkit.getOnlinePlayers()) {
-					Utils.sendMultilineMessage(message, p);
+					Messages.sendMultilineMessage(message, p);
 				}
 			}
 		}
 		if(worldName != null) {
-			Utils.msg(sender, "AllChestsReloadedInWorld", "[World]", args[1]);
+			Messages.msg(sender, "AllChestsReloadedInWorld", "[World]", args[1]);
 		} else {
-			Utils.msg(sender, "AllChestsReloaded", " ", " ");
+			Messages.msg(sender, "AllChestsReloaded", " ", " ");
 		}
 	}
 }

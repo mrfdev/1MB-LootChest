@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.commands.SubCommand;
 import fr.black_eyes.simpleJavaPlugin.Files;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import java.util.Objects;
 
@@ -47,7 +48,7 @@ public class ReloadCommand extends SubCommand {
 			if (name != null && LootChestUtils.isWorldLoaded(randomname) && LootChestUtils.isWorldLoaded(name)) {
 				Main.getInstance().getLootChest().put(keys, new Lootchest(keys));
 			} else {
-				Utils.logInfo("&cCouldn't load chest " + keys + " : the world " + configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world") + " is not loaded.");
+				Messages.log("<#f38ba8>Could not load LootChest " + keys + ": world " + configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world") + " is not loaded.");
 			}
 		}
 		
@@ -58,6 +59,6 @@ public class ReloadCommand extends SubCommand {
 								l.spawn(true), 0L), 5L);
 				}
 		}
-		Utils.msg(sender, "PluginReloaded", " ", " ");
+		Messages.msg(sender, "PluginReloaded", " ", " ");
 	}
 }

@@ -1,12 +1,13 @@
 package fr.black_eyes.lootchest.ui.menu;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.ui.PagedChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -52,7 +53,7 @@ public class CopyMenu extends PagedChestUi {
 			} else {
 				world = LootChestUtils.getWorldName(Objects.requireNonNull(Bukkit.getWorld(otherChest.getWorld())));
 			}
-			ItemStack item = nameItem(Mat.CHEST, Utils.color("&6" + otherName), 1, Utils.color("&bHologram: &6" + holoName + "||&bWorld: &6" + world + "||&bEffect: &6" + effect));
+			ItemStack item = nameItem(Mat.CHEST, "<#f6c177>" + otherName, 1, "<#9ccfd8>Hologram: <#f6c177>" + holoName + "||<#9ccfd8>World: <#f6c177>" + world + "||<#9ccfd8>Effect: <#f6c177>" + effect);
 			addContent(item, p -> copyChest(p, otherChest));
 		}
 	}
@@ -60,7 +61,7 @@ public class CopyMenu extends PagedChestUi {
 	public void copyChest(Player player, Lootchest copyChest) {
 		LootChestUtils.copychest(copyChest, chest);
 		Main.getInstance().getLootChest().get(chest.getName()).updateData();
-		Utils.msg(player, "copiedChest", "[Chest1]", copyChest.getName(), "[Chest2]", chest.getName());
+		Messages.msg(player, "copiedChest", "[Chest1]", copyChest.getName(), "[Chest2]", chest.getName());
 	}
 
 	@Override

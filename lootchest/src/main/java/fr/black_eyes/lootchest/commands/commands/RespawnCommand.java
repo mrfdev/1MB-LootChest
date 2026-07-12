@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.Bukkit;
@@ -13,7 +15,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class  RespawnCommand extends SubCommand {
 	
@@ -26,27 +27,27 @@ public class  RespawnCommand extends SubCommand {
 		String chestName = args[1];
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
 		if(!lc.spawn(true)){
-			sender.sendMessage("Chest not respawned, maybe because it didn't find a valid location");
+			Messages.send(sender, "<#f38ba8>The LootChest could not respawn because no valid location was found.");
 			return;
 		}
 		if(!Lootchest.checkIfEnoughPlayersCommand()){
-			Utils.msg(sender, "NotEnoughPlayers", "[Number]" , ""+Main.configs.minimumNumberOfPlayersForCommandSpawning);
+			Messages.msg(sender, "NotEnoughPlayers", "[Number]" , ""+Main.configs.minimumNumberOfPlayersForCommandSpawning);
 			return;
 		}
-		Utils.msg(sender, "succesfulyRespawnedChest", Constants.CHEST_PLACEHOLDER, chestName);
+		Messages.msg(sender, "succesfulyRespawnedChest", Constants.CHEST_PLACEHOLDER, chestName);
 		if (lc.isRespawnCmdMsgEnabled()) {
 			Block block = lc.getActualLocation().getBlock();
 			String holo = lc.getHolo();
-			String message = Utils.color((((Main.configs.noteCommandMsg.replace("[World]", block.getWorld().getName()).replace(Constants.CHEST_PLACEHOLDER, holo)).replace("[x]", block.getX() + "")).replace("[y]", block.getY() + "")).replace("[z]", block.getZ() + ""));
+			String message = (((Main.configs.noteCommandMsg.replace("[World]", block.getWorld().getName()).replace(Constants.CHEST_PLACEHOLDER, holo)).replace("[x]", block.getX() + "")).replace("[y]", block.getY() + "")).replace("[z]", block.getZ() + "");
 			if (Main.configs.noteBungeeBroadcast) {
 				BungeeChannel.bungeeBroadcast(message);
 			} else if (Main.configs.notePerWorldMessage) {
 				for (Player p : block.getWorld().getPlayers()) {
-					Utils.sendMultilineMessage(message, p);
+					Messages.sendMultilineMessage(message, p);
 				}
 			} else {
 				for (Player p : Bukkit.getOnlinePlayers()) {
-					Utils.sendMultilineMessage(message, p);
+					Messages.sendMultilineMessage(message, p);
 				}
 			}
 		}

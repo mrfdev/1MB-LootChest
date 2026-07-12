@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.command.CommandSender;
@@ -11,7 +13,6 @@ import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class SetPosCommand extends SubCommand {
 	
@@ -27,7 +28,7 @@ public class SetPosCommand extends SubCommand {
 		lc.setDirection(getCardinalDirection(player));
 		lc.changepos(player.getLocation().getBlock().getLocation());
 		lc.updateData();
-		Utils.msg(sender, "changedPosition", Constants.CHEST_PLACEHOLDER, lc.getName());
+		Messages.msg(sender, "changedPosition", Constants.CHEST_PLACEHOLDER, lc.getName());
 	}
 
 	public String getCardinalDirection(Player player) {

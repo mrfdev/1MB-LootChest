@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.Bukkit;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 @SuppressWarnings("deprecation")
 public class DespawnAllCommand extends SubCommand {
@@ -30,14 +31,14 @@ public class DespawnAllCommand extends SubCommand {
 						Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () ->
 								l.spawn(false, true), 0L), 5L);
 			}
-			Utils.msg(sender, "AllChestsDespawnedInWorld", "[World]", worldName);
+			Messages.msg(sender, "AllChestsDespawnedInWorld", "[World]", worldName);
 		}else if(args.length == 1) {
 			for (final Lootchest l : Main.getInstance().getLootChest().values()) {
 				Bukkit.getScheduler().scheduleAsyncDelayedTask(Main.getInstance(), () ->
 						Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () ->
 								l.spawn(false, true), 0L), 5L);
 			}
-			Utils.msg(sender, "AllChestsDespawned", " ", " ");
+			Messages.msg(sender, "AllChestsDespawned", " ", " ");
 		}
 		
 		

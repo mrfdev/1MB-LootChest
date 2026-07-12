@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class SetTimeCommand extends SubCommand {
 	
@@ -29,7 +30,7 @@ public class SetTimeCommand extends SubCommand {
 		lc.setTime(Integer.parseInt(args[1]));
 		lc.updateData();
 		lc.spawn(true);
-		Utils.msg(sender, "settime", Constants.CHEST_PLACEHOLDER, chestName);
+		Messages.msg(sender, "settime", Constants.CHEST_PLACEHOLDER, chestName);
 	}
 	
 }

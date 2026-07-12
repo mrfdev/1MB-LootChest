@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.Bukkit;
@@ -12,7 +14,6 @@ import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class GiveCommand extends SubCommand {
 	
@@ -26,9 +27,9 @@ public class GiveCommand extends SubCommand {
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
 		String playerName = args[2];
 		Player player = Bukkit.getPlayerExact(playerName);
-		Utils.msg(sender, "giveto", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", playerName);
+		Messages.msg(sender, "giveto", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", playerName);
         if (player != null) {
-            Utils.msg(player, "givefrom", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", sender.getName());
+            Messages.msg(player, "givefrom", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", sender.getName());
 			LootChestUtils.fillInventory(lc, player.getInventory(), false, player);
 		}
 	}

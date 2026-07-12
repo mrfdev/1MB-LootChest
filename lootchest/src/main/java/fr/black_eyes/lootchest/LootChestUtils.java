@@ -19,7 +19,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.simpleJavaPlugin.Files;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -107,7 +106,7 @@ public class LootChestUtils  {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				Utils.logInfo("&cError while waiting for finding good spawn location: " + e.getMessage());
+				Messages.log("<#f38ba8>Interrupted while finding a valid spawn location: " + e.getMessage());
 			}
 		}
 		if(spawnLoc == null) {
@@ -212,12 +211,7 @@ public class LootChestUtils  {
 	 * @return the name of the menu
 	 */
 	public static String getMenuName(String name, String replacement) {
-		String menuName = Utils.getMsg("Menu."+name+".name", "[Chest]", replacement);
-		//cut it to 32 chars max 
-		if(menuName.length()>32) {
-			menuName = menuName.substring(0, 32);
-		}
-		return menuName;
+		return Messages.get("Menu."+name+".name", "[Chest]", replacement);
 	}
 
 	/**
@@ -329,11 +323,11 @@ public class LootChestUtils  {
 	public static void broadcast(String message) {
 		for(World w : Bukkit.getWorlds()){
 			for(Player p : w.getPlayers()) {
-				p.sendMessage(Utils.color(message));
+				Messages.send(p, message);
 			}
 		}
 		//send message to even console
-		Utils.logInfo(message);
+		Messages.log(message);
 
 	}
 	
@@ -344,7 +338,7 @@ public class LootChestUtils  {
 	 */
 	public  Location getPosition(String name) {
 		if (configFiles.getData().getString(DATA_CHEST_PATH + name + POSITION_WORLD) == null) {
-			Utils.logInfo("&cThe plugin couldn't get the world of chest &6" + name +"&c. This won't prevent the plugin to work, but the plugin may throw other errors because of that.");
+			Messages.log("<#f38ba8>Could not resolve the world for LootChest <#f6c177>" + name + "<#f38ba8>. Additional errors may follow.");
 			return null;
 		}
 		World world = Bukkit.getWorld(Objects.requireNonNull(configFiles.getData().getString(DATA_CHEST_PATH + name + POSITION_WORLD)));
@@ -385,7 +379,7 @@ public class LootChestUtils  {
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".randomPosition.pitch", loc.getPitch());
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".randomPosition.yaw", loc.getYaw());
 		}catch(NullPointerException e) {
-			Utils.logInfo(name + " " +loc.toString());
+			Messages.log(name + " " +loc.toString());
 		}
 	}
 	
@@ -463,7 +457,7 @@ public class LootChestUtils  {
                 return ((org.bukkit.block.data.Directional) data).getFacing().name();
             }
         }catch (ClassCastException e){
-            Utils.logInfo("&cCould not get the direction of the chest, this should be reported to the dev (me) - "+ Bukkit.getBukkitVersion());
+			Messages.log("<#f38ba8>Could not determine the chest direction on " + Bukkit.getBukkitVersion() + ".");
             return "NORTH";
         }
 	}

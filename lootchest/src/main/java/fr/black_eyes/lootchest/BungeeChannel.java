@@ -44,7 +44,7 @@ public class BungeeChannel implements PluginMessageListener {
 	 * @param message The message to broadcast
 	 */
 	public static void bungeeBroadcast(String message) {
-		sendPluginMsg(new String[]{"Message", "ALL", message}, null);
+		sendPluginMsg(new String[]{"Message", "ALL", Messages.legacy(message)}, null);
 	}
 
 

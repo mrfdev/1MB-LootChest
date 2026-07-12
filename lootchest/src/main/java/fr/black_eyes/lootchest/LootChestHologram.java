@@ -15,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import lombok.Getter;
 
 /**
@@ -131,7 +130,7 @@ public class LootChestHologram {
 		if(!NULL_NAME.contains(name)) {
 			try {
 				getHologram();
-				setLine(Utils.color(name));
+				setLine(Messages.legacy(name));
 			} catch (RuntimeException | LinkageError e) {
 				disableHolograms(e);
 			}
@@ -158,7 +157,6 @@ public class LootChestHologram {
 	private void createHologram() {
 		text = chest.getHolo();
 		hologram = DHAPI.createHologram(chest.getName(), location);
-
 	}
 
 	/**
@@ -201,7 +199,7 @@ public class LootChestHologram {
 							runnable.cancel();
 						}else {
 							//replace with paragraph character
-							setLine(Utils.color(text));
+							setLine(Messages.legacy(text));
 						}
 					}
 					if(secondes<=0) {

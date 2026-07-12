@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class CopyCommand extends SubCommand {
 	
@@ -29,6 +30,6 @@ public class CopyCommand extends SubCommand {
 		Lootchest copy = Main.getInstance().getLootChest().get(args[2]);
 		LootChestUtils.copychest(lc, copy);
 		copy.updateData();
-		Utils.msg(sender, "copiedChest", "[Chest1]", lc.getName(), "[Chest2]", copy.getName());
+		Messages.msg(sender, "copiedChest", "[Chest1]", lc.getName(), "[Chest2]", copy.getName());
 	}
 }

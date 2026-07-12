@@ -1,7 +1,8 @@
 package fr.black_eyes.lootchest.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Main;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -89,13 +90,13 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 	public void displayHelp(CommandSender p) {
 		List<String> help = Main.getInstance().getConfigFiles().getLang().getStringList("help");
         for (String s : help) {
-            p.sendMessage(Utils.color(s));
+            Messages.send(p, s);
         }
 	}
 	
 	private boolean hasPerm(CommandSender sender, String permission) {
 		if (!sender.hasPermission(permission) && !sender.hasPermission("lootchest.admin") && !sender.hasPermission("lootchest.*")) {
-			Utils.msg(sender, "noPermission", "[Permission]", "lootchest." + permission);
+			Messages.msg(sender, "noPermission", "[Permission]", "lootchest." + permission);
 			return false;
 		}
 		return true;
