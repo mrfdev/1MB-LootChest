@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -156,11 +157,15 @@ public class DeleteListener implements Listener  {
 					block.getLocation().getWorld().dropItemNaturally(block.getLocation(), item);
 				}
 			}
+			container.getInventory().clear();
 			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
 				block.getLocation().getWorld().dropItemNaturally(block.getLocation(), new ItemStack(key.getType()));
 			}
-			key.despawn();
-			key.spawn( false);
+			// Paper restores cancelled block breaks after event handlers return.
+			Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+				key.despawn();
+				key.spawn(false);
+			});
 
 			Player p = e.getPlayer();
 			sendChestTakeMessageIfEnabled(key, p);
