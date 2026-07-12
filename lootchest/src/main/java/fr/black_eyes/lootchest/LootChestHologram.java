@@ -3,16 +3,15 @@ package fr.black_eyes.lootchest;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import eu.decentsoftware.holograms.api.DHAPI;
-import eu.decentsoftware.holograms.api.holograms.Hologram;
-import org.bukkit.Bukkit;
+import com.Zrips.CMI.CMI;
+import com.Zrips.CMI.Modules.Holograms.CMIHologram;
+import com.Zrips.CMI.Modules.Holograms.HologramManager;
 import org.bukkit.Location;
-
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.simpleJavaPlugin.Utils;
@@ -97,7 +96,7 @@ public class LootChestHologram {
 
 
 
-	private Hologram hologram;
+	private CMIHologram hologram;
 
 	
 	/**
@@ -110,8 +109,13 @@ public class LootChestHologram {
 				runnable = null;
 			}
 			if(hologram!=null) {
-				hologram.destroy();
-				hologram = null;
+				try {
+					hologram.remove();
+				} catch (RuntimeException | LinkageError e) {
+					disableHolograms(e);
+				} finally {
+					hologram = null;
+				}
 			}
 
 		}
@@ -124,8 +128,12 @@ public class LootChestHologram {
 		text = name;
 		if(Main.getCompleteVersion()<1080 || !Main.configs.usehologram) return;
 		if(!NULL_NAME.contains(name)) {
-			getHologram();
-			setLine(Utils.color(name));
+			try {
+				getHologram();
+				setLine(Utils.color(name));
+			} catch (RuntimeException | LinkageError e) {
+				disableHolograms(e);
+			}
 		}else {
 			remove();
 		}
@@ -136,26 +144,32 @@ public class LootChestHologram {
 	 * @param text The text to display
 	 */
 	private void setLine(String text){
-		if(hologram.getPage(0).getLines().isEmpty()) {
-			DHAPI.addHologramLine(hologram, 0, text);
-		}
-		else{
-			hologram.getPage(0).getLine(0).setContent(text);
-			List<Player> players = new ArrayList<>(Bukkit.getServer().getOnlinePlayers());
-			hologram.getPage(0).getLine(0).update(true, players.toArray(new Player[0]));
-		}
+		hologram.getPages().setLines(Collections.singletonList(text));
+		hologram.update();
 	}
 
 	private void createHologram() {
 		text = chest.getHolo();
-		hologram = DHAPI.createHologram(chest.getName(), location);
+		HologramManager manager = CMI.getInstance().getHologramManager();
+		String name = "LootChest-" + chest.getName();
+		CMIHologram existing = manager.getByName(name);
+		if (existing != null) {
+			existing.remove();
+		}
+		hologram = new CMIHologram(name, location);
+		hologram.getSettings().setSaveToFile(false);
+		hologram.getPages().setLines(Collections.singletonList(Utils.color(text)));
+		manager.add(hologram, true, true);
+		if (manager.getByName(name) != hologram) {
+			throw new IllegalStateException("CMI did not register hologram " + name);
+		}
 
 	}
 
 	/**
 	 * @return The hologram
 	 */
-	private Hologram getHologram() {
+	private CMIHologram getHologram() {
 		if(hologram==null) {
 			createHologram();
 		}
@@ -170,36 +184,51 @@ public class LootChestHologram {
 	private void startShowTime() {
 		runnable = new BukkitRunnable() {
     		public void run() {
-    			Hologram holo = getHologram();
-    			long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
-    			long secondes = chest.getTime()*60;
-    			long tempsEnregistre = chest.getLastReset()/1000;
-    			secondes = secondes - (tempsActuel - tempsEnregistre);
-    			long secs = secondes%60;
-    			long mins = (secondes%3600)/60; 
-    			long hours = secondes/3600;
-    			String text = Main.configs.timerFormat;
-				if(text != null && Main.configs.timerHSep != null && Main.configs.timerMSep != null && Main.configs.timerSSep != null) {
-					if(hours <1) text = text.replace("%Hours", "").replace("%Hsep", "");
-					if(mins <1) text = text.replace("%Minutes", "").replace("%Msep", "");
-					text = text.replace("%Hours", hours+"").replace("%Hsep", Main.configs.timerHSep)
-							.replace("%Minutes", mins+"").replace("%Msep", Main.configs.timerMSep)
-							.replace("%Seconds", secs+"").replace("%Ssep", Main.configs.timerSSep)
-							.replace("%Hologram", getText());
+				try {
+					CMIHologram holo = getHologram();
+					long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
+					long secondes = chest.getTime()*60;
+					long tempsEnregistre = chest.getLastReset()/1000;
+					secondes = secondes - (tempsActuel - tempsEnregistre);
+					long secs = secondes%60;
+					long mins = (secondes%3600)/60;
+					long hours = secondes/3600;
+					String text = Main.configs.timerFormat;
+					if(text != null && Main.configs.timerHSep != null && Main.configs.timerMSep != null && Main.configs.timerSSep != null) {
+						if(hours <1) text = text.replace("%Hours", "").replace("%Hsep", "");
+						if(mins <1) text = text.replace("%Minutes", "").replace("%Msep", "");
+						text = text.replace("%Hours", hours+"").replace("%Hsep", Main.configs.timerHSep)
+								.replace("%Minutes", mins+"").replace("%Msep", Main.configs.timerMSep)
+								.replace("%Seconds", secs+"").replace("%Ssep", Main.configs.timerSSep)
+								.replace("%Hologram", getText());
 
-					if(holo ==null) {
-						runnable.cancel();
-					}else {
-						//replace with paragraph character
-						setLine(Utils.color(text));
+						if(holo ==null) {
+							runnable.cancel();
+						}else {
+							//replace with paragraph character
+							setLine(Utils.color(text));
+						}
 					}
+					if(secondes<=0) {
+						runnable.cancel();
+					}
+				} catch (RuntimeException | LinkageError e) {
+					disableHolograms(e);
 				}
-    			if(secondes<=0) {
-    				runnable.cancel();
-    			}
 	    	}
 	    };
 	    runnable.runTaskTimer(Main.getInstance(), 0, 20);
+	}
+
+	private void disableHolograms(Throwable throwable) {
+		Main.configs.usehologram = false;
+		if(runnable != null) {
+			runnable.cancel();
+			runnable = null;
+		}
+		hologram = null;
+		Main.getInstance().getLogger().warning("LootChest holograms disabled after CMI error: "
+				+ throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
 	}
 	
 }

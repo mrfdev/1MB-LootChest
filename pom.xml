@@ -14,11 +14,15 @@
 
     <properties>
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
-        <release>8</release>
-        <source>8</source>
-        <target>8</target>
-        <revision>2.5.9</revision>
-        <paperVersion>1.21.7</paperVersion>
+        <release>25</release>
+        <source>25</source>
+        <target>25</target>
+        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <revision>2.5.9.1</revision>
+        <paperVersion>26.2</paperVersion>
+        <paperApiVersion>26.2.build.29-alpha</paperApiVersion>
     </properties>
     <repositories>
         <repository>
@@ -35,6 +39,20 @@
         </repository>
     </repositories>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

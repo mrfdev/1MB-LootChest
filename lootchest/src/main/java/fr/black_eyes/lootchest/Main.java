@@ -4,8 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.*;
 
-import eu.decentsoftware.holograms.api.DecentHolograms;
-import eu.decentsoftware.holograms.plugin.DecentHologramsPlugin;
+import com.Zrips.CMI.CMI;
 import fr.black_eyes.lootchest.commands.SubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -38,17 +37,23 @@ public class Main extends SimpleJavaPlugin {
 	@Getter @Setter private static Main instance;
 	@Getter private LootChestUtils utils;
 	@Getter private boolean useArmorStands;
-	@Getter private DecentHologramsPlugin hologramPlugin;
-	@Getter private DecentHolograms hologramImpl;
+	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
+	private boolean simplePluginStarted;
 	private static int version = 0;
-	
+
 
 	@Override
 	public void onDisable() {
-		super.onDisable();
-		hologramPlugin.onDisable();
-		LootChestUtils.saveAllChests();
+		if (lootChest != null && cmiHologramsAvailable) {
+			lootChest.values().forEach(chest -> chest.getHologram().remove());
+		}
+		if (simplePluginStarted) {
+			super.onDisable();
+		}
+		if (lootChest != null) {
+			LootChestUtils.saveAllChests();
+		}
 	}
     
     /**
@@ -68,7 +73,7 @@ public class Main extends SimpleJavaPlugin {
 	 */
 	public static int getVersion() {
 		if(version == 0) {
-			String completeVer = Bukkit.getBukkitVersion().split("-")[0];
+			String completeVer = getCleanBukkitVersion();
             // there is now an exception: version can now be just "26.1". Let's add a "1." before it if there's no "1"
             if(!completeVer.startsWith("1"))
                 completeVer = "1." + completeVer;
@@ -78,13 +83,18 @@ public class Main extends SimpleJavaPlugin {
 		return version;
 	}
 
+	public static String getCleanBukkitVersion() {
+		String completeVer = Bukkit.getBukkitVersion().split("-")[0];
+		return completeVer.replaceFirst("^([0-9]+(?:\\.[0-9]+)*).*$", "$1");
+	}
+
 	/**
 	 * Get the version a different way:
 	 * 1.8.4 = 184, 1.20.6 = 1206, etc.
 	 * @return the version number
 	 */
 	public static int getCompleteVersion(){
-		String completeVer = Bukkit.getBukkitVersion().split("-")[0];
+		String completeVer = getCleanBukkitVersion();
 		String sversion = completeVer.replace(".", "");
 		if(sversion.startsWith("18") || sversion.startsWith("19") || sversion.startsWith("17")){
 			//add a 0 between the first and second digit
@@ -106,28 +116,22 @@ public class Main extends SimpleJavaPlugin {
 	public void onEnable() {
 		setInstance(this);
 
-		if(hologramPlugin == null && getCompleteVersion() >= 1080){
-			hologramPlugin = new DecentHologramsPlugin();
-		}
-		if (getCompleteVersion() >= 1080){
-			hologramImpl = hologramPlugin.onEnable(this);
-		}
-
 		lootChest = new HashMap<>();
 		useArmorStands = true;
 		//initialisation des matériaux dans toutes les verions du jeu
         //initializing materials in all game versions, to allow cross-version compatibility
         Mat.init_materials();
-		
 
-        //In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
-		super.onEnable();
-		if(configFiles.getLang() == null) {
+
+			//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
+			super.onEnable();
+			simplePluginStarted = true;
+			if(configFiles.getLang() == null) {
 			Utils.logInfo("&cConfig or data files couldn't be initialized, the plugin will stop.");
 			return;
 		}
 		Utils.logInfo("config files loaded");
-		Utils.logInfo("Server version: 1." + getVersion() );
+		Utils.logInfo("Server version: " + getCleanBukkitVersion());
 		updateOldConfig();
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
@@ -150,6 +154,7 @@ public class Main extends SimpleJavaPlugin {
 		
 		//load config
 		setConfigs(Config.getInstance(configFiles.getConfig()));
+		startCmiHolograms();
 
 		//If we enabled bungee broadcast, but we aren't on a bungee server, not any message will show
         if(configs.noteBungeeBroadcast && !hasBungee()){
@@ -190,6 +195,33 @@ public class Main extends SimpleJavaPlugin {
     	//Loads all chests asynchronously
     	loadChests();
         
+	}
+
+	private void startCmiHolograms() {
+		if (getCompleteVersion() < 1080 || !configs.usehologram) {
+			return;
+		}
+		if (Bukkit.getPluginManager().getPlugin("CMI") == null
+				|| !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
+			configs.usehologram = false;
+			getLogger().warning("CMI is not enabled; LootChest holograms are disabled.");
+			return;
+		}
+		try {
+			CMI cmi = CMI.getInstance();
+			if (cmi == null || cmi.getHologramManager() == null) {
+				configs.usehologram = false;
+				getLogger().warning("CMI's hologram manager is unavailable; LootChest holograms are disabled.");
+				return;
+			}
+			cmiHologramsAvailable = true;
+			Utils.logInfo("&aUsing CMI holograms: " + cmi.getDescription().getVersion());
+		} catch (RuntimeException | LinkageError e) {
+			configs.usehologram = false;
+			cmiHologramsAvailable = false;
+			getLogger().warning("CMI holograms failed to start; LootChest holograms are disabled. "
+					+ e.getClass().getSimpleName() + ": " + e.getMessage());
+		}
 	}
 
 	private void registerEvents(UiHandler uiHandler) {

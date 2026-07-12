@@ -1,5 +1,6 @@
 package fr.black_eyes.lootchest.particles;
 
+import fr.black_eyes.lootchest.Main;
 import org.bukkit.Bukkit;
 
 import java.util.Optional;
@@ -21,7 +22,7 @@ public final class FastReflection {
             ? Bukkit.getServer().getClass().getPackage().getName().substring(OBC_PACKAGE.length() + 1)
             : "unknown")
     // now for new ones:
-        : eu.decentsoftware.holograms.api.utils.reflect.Version.getCurrentVersion().name();
+        : "v" + Main.getCleanBukkitVersion().replace('.', '_');
 
     private FastReflection() {
         throw new UnsupportedOperationException();
