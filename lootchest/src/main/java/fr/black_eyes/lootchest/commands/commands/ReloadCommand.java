@@ -52,17 +52,11 @@ public class ReloadCommand extends SubCommand {
 		}
 		
 		for (final Lootchest l : Main.getInstance().getLootChest().values()) {
-			if (LootChestUtils.isWorldLoaded(l.getWorld())) {
-				Bukkit.getScheduler().scheduleAsyncDelayedTask(Main.getInstance(), ()
-						-> Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
-							if (!l.spawn(false)) {
-								LootChestUtils.scheduleReSpawn(l);
-								l.reactivateEffects();
-							}
-
-
-                }, 0L), 5L);
-			}
+				if (LootChestUtils.isWorldLoaded(l.getWorld())) {
+					Bukkit.getScheduler().scheduleAsyncDelayedTask(Main.getInstance(), ()
+							-> Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () ->
+								l.spawn(true), 0L), 5L);
+				}
 		}
 		Utils.msg(sender, "PluginReloaded", " ", " ");
 	}
