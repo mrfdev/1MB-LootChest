@@ -1,7 +1,8 @@
 package fr.black_eyes.lootchest.ui;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Main;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -63,11 +64,11 @@ public abstract class PagedChestUi extends ChestUi {
 		}
 		//add page navigation items to the last row
 		if (pageIdx > 0) {
-			String prevPageLabel = Utils.getMsg("Menu.particles.page", "[Number]", "" + pageIdx);
+			String prevPageLabel = Messages.get("Menu.particles.page", "[Number]", "" + pageIdx);
 			setItem(prevPageSlot, nameItem(Material.PAPER, prevPageLabel), p -> loadPage(pageIdx - 1));
 		}
 		if (pageIdx < pageCount - 1) {
-			String nextPageLabel = Utils.getMsg("Menu.particles.page", "[Number]", "" + (pageIdx + 2));
+			String nextPageLabel = Messages.get("Menu.particles.page", "[Number]", "" + (pageIdx + 2));
 			setItem(nextPageSlot, nameItem(Material.PAPER, nextPageLabel), p -> loadPage(pageIdx + 1));
 		}
 	}

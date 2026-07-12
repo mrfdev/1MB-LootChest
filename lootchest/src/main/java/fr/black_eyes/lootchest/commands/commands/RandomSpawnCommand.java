@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class RandomSpawnCommand extends SubCommand {
 	
@@ -30,13 +31,13 @@ public class RandomSpawnCommand extends SubCommand {
 		newradius = Math.max(newradius, 0);
 		lc.setRadius(newradius);
 		if (newradius > 0) {
-			Utils.msg(sender, "chestRadiusSet", Constants.CHEST_PLACEHOLDER, chestName);
+			Messages.msg(sender, "chestRadiusSet", Constants.CHEST_PLACEHOLDER, chestName);
 		}
 		
 		lc.despawn();
 		if (newradius == 0) {
 			lc.setRandomLoc(null);
-			Utils.msg(sender, "disabledChestRadius", Constants.CHEST_PLACEHOLDER, chestName);
+			Messages.msg(sender, "disabledChestRadius", Constants.CHEST_PLACEHOLDER, chestName);
 		}
 		lc.despawn();
 		lc.spawn(true);

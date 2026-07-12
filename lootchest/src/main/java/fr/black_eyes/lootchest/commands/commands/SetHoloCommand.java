@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class SetHoloCommand extends SubCommand {
 	
@@ -32,7 +33,7 @@ public class SetHoloCommand extends SubCommand {
 		String holoText = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 		lc.setHolo(holoText);
 		lc.updateData();
-		Utils.msg(sender, "hologram_edited", Constants.CHEST_PLACEHOLDER, chestName);
+		Messages.msg(sender, "hologram_edited", Constants.CHEST_PLACEHOLDER, chestName);
 		lc.spawn(false);
 	}
 }

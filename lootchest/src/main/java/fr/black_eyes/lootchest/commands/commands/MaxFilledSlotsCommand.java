@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Arrays;
 
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,6 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class MaxFilledSlotsCommand extends SubCommand {
 	
@@ -30,6 +31,6 @@ public class MaxFilledSlotsCommand extends SubCommand {
 			lc.setMaxFilledSlots(maxFilledSlots);
 		}
 		lc.updateData();
-		Utils.msg(sender, "editedMaxFilledSlots", Constants.CHEST_PLACEHOLDER, lc.getName());
+		Messages.msg(sender, "editedMaxFilledSlots", Constants.CHEST_PLACEHOLDER, lc.getName());
 	}
 }

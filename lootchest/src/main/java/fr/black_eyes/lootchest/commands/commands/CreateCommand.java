@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.Collections;
 
 import org.bukkit.block.Block;
@@ -15,7 +17,6 @@ import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class CreateCommand extends SubCommand {
 	
@@ -34,19 +35,19 @@ public class CreateCommand extends SubCommand {
 		String chestName = args[1];
 		chest = LootChestUtils.getWatchedBlock(player);
 		if (!Mat.isALootChestBlock(chest)) {
-			Utils.msg(sender, "notAChest", " ", " ");
+			Messages.msg(sender, "notAChest", " ", " ");
 		} else if (LootChestUtils.isEmpty(((InventoryHolder) chest.getState()).getInventory())) {
-			Utils.msg(sender, "chestIsEmpy", " ", " ");
+			Messages.msg(sender, "chestIsEmpy", " ", " ");
 		} else if (Main.getInstance().getLootChest().containsKey(chestName)) {
-			Utils.msg(sender, "chestAlreadyExist", Constants.CHEST_PLACEHOLDER, chestName);
+			Messages.msg(sender, "chestAlreadyExist", Constants.CHEST_PLACEHOLDER, chestName);
 		} else if (LootChestUtils.isLootChest(chest.getLocation()) != null) {
-			Utils.msg(sender, "blockIsAlreadyLootchest", Constants.CHEST_PLACEHOLDER, chestName);
+			Messages.msg(sender, "blockIsAlreadyLootchest", Constants.CHEST_PLACEHOLDER, chestName);
 		} else {
 			Lootchest newChest = new Lootchest(chest, chestName);
 			Main.getInstance().getLootChest().put(chestName, newChest);
 			newChest.activateExistingContainer(chest);
 			newChest.updateData();
-			Utils.msg(sender, "chestSuccefulySaved", Constants.CHEST_PLACEHOLDER, chestName);
+			Messages.msg(sender, "chestSuccefulySaved", Constants.CHEST_PLACEHOLDER, chestName);
 			uiHandler.openUi(player, UiHandler.UiType.MAIN, newChest);
 		}
 	}

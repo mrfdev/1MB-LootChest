@@ -14,7 +14,6 @@ import com.Zrips.CMI.Modules.Holograms.HologramManager;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import lombok.Getter;
 
 /**
@@ -130,7 +129,7 @@ public class LootChestHologram {
 		if(!NULL_NAME.contains(name)) {
 			try {
 				getHologram();
-				setLine(Utils.color(name));
+				setLine(Messages.legacy(name));
 			} catch (RuntimeException | LinkageError e) {
 				disableHolograms(e);
 			}
@@ -158,7 +157,7 @@ public class LootChestHologram {
 		}
 		hologram = new CMIHologram(name, location);
 		hologram.getSettings().setSaveToFile(false);
-		hologram.getPages().setLines(Collections.singletonList(Utils.color(text)));
+		hologram.getPages().setLines(Collections.singletonList(Messages.legacy(text)));
 		manager.add(hologram, true, true);
 		if (manager.getByName(name) != hologram) {
 			throw new IllegalStateException("CMI did not register hologram " + name);
@@ -206,7 +205,7 @@ public class LootChestHologram {
 							runnable.cancel();
 						}else {
 							//replace with paragraph character
-							setLine(Utils.color(text));
+							setLine(Messages.legacy(text));
 						}
 					}
 					if(secondes<=0) {

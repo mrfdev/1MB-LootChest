@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.falleffect;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.lang.reflect.InvocationTargetException;
 
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -18,7 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 
 public final class FallingPackageEntity {
@@ -78,12 +79,12 @@ public final class FallingPackageEntity {
                         .getDeclaredConstructor(Location.class, Material.class, int.class, double.class, JavaPlugin.class)
                         .newInstance(startLoc, this.material, this.height, this.speed, Main.getInstance());
             } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException ex) {
-                Utils.logInfo("&cError while creating the armorstand fall packet: " + ex.getMessage());
+				Messages.log("<#f38ba8>Error while creating the falling-package armor stand packet: " + ex.getMessage());
                 //ex.printStackTrace();
             }
             if (armorstandFall != null) {
                 if (Main.configs.debug) {
-                    Utils.logInfo("&aUsing falling package adapter: v_" + version);
+					Messages.log("<#a6e3a1>Using falling package adapter: v_" + version);
                 }
                 armorstandFall.sendPacketToAll();
             } else {

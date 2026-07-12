@@ -1,10 +1,11 @@
 package fr.black_eyes.lootchest.ui.menu;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.ui.ChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ public class ChancesMenu extends ChestUi {
 	 */
 	private void loadChestItems() {
 		Inventory chestInv = chest.getInv();
-		String lore = Utils.getMsg("Menu.chances.lore", "[Chest]", chest.getName());
+		String lore = Messages.get("Menu.chances.lore", "[Chest]", chest.getName());
 
 		for (int i = 0; i < chestInv.getSize(); i++) {
 			if (chestInv.getItem(i) == null || Objects.requireNonNull(chestInv.getItem(i)).getType() == Material.AIR) {

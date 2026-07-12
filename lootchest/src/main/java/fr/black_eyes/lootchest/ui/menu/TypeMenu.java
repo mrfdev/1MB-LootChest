@@ -1,12 +1,13 @@
 package fr.black_eyes.lootchest.ui.menu;
 
+import fr.black_eyes.lootchest.Messages;
+
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.ui.ChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -52,7 +53,7 @@ public class TypeMenu extends ChestUi {
 		chest.updateData();
 		chest.despawn();
 		chest.spawn(true);
-		Utils.msg(player, "editedChestType", "[Chest]", chest.getName());
+		Messages.msg(player, "editedChestType", "[Chest]", chest.getName());
 	}
 
 	@Override

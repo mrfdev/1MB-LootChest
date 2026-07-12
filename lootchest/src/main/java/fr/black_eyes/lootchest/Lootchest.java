@@ -19,7 +19,6 @@ import fr.black_eyes.api.events.LootChestSpawnEvent;
 import fr.black_eyes.lootchest.falleffect.FallingPackageEntity;
 import fr.black_eyes.lootchest.particles.Particle;
 import fr.black_eyes.simpleJavaPlugin.Files;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -237,7 +236,7 @@ public class Lootchest {
 			chances[Integer.parseInt(keys)] = configFiles.getData().getInt(DATA_CHEST_PATH + naming + ".chance." + keys);
 		}
 		}catch(NullPointerException e) {
-			Utils.logInfo("&cMaybe you changed to an older server version recently: chest inventory of "+name+" was lost :/");
+			Messages.log("<#f38ba8>Chest inventory data for " + name + " could not be loaded.");
 		}
 		respawnCmdMsgEnabled =  configFiles.getData().getBoolean(DATA_CHEST_PATH + naming + ".respawn_cmd");
 		respawnNaturalMsgEnabled =  configFiles.getData().getBoolean(DATA_CHEST_PATH + naming + ".respawn_natural");
@@ -270,7 +269,7 @@ public class Lootchest {
 			}
 		}
 		if(inventory.getSize() >27) {
-			Utils.logInfo("&cDo not use double chests to create chests! Only half of the inventory of the chest was registered.");
+			Messages.log("<#f38ba8>Do not use double chests to create LootChests. Only half of the inventory was registered.");
 		}
 		maxFilledSlots = Main.configs.defaultMaxFilledSlots;
 		fallEnabled =  Main.configs.fallEnabled;
@@ -462,7 +461,7 @@ public class Lootchest {
                 }
             }
 		}catch(Exception e){
-			Utils.logInfo("&eError while setting the direction of the chest " + getName() + "; This will not prevent the plugin to work, but if you manage to reproduce it, tell me, so I can fix it.");
+			Messages.log("<#f6c177>Could not restore the direction of LootChest " + getName() + ". The chest will otherwise continue to work.");
 		}
 
 		// check if lootin is installed
@@ -555,7 +554,7 @@ public class Lootchest {
 			}
 			spawnLoc = LootChestUtils.chooseRandomLocation(globalLocation, radius);
 			if(spawnLoc == null){
-				Utils.logInfo(Utils.color("&cThe chest " + getName() + " didn't found a good location, so that it couldn't respawn! " ));
+				Messages.log("<#f38ba8>LootChest " + getName() + " could not find a valid respawn location.");
 				LootChestUtils.scheduleReSpawn(this);
 				return false;
 			}
@@ -568,19 +567,19 @@ public class Lootchest {
 
 		// handle natural spawning messages - command respawn messages are handled in command class
 		if(!forceSpawn && isRespawnNaturalMsgEnabled() ) {
-			String naturalMsg = Utils.color((((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world));
+			String naturalMsg = (((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world);
 			if(Main.configs.noteBungeeBroadcast) {
 				BungeeChannel.bungeeBroadcast(naturalMsg);
 			}
 			else if(!Main.configs.notePerWorldMessage) {
 				for(World w : Bukkit.getWorlds()) {
 					for(Player p : w.getPlayers()) {
-						Utils.sendMultilineMessage(naturalMsg, p);
+						Messages.sendMultilineMessage(naturalMsg, p);
 					}
 				}
 			}else {
 				for(Player p : spawnLoc.getWorld().getPlayers()){
-					Utils.sendMultilineMessage(naturalMsg, p);
+					Messages.sendMultilineMessage(naturalMsg, p);
 				}
 			}
 		}

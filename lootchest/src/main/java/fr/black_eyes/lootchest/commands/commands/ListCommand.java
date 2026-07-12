@@ -1,5 +1,7 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import fr.black_eyes.lootchest.Messages;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,7 +9,6 @@ import org.bukkit.command.CommandSender;
 
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.SubCommand;
-import fr.black_eyes.simpleJavaPlugin.Utils;
 
 public class ListCommand extends SubCommand {
 	
@@ -23,6 +24,6 @@ public class ListCommand extends SubCommand {
 	@Override
 	protected void onCommand(CommandSender sender, String[] args) {
 		List<String> sorted = Main.getInstance().getLootChest().keySet().stream().sorted().collect(Collectors.toList());
-		Utils.msg(sender, "ListCommand", "[List]", String.join(" ", sorted));
+		Messages.msg(sender, "ListCommand", "[List]", String.join(" ", sorted));
 	}
 }

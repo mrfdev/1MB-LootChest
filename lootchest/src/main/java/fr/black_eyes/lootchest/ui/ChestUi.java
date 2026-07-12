@@ -14,6 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import fr.black_eyes.lootchest.Messages;
 import lombok.Getter;
 
 /**
@@ -31,7 +32,7 @@ public class ChestUi {
 
 	public ChestUi(int rows, String title) {
 		this.rows = rows;
-		inventory = Bukkit.createInventory(null, rows * 9, title);
+		inventory = Bukkit.createInventory(null, rows * 9, Messages.component(title));
 		clickActions = new HashMap<>();
 		rightClickActions = new HashMap<>();
 	}
@@ -128,11 +129,12 @@ public class ChestUi {
 
 	protected ItemStack renameItem(ItemStack item, String name, String lore) {
 		ItemMeta meta = item.getItemMeta();
-		meta.setDisplayName(name);
+		meta.displayName(Messages.component(name));
 
 		if (!lore.isEmpty()) {
-			List<String> loreList = Arrays.asList(lore.split("\\|\\|"));
-			meta.setLore(loreList);
+			meta.lore(Arrays.stream(lore.split("\\|\\|"))
+					.map(Messages::component)
+					.toList());
 		}
 		item.setItemMeta(meta);
 		return item;
