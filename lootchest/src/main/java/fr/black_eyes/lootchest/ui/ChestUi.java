@@ -17,6 +17,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import fr.black_eyes.lootchest.Messages;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 
 /**
  * A custom inventory UI that allows for actions to be assigned to each slot.
@@ -131,7 +133,7 @@ public class ChestUi {
 	protected ItemStack renameItem(ItemStack item, String name, String lore) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> nameLines = splitTooltipLines(name);
-		meta.displayName(Messages.component(nameLines.getFirst()));
+		meta.displayName(tooltipComponent(nameLines.getFirst()));
 
 		List<String> loreLines = new ArrayList<>(nameLines.subList(1, nameLines.size()));
 		if (!lore.isEmpty()) {
@@ -139,7 +141,7 @@ public class ChestUi {
 		}
 		if (!loreLines.isEmpty()) {
 			meta.lore(loreLines.stream()
-					.map(Messages::component)
+					.map(ChestUi::tooltipComponent)
 					.toList());
 		}
 		item.setItemMeta(meta);
@@ -148,5 +150,9 @@ public class ChestUi {
 
 	private static List<String> splitTooltipLines(String text) {
 		return Arrays.asList(text.split("(?i)<newline>|\\|\\||\\R"));
+	}
+
+	private static Component tooltipComponent(String text) {
+		return Messages.component(text).decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE);
 	}
 }
