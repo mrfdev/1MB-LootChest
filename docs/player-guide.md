@@ -41,7 +41,9 @@ shown on one visit is not guaranteed on the next visit.
 | `/lc help` | Shows commands you are permitted to use. Most entries are staff tools. |
 
 All creation, editing, teleportation, forced respawn, and removal commands are
-administrative. See the [technical command reference](commands.md) for those tools.
+administrative. See the
+[technical command reference](https://github.com/mrfloris/LootChest/blob/master/docs/commands.md)
+for those tools.
 
 ## Rank Requirements
 
@@ -78,6 +80,7 @@ regions and world rules can also control where random Lootboxes are allowed to a
 
 ## Technical Documentation
 
-Administrators and developers can use the [Lootbox technical overview](../README.md).
+Administrators and developers can use the
+[Lootbox technical overview](https://github.com/mrfloris/LootChest/blob/master/README.md).
 The canonical public page is
 [docs.1moreblock.com/custom-server-plugins/lootbox/](https://docs.1moreblock.com/custom-server-plugins/lootbox/).
