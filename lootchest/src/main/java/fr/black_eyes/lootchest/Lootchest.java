@@ -285,8 +285,6 @@ public class Lootchest {
 	   	particle =  Particle.valueOf(Main.configs.partDefaultParticle);
 	   	radius = 0;
 	   	world = LootChestUtils.getWorldName(chest.getWorld());
-		((InventoryHolder) chest.getLocation().getBlock().getState()).getInventory().clear();
-		chest.getLocation().getBlock().setType(Material.AIR);
 		protectionTime = Main.configs.defaultRespawnProtection;
 		hologram = new LootChestHologram(this);
 	}
@@ -482,6 +480,13 @@ public class Lootchest {
 		LootChestUtils.scheduleReSpawn(this);
 	}
 
+	public void activateExistingContainer(Block block) {
+		Location location = block.getLocation();
+		spawnFallEffect(location, block.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4));
+		createchest(block, location);
+		resendContainerBlock(block);
+	}
+
 	/**
 	 * Executes the spawn function, despawning the chest only if we force it to respawn
 	 * @param forceRespawn Forces the chest to respawn, even if it's not time to respawn
@@ -564,15 +569,20 @@ public class Lootchest {
 
 		// make the fall effect
 		final Block newBlock = spawnLoc.getBlock();
-		if(isFallEnabled()) {
-			int height = Main.configs.fallHeight;
-			Location startLocation = new Location(spawnLoc.getWorld(), spawnLoc.getX()+0.5, spawnLoc.getY()+height, spawnLoc.getZ()+0.5);
-			new FallingPackageEntity(startLocation, chunkWasLoaded, spawnLoc);
-		}
+		spawnFallEffect(spawnLoc, chunkWasLoaded);
 		createchest(newBlock, spawnLoc);
 		resendContainerBlock(newBlock);
 		
 		return true;
+	}
+
+	private void spawnFallEffect(Location target, boolean chunkWasLoaded) {
+		if (!isFallEnabled()) {
+			return;
+		}
+		int height = Main.configs.fallHeight;
+		Location startLocation = new Location(target.getWorld(), target.getX()+0.5, target.getY()+height, target.getZ()+0.5);
+		new FallingPackageEntity(startLocation, chunkWasLoaded, target);
 	}
 
 	private void resendContainerBlock(Block block) {

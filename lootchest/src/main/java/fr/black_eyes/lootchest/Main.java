@@ -136,14 +136,6 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
 
-		int pluginId = 21246; // <-- Replace with the id of your plugin!
-		try{ 
-       		new Metrics(this, pluginId);
-			Utils.logInfo("Metrics started");
-		}catch (NoClassDefFoundError e) {
-			//if metrics can't be loaded, it's not a big deal
-		}		
-
 		uiHandler = new UiHandler(this);
 		registerEvents(uiHandler);
 		registerCommands();
