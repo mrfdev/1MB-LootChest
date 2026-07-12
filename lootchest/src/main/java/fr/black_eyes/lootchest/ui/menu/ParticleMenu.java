@@ -6,11 +6,12 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
-import fr.black_eyes.lootchest.particles.Particle;
+import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.ui.PagedChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
 
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -40,9 +41,11 @@ public class ParticleMenu extends PagedChestUi {
 		}
 		//add items for all other particle effects
 		List<Particle> particles = new ArrayList<>(Main.getInstance().getParticles().values());
-		particles.sort(Comparator.comparing(Particle::getReadableName));
+		particles.sort(Comparator.comparing(ParticleCatalog::readableName));
 		for (Particle particle : particles) {
-			addContent(nameItem(particle.getMat(), particle.getReadableName()), p -> changeParticle(chest, particle, p));
+			String lore = particle == chest.getParticle() ? Messages.get("Menu.particles.selected") : "";
+			addContent(nameItem(ParticleCatalog.icon(particle), ParticleCatalog.readableName(particle), 1, lore),
+					p -> changeParticle(chest, particle, p));
 		}
 	}
 	
@@ -50,7 +53,11 @@ public class ParticleMenu extends PagedChestUi {
 		chest.setParticle(particle);
 		chest.updateData();
 		Location loc = chest.getParticleLocation();
-		Main.getInstance().getPart().put(loc, particle);
+		if (particle == null) {
+			Main.getInstance().getPart().remove(loc);
+		} else {
+			Main.getInstance().getPart().put(loc, particle);
+		}
 		Messages.msg(player, "editedParticle", "[Chest]", chest.getName());
 	}
 

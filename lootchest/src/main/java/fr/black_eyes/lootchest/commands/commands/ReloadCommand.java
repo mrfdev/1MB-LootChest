@@ -34,6 +34,7 @@ public class ReloadCommand extends SubCommand {
 		}
 		configFiles.reloadConfig();
 		Main.setConfigs(Config.getInstance(configFiles.getConfig()));
+		main.reloadParticleCatalog();
 		main.getPart().clear();
 		if (!Bukkit.getVersion().contains("1.7")) {
 			Main.getInstance().getLootChest().values().forEach(chest -> chest.getHologram().remove());

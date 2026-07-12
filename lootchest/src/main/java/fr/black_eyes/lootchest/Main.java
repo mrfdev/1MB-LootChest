@@ -8,13 +8,14 @@ import com.Zrips.CMI.CMI;
 import fr.black_eyes.lootchest.commands.SubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
-import fr.black_eyes.lootchest.particles.Particle;
+import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.ui.UiHandler;
 import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
 import fr.black_eyes.simpleJavaPlugin.Updater;
@@ -27,10 +28,11 @@ import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 public class Main extends SimpleJavaPlugin {
 	public static final String MENU_MAIN_TYPE = "Menu.main.type";
 	public static final String MENU_CHANCES_LORE = "Menu.chances.lore";
-	@Getter private Particle[] supportedParticles = {};
 	@Getter private final HashMap<Location, Long> protection = new HashMap<>();
-	@Getter private final HashMap<String, Particle> particles = new HashMap<>();
+	@Getter private final LinkedHashMap<String, Particle> particles = new LinkedHashMap<>();
 	@Getter private final HashMap<Location, Particle> part = new HashMap<>();
+	@Getter private ParticleCatalog particleCatalog;
+	private final Set<Particle> failedParticles = EnumSet.noneOf(Particle.class);
 	@Setter public static Config configs;
 	@Getter private HashMap<String, Lootchest> lootChest;
 	@Getter @Setter private static Main instance;
@@ -174,10 +176,8 @@ public class Main extends SimpleJavaPlugin {
 		}
         Messages.log("Starting particles...");
         
-		if(configs.partEnable) {
-			//Initialization of particles values, it doesn't spawn them but is used in spawning
-			initParticles();
-	
+		reloadParticleCatalog();
+        if(configs.partEnable) {
 			//loop de tous les coffres tous les 1/4 (modifiable dans la config) de secondes pour faire spawn des particules
 			//loop of all chests every 1/4 (editable in config) of seconds to spawn particles 
 			startParticles();
@@ -241,49 +241,33 @@ public class Main extends SimpleJavaPlugin {
 	 * Servers with bad performances (or with 400 chests) should disable particles.
 	 */
 	private void startParticles() {
-		new Thread(() -> {
-			if(Main.getCompleteVersion()>=1080){
-				new BukkitRunnable() {
-					public void run() {
-						try{
-							float radius = (float) configs.PART_radius;
-							float speed = (float)configs.PART_speed;
-							int number = configs.partNumber;
-							if (configs.partEnable) {
-								for(Map.Entry<Location, Particle> entry: part.entrySet()) {
-									boolean loaded = entry.getKey().getWorld().isChunkLoaded(entry.getKey().getBlockX() >> 4, entry.getKey().getBlockZ() >> 4);
-									if (loaded && entry.getValue()!=null)
-											try{
-												entry.getValue().display(radius, radius, radius, speed, number, entry.getKey(), entry.getKey().getWorld().getPlayers());
-											}catch(Exception e) {
-												// concurrent modification exception, just ignore it
-											}
-
-								}
-							}
-						}catch(Exception e) {
-							// concurrent modification exception, just ignore it
-						}
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				if (!configs.partEnable) {
+					return;
+				}
+				for (Map.Entry<Location, Particle> entry : part.entrySet()) {
+					Location location = entry.getKey();
+					Particle particle = entry.getValue();
+					if (particle == null || location.getWorld() == null
+							|| !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+						continue;
 					}
-				}.runTaskTimer(this, 0, configs.partRespawnTicks);
-			}else{
-				new BukkitRunnable() {
-					public void run() {
-						float radius = (float) configs.PART_radius;
-						float speed = (float)configs.PART_speed;
-						int number = configs.partNumber;
-						if (configs.partEnable) {
-							for(Map.Entry<Location, Particle> entry: part.entrySet()) {
-								boolean loaded = entry.getKey().getWorld().isChunkLoaded(entry.getKey().getBlockX() >> 4, entry.getKey().getBlockZ() >> 4);
-								if (loaded && entry.getValue()!=null)
-									entry.getValue().display(radius, radius, radius, speed, number, entry.getKey(), entry.getKey().getWorld().getPlayers());
-								
-							}
+					try {
+						particleCatalog.display(particle, location, configs.partNumber,
+								configs.PART_radius, configs.PART_speed, location.getWorld().getPlayers());
+					} catch (RuntimeException exception) {
+						if (failedParticles.add(particle)) {
+							getLogger().warning("Particle " + particle.name() + " failed to spawn; using "
+									+ particleCatalog.getFallback().name() + ". "
+									+ exception.getClass().getSimpleName() + ": " + exception.getMessage());
 						}
+						entry.setValue(particleCatalog.getFallback());
 					}
-				}.runTaskTimer(this, 0, configs.partRespawnTicks);
+				}
 			}
-		}).start();
+		}.runTaskTimer(this, 0, configs.partRespawnTicks);
 	}
     		
 	/**
@@ -360,6 +344,12 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.message", "<#a6e3a1>All LootChests were force-respawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
 		configFiles.setConfig("EnableLootin", false);
+		configFiles.setConfig("Particles.fallback_particle", "FLAME");
+		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
+		configFiles.setLang("info.title", "<#cba6f7><bold>Lootbox</bold> <#6c7086>v[Version]");
+		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
+		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
+		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");
 		//deletion of now unsuported feature
 		configFiles.getConfig().set("Fall_Effect.Let_Block_Above_Chest_After_Fall", null);
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
@@ -394,6 +384,19 @@ public class Main extends SimpleJavaPlugin {
 			configFiles.getLang().set("help", help);
 			configFiles.saveLang();
 		}
+		if(!configFiles.getLang().getStringList("help").toString().contains("/lc info")){
+			List<String> help = configFiles.getLang().getStringList("help");
+			help.add(2, "<#a6e3a1>/lc info <#6c7086>- About Lootbox and its documentation");
+			configFiles.getLang().set("help", help);
+			configFiles.saveLang();
+		}
+		List<String> commandHelp = configFiles.getLang().getStringList("help");
+		for (int i = 0; i < commandHelp.size(); i++) {
+			if (commandHelp.get(i).contains("/lc settime")) {
+				commandHelp.set(i, "<#a6e3a1>/lc settime <#bac2de>\\<name> \\<minutes> <#6c7086>- Set respawn time");
+			}
+		}
+		configFiles.getLang().set("help", commandHelp);
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawn ")){
 			  List<String> help = configFiles.getLang().getStringList("help");
 			  help.add("<#a6e3a1>/lc despawn <#bac2de>\\<name> <#6c7086>- Despawn a LootChest");
@@ -419,24 +422,19 @@ public class Main extends SimpleJavaPlugin {
 
 	
 	/**
-	 * This initializes an array of particles. Under 1.12, I use InventiveTalent's ParticleAPI,
-	 * and for 1.12+, I use new particles spawning functions, so I use default spigot particles
+	 * Builds the editor choices from payload-free particles exposed by the running Paper API.
 	 */
 	private void initParticles() {
-		int cpt = 0;
-		for(Particle p:Particle.values()) {
-			if(p.isSupported() && p.getParticle()!=null) {
-				cpt++;
-			}
-		}
-		supportedParticles = new Particle[cpt];
-		int i = 0;
-		for(Particle p:Particle.values()) {
-			if(p.isSupported() && p.getParticle()!=null) {
-				particles.put(p.getName(), p);
-				supportedParticles[i++] = p;
-			}
-		}
+		particleCatalog = new ParticleCatalog(configs.partFallbackParticle, getLogger()::warning);
+		particles.clear();
+		particles.putAll(particleCatalog.getSupportedParticles());
+		Messages.log("<#a6e3a1>Loaded " + particles.size() + " Paper particles; fallback: "
+				+ particleCatalog.getFallback().name() + ".");
+	}
+
+	public void reloadParticleCatalog() {
+		failedParticles.clear();
+		initParticles();
 	}
 
 

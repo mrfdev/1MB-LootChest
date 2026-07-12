@@ -20,14 +20,14 @@ public class SetTimeCommand extends SubCommand {
 	
 	@Override
 	public String getUsage() {
-		return "/lc settime <chestname> <seconds>";
+		return "/lc settime <chestname> <minutes>";
 	}
 	
 	@Override
 	protected void onCommand(CommandSender sender, String[] args) {
 		String chestName = args[1];
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
-		lc.setTime(Integer.parseInt(args[1]));
+		lc.setTime(Integer.parseInt(args[2]));
 		lc.updateData();
 		lc.spawn(true);
 		Messages.msg(sender, "settime", Constants.CHEST_PLACEHOLDER, chestName);

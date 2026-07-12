@@ -17,7 +17,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.api.events.LootChestSpawnEvent;
 import fr.black_eyes.lootchest.falleffect.FallingPackageEntity;
-import fr.black_eyes.lootchest.particles.Particle;
+import org.bukkit.Particle;
 import fr.black_eyes.simpleJavaPlugin.Files;
 import lombok.Getter;
 import lombok.Setter;
@@ -216,17 +216,11 @@ public class Lootchest {
 
 		holo = configFiles.getData().getString(DATA_CHEST_PATH + naming + ".holo");
 		String part = configFiles.getData().getString(DATA_CHEST_PATH + naming + PARTICLE);
-		if(part != null && part.equals("Disabled")) {
+		if(part != null && part.equalsIgnoreCase("Disabled")) {
 			particle = null;
 		}else {
-			try {
-				particle = Particle.valueOf(part);
-			}catch(IllegalArgumentException e) {
-				particle = Particle.FLAME;
-			}
-			if(!particle.isSupported()) {
-				particle = Particle.FLAME;
-			}
+			particle = Main.getInstance().getParticleCatalog()
+					.resolveOrFallback(part, "LootChest " + naming);
 		}
 		time = configFiles.getData().getInt(DATA_CHEST_PATH + naming + ".time");
 		fallEnabled =  configFiles.getData().getBoolean(DATA_CHEST_PATH + naming + ".fall");
@@ -281,7 +275,8 @@ public class Lootchest {
 		time =  Main.configs.defaultResetTime;
 		globalLoc =  chest.getLocation();
 		lastReset =  new Timestamp(System.currentTimeMillis()).getTime();
-	   	particle =  Particle.valueOf(Main.configs.partDefaultParticle);
+		particle = Main.getInstance().getParticleCatalog()
+				.resolveOrFallback(Main.configs.partDefaultParticle, "Particles.default_particle");
 	   	radius = 0;
 	   	world = LootChestUtils.getWorldName(chest.getWorld());
 		protectionTime = Main.configs.defaultRespawnProtection;
@@ -475,11 +470,7 @@ public class Lootchest {
 		// spawn particles and hologram if needed
 		final Location loc2 = getParticleLocation();
 		if(getParticle() != null && Main.configs.partEnable){
-			for(Particle part : Main.getInstance().getSupportedParticles()) {
-				if((""+part).contains(getParticle().name())) {
-					Main.getInstance().getPart().put(loc2, part);
-				}
-			}
+			Main.getInstance().getPart().put(loc2, getParticle());
 		}
 		getHologram().setLoc(blockLocation);
 		
@@ -733,10 +724,8 @@ public class Lootchest {
 		getHologram().setLoc(loc);
 		
 		final Location loc2 = getParticleLocation();
-		for(Particle part : Main.getInstance().getSupportedParticles()) {
-			if(getParticle() != null && (""+part).contains(getParticle().name())) {
-				Main.getInstance().getPart().put(loc2, part);
-			}
+		if (getParticle() != null) {
+			Main.getInstance().getPart().put(loc2, getParticle());
 		}
 		
 	}

@@ -57,6 +57,7 @@ public boolean worldborderCheckForSpawn, usehologram;
 
 
 public final String partDefaultParticle,
+		partFallbackParticle,
 		noteNaturalMsg,
 		noteCommandMsg,
 		noteAllcmdMsg,
@@ -143,6 +144,7 @@ public Config(FileConfiguration config) {
 	spawnOnNonSolidBlocks = config.getBoolean("spawn_on_non_solid_blocks");
 	
 	partDefaultParticle = config.getString("Particles.default_particle");
+	partFallbackParticle = config.getString("Particles.fallback_particle", "FLAME");
 	fallBlock = config.getString("Fall_Effect.Block");
 	noteNaturalMsg = config.getString("respawn_notify.natural_respawn.message");
 	noteCommandMsg = config.getString("respawn_notify.respawn_with_command.message");

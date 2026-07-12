@@ -2,7 +2,6 @@ package fr.black_eyes.lootchest.ui;
 
 import fr.black_eyes.lootchest.Messages;
 
-import fr.black_eyes.lootchest.Main;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -34,9 +33,8 @@ public abstract class PagedChestUi extends ChestUi {
 	 * Returns the number of pages required to display all items
 	 */
 	private int getPageCount() {
-		int particleCount = Main.getInstance().getParticles().size() + 9;
 		int pageSize = (getRows() - 1) * 9;
-		return (int) Math.max(1, Math.ceil((float) particleCount / pageSize));
+		return (int) Math.max(1, Math.ceil((float) contents.size() / pageSize));
 	}
 	
 	private void loadPage(int pageIdx) {

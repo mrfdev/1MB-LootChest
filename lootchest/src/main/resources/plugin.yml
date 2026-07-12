@@ -2,11 +2,46 @@ name: ${project.parent.name}
 main: ${project.groupId}.Main
 version: ${project.version}
 author: Black_Eyes
-api-version: 1.13
+api-version: '26.2'
 softdepend: [CMI, CMILib, MultiWorld, Multiverse-Core, FabledSkyBlock, MultiverseCore, GriefPrevention, Residence, WorldGuard, Factions, FactionsX, Towny, Lootin]
 description: >
              ${project.description}
 commands:
   lootchest:
-    description: Main Command
+    description: Manage Lootbox containers and view player information
     aliases: lc
+    usage: /lc <subcommand>
+permissions:
+  lootchest.info:
+    description: View Lootbox information and its documentation link
+    default: true
+  lootchest.admin:
+    description: Full Lootbox administration access
+    default: op
+    children:
+      lootchest.*: true
+  lootchest.*:
+    description: Access every Lootbox administrative command
+    default: op
+    children:
+      lootchest.copy: true
+      lootchest.create: true
+      lootchest.despawn: true
+      lootchest.despawnall: true
+      lootchest.edit: true
+      lootchest.getname: true
+      lootchest.give: true
+      lootchest.list: true
+      lootchest.locate: true
+      lootchest.maxfilledslots: true
+      lootchest.randomspawn: true
+      lootchest.reload: true
+      lootchest.remove: true
+      lootchest.respawn: true
+      lootchest.respawnall: true
+      lootchest.setholo: true
+      lootchest.setpos: true
+      lootchest.setprotection: true
+      lootchest.settime: true
+      lootchest.togglefall: true
+      lootchest.tp: true

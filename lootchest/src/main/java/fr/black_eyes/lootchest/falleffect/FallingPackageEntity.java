@@ -17,6 +17,7 @@ import fr.black_eyes.lootchest.Main;
 
 import org.bukkit.Material;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -117,10 +118,7 @@ public final class FallingPackageEntity {
 
         if (locPackage != null && this.world.getBlockAt(LocationUtils.offset(locPackage, 0.0, -1.0, 0.0)).getType() == Material.AIR) {
             ++this.counter;
-            if (Main.getCompleteVersion() >= 1206 && Main.getInstance().getParticles().get("SMOKE") != null)
-                Main.getInstance().getParticles().get("SMOKE").display((float) 0.1, (float) 0.1, (float) 0.1, (float) 0.1, 1, goodLocation());
-            else if (Main.getInstance().getParticles().get("SMOKE_NORMAL") != null)
-                Main.getInstance().getParticles().get("SMOKE_NORMAL").display((float) 0.1, (float) 0.1, (float) 0.1, (float) 0.1, 1, goodLocation());
+            this.world.spawnParticle(Particle.SMOKE, goodLocation(), 1, 0.1, 0.1, 0.1, 0.1);
             if (!this.armorstand && ((Entity) this.blocky).isDead()) {
                 final Vector oldVelocity = ((Entity) this.blocky).getVelocity().setY(-(speed));
                 this.blocky = this.world.spawnFallingBlock(locPackage, this.material, (byte) 0);

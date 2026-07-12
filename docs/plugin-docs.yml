@@ -1,0 +1,12 @@
+id: lootbox
+name: Lootbox
+category: custom-server-plugin
+summary: Discover repeatable loot containers with randomized rewards on 1MoreBlock.
+main_command: /lc
+docs_url: https://docs.1moreblock.com/custom-server-plugins/lootbox/
+player_guide: player-guide.md
+technical_readme: ../README.md
+java_target: "25"
+paper_target: "26.2"
+official_project: true
+repository: mrfloris/LootChest

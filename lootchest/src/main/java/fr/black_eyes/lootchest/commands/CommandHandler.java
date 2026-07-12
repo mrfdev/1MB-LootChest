@@ -96,7 +96,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 	
 	private boolean hasPerm(CommandSender sender, String permission) {
 		if (!sender.hasPermission(permission) && !sender.hasPermission("lootchest.admin") && !sender.hasPermission("lootchest.*")) {
-			Messages.msg(sender, "noPermission", "[Permission]", "lootchest." + permission);
+			Messages.msg(sender, "noPermission", "[Permission]", permission);
 			return false;
 		}
 		return true;

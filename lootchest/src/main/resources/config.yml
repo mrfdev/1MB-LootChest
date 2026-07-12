@@ -14,6 +14,8 @@ Particles:
       #if you disable this, no matter what you but below^^
   enable: true
   default_particle: FLAME
+      #Used when a saved/default particle is unavailable or requires unsupported extra data
+  fallback_particle: FLAME
       #10 of these particles spawn at the same time
   number: 10
       #They respawn all 5 ticks by default
