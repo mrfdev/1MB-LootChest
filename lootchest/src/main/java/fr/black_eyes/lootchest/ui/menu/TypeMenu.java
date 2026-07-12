@@ -21,7 +21,7 @@ public class TypeMenu extends ChestUi {
 	private final UiHandler uiHandler;
 
 	public TypeMenu(Lootchest chest, UiHandler uiHandler) {
-		super(3, LootChestUtils.getMenuName("type", chest.getName()));
+		super(4, LootChestUtils.getMenuName("type", chest.getName()));
 		this.chest = chest;
 		this.uiHandler = uiHandler;
 
@@ -30,15 +30,21 @@ public class TypeMenu extends ChestUi {
 		if (Mat.BARREL != Mat.CHEST) {
 			setItem(2, new ItemStack(Mat.BARREL), p -> changeChestType(p, Mat.BARREL));
 		}
-        if(Main.getVersion()>=11){
-            int cpt = 3;
-            for(Material mat : Material.values()){
-                if(mat.toString().contains("SHULKER_BOX")){
-                    setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
-                    cpt++;
-                }
-            }
-        }
+		if (Main.getVersion() >= 11) {
+			int cpt = 3;
+			for (Material mat : Material.values()) {
+				if (Mat.isCopperChest(mat)) {
+					setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
+					cpt++;
+				}
+			}
+			for (Material mat : Material.values()) {
+				if (mat.toString().contains("SHULKER_BOX")) {
+					setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
+					cpt++;
+				}
+			}
+		}
 	}
 
 	void changeChestType(Player player, Material type) {

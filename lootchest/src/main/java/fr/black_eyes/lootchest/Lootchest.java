@@ -144,8 +144,8 @@ public class Lootchest {
 	@Setter private boolean taken;
 
 	/** 
-	 * @return the type of the lootchest, can be chest, trapped chest or barrel
-	 * @param type the type of the lootchest, can be chest, trapped chest or barrel
+	 * @return the material used for this loot chest container
+	 * @param type the material used for this loot chest container
 	 */
 	@Getter @Setter private Material type;
 
@@ -449,7 +449,7 @@ public class Lootchest {
 
 		// check if lootin is installed
 		if(Config.getInstance().lootin && Bukkit.getPluginManager().isPluginEnabled("Lootin")) {
-			if(block.getType().equals(Material.CHEST) || block.getType().equals(Material.TRAPPED_CHEST))
+			if(block.getType().equals(Material.CHEST) || block.getType().equals(Material.TRAPPED_CHEST) || Mat.isCopperChest(block.getType()))
 				com.github.sachin.lootin.utils.ChestUtils.setLootinContainer(null,block.getState(),com.github.sachin.lootin.utils.ContainerType.CHEST);
 			else if(block.getType().equals(Material.valueOf("BARREL")))
 				com.github.sachin.lootin.utils.ChestUtils.setLootinContainer(null,block.getState(),com.github.sachin.lootin.utils.ContainerType.BARREL);
