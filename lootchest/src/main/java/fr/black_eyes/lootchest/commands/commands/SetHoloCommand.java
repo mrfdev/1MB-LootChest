@@ -16,6 +16,7 @@ public class SetHoloCommand extends SubCommand {
 	
 	public SetHoloCommand() {
 		super("setholo", Arrays.asList(ArgType.LOOTCHEST, ArgType.STRING));
+		setAllowTrailingArguments(true);
 	}
 	
 	@Override

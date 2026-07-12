@@ -25,6 +25,7 @@ public abstract class SubCommand {
 	private Set<String> aliases;
 	@Getter private String permission;
 	@Setter private boolean isPlayerRequired = false;
+	@Setter private boolean allowTrailingArguments = false;
 	@Getter private List<ArgType> requiredArgs;
 	@Getter private List<ArgType> optionalArgs;
 
@@ -67,12 +68,12 @@ public abstract class SubCommand {
 			return;
 		}
 		// -1 because first arg is the command name
-		if (args.length -1 < requiredArgs.size() || args.length -1 > getArgCount()) {
+		if (args.length -1 < requiredArgs.size() || (!allowTrailingArguments && args.length -1 > getArgCount())) {
 			Messages.send(sender, "<#f38ba8>Usage: <#bac2de>[Usage]", "[Usage]", getUsage());
 			return;
 		}
 		// check each argument
-		for (int i = 1; i < args.length; i++) {
+		for (int i = 1; i < args.length && i <= getArgCount(); i++) {
 			ArgType arg = getArgs().get(i-1);
 			if (!arg.isValid(args[i], sender)) {
 				Messages.send(sender, "<#f38ba8>Usage: <#bac2de>[Usage]", "[Usage]", getUsage());
@@ -96,6 +97,9 @@ public abstract class SubCommand {
 	}
 	
 	public List<String> getTabList(String[] args) {
+		if (args.length - 2 >= getArgs().size()) {
+			return new ArrayList<>();
+		}
 		switch(getArgs().get(args.length - 2)) {
 			case LOOTCHEST:
 				return new ArrayList<>(Main.getInstance().getLootChest().keySet());

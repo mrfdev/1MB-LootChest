@@ -1,5 +1,6 @@
 package fr.black_eyes.lootchest.ui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -129,14 +130,23 @@ public class ChestUi {
 
 	protected ItemStack renameItem(ItemStack item, String name, String lore) {
 		ItemMeta meta = item.getItemMeta();
-		meta.displayName(Messages.component(name));
+		List<String> nameLines = splitTooltipLines(name);
+		meta.displayName(Messages.component(nameLines.getFirst()));
 
+		List<String> loreLines = new ArrayList<>(nameLines.subList(1, nameLines.size()));
 		if (!lore.isEmpty()) {
-			meta.lore(Arrays.stream(lore.split("\\|\\|"))
+			loreLines.addAll(splitTooltipLines(lore));
+		}
+		if (!loreLines.isEmpty()) {
+			meta.lore(loreLines.stream()
 					.map(Messages::component)
 					.toList());
 		}
 		item.setItemMeta(meta);
 		return item;
+	}
+
+	private static List<String> splitTooltipLines(String text) {
+		return Arrays.asList(text.split("(?i)<newline>|\\|\\||\\R"));
 	}
 }
