@@ -389,6 +389,24 @@ public class Lootchest {
 		}
 	}
 
+	public void despawnAtValidatedLocation(Location location) {
+		Location actualLocation = getActualLocation();
+		if(actualLocation.getWorld() != location.getWorld()
+				|| actualLocation.getBlockX() != location.getBlockX()
+				|| actualLocation.getBlockY() != location.getBlockY()
+				|| actualLocation.getBlockZ() != location.getBlockZ()) {
+			return;
+		}
+
+		Block block = location.getBlock();
+		if(block.getState() instanceof InventoryHolder inventoryHolder) {
+			inventoryHolder.getInventory().clear();
+		}
+		block.setType(Material.AIR);
+		Main.getInstance().getPart().remove(getParticleLocation());
+		hologram.remove();
+	}
+
 	/**
 	 * @return whever config option Minimum_Number_Of_Players_For_Natural_Spawning is respected
 	 */
