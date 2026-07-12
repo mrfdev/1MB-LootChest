@@ -110,8 +110,13 @@ public class LootChestHologram {
 				runnable = null;
 			}
 			if(hologram!=null) {
-				hologram.destroy();
-				hologram = null;
+				try {
+					hologram.destroy();
+				} catch (RuntimeException | LinkageError e) {
+					disableHolograms(e);
+				} finally {
+					hologram = null;
+				}
 			}
 
 		}
@@ -124,8 +129,12 @@ public class LootChestHologram {
 		text = name;
 		if(Main.getCompleteVersion()<1080 || !Main.configs.usehologram) return;
 		if(!NULL_NAME.contains(name)) {
-			getHologram();
-			setLine(Utils.color(name));
+			try {
+				getHologram();
+				setLine(Utils.color(name));
+			} catch (RuntimeException | LinkageError e) {
+				disableHolograms(e);
+			}
 		}else {
 			remove();
 		}
@@ -170,36 +179,51 @@ public class LootChestHologram {
 	private void startShowTime() {
 		runnable = new BukkitRunnable() {
     		public void run() {
-    			Hologram holo = getHologram();
-    			long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
-    			long secondes = chest.getTime()*60;
-    			long tempsEnregistre = chest.getLastReset()/1000;
-    			secondes = secondes - (tempsActuel - tempsEnregistre);
-    			long secs = secondes%60;
-    			long mins = (secondes%3600)/60; 
-    			long hours = secondes/3600;
-    			String text = Main.configs.timerFormat;
-				if(text != null && Main.configs.timerHSep != null && Main.configs.timerMSep != null && Main.configs.timerSSep != null) {
-					if(hours <1) text = text.replace("%Hours", "").replace("%Hsep", "");
-					if(mins <1) text = text.replace("%Minutes", "").replace("%Msep", "");
-					text = text.replace("%Hours", hours+"").replace("%Hsep", Main.configs.timerHSep)
-							.replace("%Minutes", mins+"").replace("%Msep", Main.configs.timerMSep)
-							.replace("%Seconds", secs+"").replace("%Ssep", Main.configs.timerSSep)
-							.replace("%Hologram", getText());
+				try {
+					Hologram holo = getHologram();
+					long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
+					long secondes = chest.getTime()*60;
+					long tempsEnregistre = chest.getLastReset()/1000;
+					secondes = secondes - (tempsActuel - tempsEnregistre);
+					long secs = secondes%60;
+					long mins = (secondes%3600)/60;
+					long hours = secondes/3600;
+					String text = Main.configs.timerFormat;
+					if(text != null && Main.configs.timerHSep != null && Main.configs.timerMSep != null && Main.configs.timerSSep != null) {
+						if(hours <1) text = text.replace("%Hours", "").replace("%Hsep", "");
+						if(mins <1) text = text.replace("%Minutes", "").replace("%Msep", "");
+						text = text.replace("%Hours", hours+"").replace("%Hsep", Main.configs.timerHSep)
+								.replace("%Minutes", mins+"").replace("%Msep", Main.configs.timerMSep)
+								.replace("%Seconds", secs+"").replace("%Ssep", Main.configs.timerSSep)
+								.replace("%Hologram", getText());
 
-					if(holo ==null) {
-						runnable.cancel();
-					}else {
-						//replace with paragraph character
-						setLine(Utils.color(text));
+						if(holo ==null) {
+							runnable.cancel();
+						}else {
+							//replace with paragraph character
+							setLine(Utils.color(text));
+						}
 					}
+					if(secondes<=0) {
+						runnable.cancel();
+					}
+				} catch (RuntimeException | LinkageError e) {
+					disableHolograms(e);
 				}
-    			if(secondes<=0) {
-    				runnable.cancel();
-    			}
 	    	}
 	    };
 	    runnable.runTaskTimer(Main.getInstance(), 0, 20);
+	}
+
+	private void disableHolograms(Throwable throwable) {
+		Main.configs.usehologram = false;
+		if(runnable != null) {
+			runnable.cancel();
+			runnable = null;
+		}
+		hologram = null;
+		Main.getInstance().getLogger().warning("LootChest holograms disabled after DecentHolograms error: "
+				+ throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
 	}
 	
 }

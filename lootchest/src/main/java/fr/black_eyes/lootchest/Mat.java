@@ -163,6 +163,11 @@ public final class Mat {
 	}
 	
 	public static boolean isALootChestBlock(Block block) {
-		return (block.getType().toString().contains("SHULKER_BOX") || block.getType().equals(Mat.CHEST) || block.getType().equals(Mat.TRAPPED_CHEST) || block.getType().equals(Mat.BARREL));
+		Material type = block.getType();
+		return type.toString().contains("SHULKER_BOX") || isCopperChest(type) || type.equals(Mat.CHEST) || type.equals(Mat.TRAPPED_CHEST) || type.equals(Mat.BARREL);
+	}
+
+	public static boolean isCopperChest(Material material) {
+		return material.isBlock() && material.name().endsWith("COPPER_CHEST");
 	}
 }

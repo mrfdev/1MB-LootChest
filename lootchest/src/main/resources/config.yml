@@ -1,5 +1,5 @@
     #Checks for updates at plugin start
-CheckForUpdates: true
+CheckForUpdates: false
     #Info messages at plugin startup
 ConsoleMessages: true
     # Looting is a plugin that allows all players to loot the same chest

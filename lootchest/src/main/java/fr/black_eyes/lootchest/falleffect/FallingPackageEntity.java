@@ -58,7 +58,12 @@ public final class FallingPackageEntity {
 
 	public void summon() {
         if(Main.getCompleteVersion() < 1083) this.armorstand = false;
-        String version = Bukkit.getBukkitVersion().split("-")[0].replace(".", "_");
+        String version = Main.getCleanBukkitVersion().replace(".", "_");
+        if (version.startsWith("26_2")) {
+            version = "26_2";
+        } else if (version.startsWith("26_1_")) {
+            version = "26_1";
+        }
         try {
             Class.forName("fr.black_eyes.lootchest.falleffect.Fallv_" + version);
         }  catch (ClassNotFoundException e) {
@@ -76,7 +81,13 @@ public final class FallingPackageEntity {
                 Utils.logInfo("&cError while creating the armorstand fall packet: " + ex.getMessage());
                 //ex.printStackTrace();
             }
-            armorstandFall.sendPacketToAll();
+            if (armorstandFall != null) {
+                Utils.logInfo("&aUsing falling package adapter: v_" + version);
+                armorstandFall.sendPacketToAll();
+            } else {
+                this.armorstand = false;
+                this.blocky = this.world.spawnFallingBlock(startLoc, this.material, (byte)0);
+            }
 		}
         if(fireworks) {
             this.summonUpdateFireworks(FireworkEffect.Type.BALL_LARGE);

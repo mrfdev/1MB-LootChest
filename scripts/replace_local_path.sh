@@ -7,4 +7,5 @@ BASEDIR="$1"
 LOCAL_REPO_PATH="file://$BASEDIR/requirements/local-repo"
 
 # On fait le remplacement dans lootchest/pom.xml
-sed -i "s|LOCAL_PATH|$LOCAL_REPO_PATH|g" "$BASEDIR/lootchest/pom.xml"
+sed -i.bak "s|LOCAL_PATH|$LOCAL_REPO_PATH|g" "$BASEDIR/lootchest/pom.xml"
+rm -f "$BASEDIR/lootchest/pom.xml.bak"

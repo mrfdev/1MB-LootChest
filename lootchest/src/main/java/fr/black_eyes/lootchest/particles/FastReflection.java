@@ -21,7 +21,7 @@ public final class FastReflection {
             ? Bukkit.getServer().getClass().getPackage().getName().substring(OBC_PACKAGE.length() + 1)
             : "unknown")
     // now for new ones:
-        : eu.decentsoftware.holograms.api.utils.reflect.Version.getCurrentVersion().name();
+        : eu.decentsoftware.holograms.api.utils.reflect.Version.CURRENT.name();
 
     private FastReflection() {
         throw new UnsupportedOperationException();
