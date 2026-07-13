@@ -239,14 +239,11 @@ public class DeleteListener implements Listener  {
     
     @EventHandler
     public void hopperPistonGrab(BlockPistonRetractEvent e) {
-    	if(Main.getCompleteVersion()>=1080){
-	    	for(Block block : e.getBlocks()) {
-	    		if(block.getType() == Material.HOPPER && Main.configs.preventHopperPlacingUnderLootChest) {
-	    				e.setCancelled(true);
-	    			   			
-	    		}
-	    	}
-    	}
+		for(Block block : e.getBlocks()) {
+			if(block.getType() == Material.HOPPER && Main.configs.preventHopperPlacingUnderLootChest) {
+				e.setCancelled(true);
+			}
+		}
     }
 
 	// if a chest is placed around a lootchest, the event has to be canceled

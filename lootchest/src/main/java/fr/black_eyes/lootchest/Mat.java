@@ -1,173 +1,95 @@
 package fr.black_eyes.lootchest;
 
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 
-
+/**
+ * Materials used by LootChest's menus and container checks on Paper 26.2.
+ *
+ * <p>The field names retain the plugin's historical names so saved data and the
+ * rest of the code do not need a migration.</p>
+ */
 public final class Mat {
-	public static Material WITCH_SPAWN_EGG, COBWEB, SILVERFISH_SPAWN_EGG, ELDER_GUARDIAN_SPAWN_EGG, SCULK, SCULK_SHRIEKER, WHITE_DYE, RED_CONCRETE, VILLAGER_SPAWN_EGG, WARPED_FUNGUS, LIGHTNING_ROD, POINTED_DRIPSTONE, SOUL_LANTERN, WATER, INK_SACK, NAUTILUS_SHELL, SPAWNER, GLOW_INK_SAC, SPORE_BLOSSOM, END_ROD, CRYING_OBSIDIAN, HONEY_BLOCK, DRAGONS_BREATH, DOLPHIN_SPAWN_EGG, CRIMSON_FUNGUS, COMPOSTER, CAMPFIRE, BUBBLE_CORAL, SOUL_SAND, EMERALD_BLOCK, STICK, GOLD_NUGGET, GOLD_INGOT, GOLD_BLOCK, TOTEM_OF_UNDYING, CHEST, CLOCK, DIAMOND, ENDER_CHEST, ENDER_EYE, SIGN, TNT, FIREWORK, PRISMARINE, MYCELIUM, IRON_SWORD, DIAMOND_SWORD, FURNACE, ENCHANTED_BOOK, NOTE_BLOCK, END_PORTAL_FRAME, ENCHANTING_TABLE, BLAZE_POWDER, STONE, QUARTZ, SNOW_BALL, IRON_SHOVEL, SLIME_BALL, ROSE_RED, REDSTONE_BLOCK, BARRIER, EMERALD, REDSTONE;
-	public static Material LEAVES, TRAPPED_CHEST, BARREL;
-	public static void init_materials(){ 
-		int v = Main.getVersion();
-		SCULK = Material.OBSIDIAN;
-		SCULK_SHRIEKER = Material.OBSIDIAN;
-		RED_CONCRETE = Material.REDSTONE_BLOCK;
-		WARPED_FUNGUS = Material.BROWN_MUSHROOM;
-		LIGHTNING_ROD = Material.BLAZE_ROD;
-		STONE = Material.STONE;
-		SOUL_LANTERN = Material.JACK_O_LANTERN;
-		NAUTILUS_SHELL = STONE;
-		GLOW_INK_SAC = Material.GLOWSTONE_DUST;
-		SPORE_BLOSSOM = Material.RED_MUSHROOM;
-		END_ROD = Material.BLAZE_ROD;
-		CRYING_OBSIDIAN = STONE;
-		HONEY_BLOCK = STONE;
-		DRAGONS_BREATH = Material.DRAGON_EGG;
-		DOLPHIN_SPAWN_EGG = STONE;
-		CRIMSON_FUNGUS = STONE;
-		COMPOSTER = STONE;
-		CAMPFIRE= Material.TORCH;
-		BUBBLE_CORAL = STONE;
-		SOUL_SAND = Material.SOUL_SAND;
-		TRAPPED_CHEST = Material.TRAPPED_CHEST;
-		BARREL = Material.CHEST;	
-		TNT = Material.TNT;
-		IRON_SWORD = Material.IRON_SWORD;
-		DIAMOND_SWORD = Material.DIAMOND_SWORD;
-		FURNACE = Material.FURNACE;
-		ENCHANTED_BOOK = Material.ENCHANTED_BOOK;
-		NOTE_BLOCK = Material.NOTE_BLOCK;
-		BLAZE_POWDER = Material.BLAZE_POWDER;
-		WATER = Material.WATER;
-		QUARTZ = Material.QUARTZ;
-		SLIME_BALL = Material.SLIME_BALL;
-		REDSTONE_BLOCK = Material.REDSTONE_BLOCK;
+    public static final Material WITCH_SPAWN_EGG = Material.WITCH_SPAWN_EGG;
+    public static final Material COBWEB = Material.COBWEB;
+    public static final Material SILVERFISH_SPAWN_EGG = Material.SILVERFISH_SPAWN_EGG;
+    public static final Material ELDER_GUARDIAN_SPAWN_EGG = Material.ELDER_GUARDIAN_SPAWN_EGG;
+    public static final Material SCULK = Material.SCULK;
+    public static final Material SCULK_SHRIEKER = Material.SCULK_SHRIEKER;
+    public static final Material WHITE_DYE = Material.GRAY_DYE;
+    public static final Material RED_CONCRETE = Material.RED_CONCRETE;
+    public static final Material VILLAGER_SPAWN_EGG = Material.VILLAGER_SPAWN_EGG;
+    public static final Material WARPED_FUNGUS = Material.WARPED_FUNGUS;
+    public static final Material LIGHTNING_ROD = Material.LIGHTNING_ROD;
+    public static final Material POINTED_DRIPSTONE = Material.POINTED_DRIPSTONE;
+    public static final Material SOUL_LANTERN = Material.SOUL_LANTERN;
+    public static final Material WATER = Material.WATER_BUCKET;
+    public static final Material INK_SACK = Material.INK_SAC;
+    public static final Material NAUTILUS_SHELL = Material.NAUTILUS_SHELL;
+    public static final Material SPAWNER = Material.SPAWNER;
+    public static final Material GLOW_INK_SAC = Material.GLOW_INK_SAC;
+    public static final Material SPORE_BLOSSOM = Material.SPORE_BLOSSOM;
+    public static final Material END_ROD = Material.END_ROD;
+    public static final Material CRYING_OBSIDIAN = Material.CRYING_OBSIDIAN;
+    public static final Material HONEY_BLOCK = Material.HONEYCOMB;
+    public static final Material DRAGONS_BREATH = Material.DRAGON_BREATH;
+    public static final Material DOLPHIN_SPAWN_EGG = Material.DOLPHIN_SPAWN_EGG;
+    public static final Material CRIMSON_FUNGUS = Material.CRIMSON_FUNGUS;
+    public static final Material COMPOSTER = Material.COMPOSTER;
+    public static final Material CAMPFIRE = Material.CAMPFIRE;
+    public static final Material BUBBLE_CORAL = Material.BUBBLE_CORAL;
+    public static final Material SOUL_SAND = Material.SOUL_SAND;
+    public static final Material EMERALD_BLOCK = Material.EMERALD_BLOCK;
+    public static final Material STICK = Material.STICK;
+    public static final Material GOLD_NUGGET = Material.GOLD_NUGGET;
+    public static final Material GOLD_INGOT = Material.GOLD_INGOT;
+    public static final Material GOLD_BLOCK = Material.GOLD_BLOCK;
+    public static final Material TOTEM_OF_UNDYING = Material.TOTEM_OF_UNDYING;
+    public static final Material CHEST = Material.CHEST;
+    public static final Material CLOCK = Material.CLOCK;
+    public static final Material DIAMOND = Material.DIAMOND;
+    public static final Material ENDER_CHEST = Material.ENDER_CHEST;
+    public static final Material ENDER_EYE = Material.ENDER_EYE;
+    public static final Material SIGN = Material.OAK_SIGN;
+    public static final Material TNT = Material.TNT;
+    public static final Material FIREWORK = Material.FIREWORK_ROCKET;
+    public static final Material PRISMARINE = Material.PRISMARINE_CRYSTALS;
+    public static final Material MYCELIUM = Material.MYCELIUM;
+    public static final Material IRON_SWORD = Material.IRON_SWORD;
+    public static final Material DIAMOND_SWORD = Material.DIAMOND_SWORD;
+    public static final Material FURNACE = Material.FURNACE;
+    public static final Material ENCHANTED_BOOK = Material.ENCHANTED_BOOK;
+    public static final Material NOTE_BLOCK = Material.NOTE_BLOCK;
+    public static final Material END_PORTAL_FRAME = Material.END_PORTAL_FRAME;
+    public static final Material ENCHANTING_TABLE = Material.ENCHANTING_TABLE;
+    public static final Material BLAZE_POWDER = Material.BLAZE_POWDER;
+    public static final Material STONE = Material.STONE;
+    public static final Material QUARTZ = Material.QUARTZ;
+    public static final Material SNOW_BALL = Material.SNOWBALL;
+    public static final Material IRON_SHOVEL = Material.IRON_SHOVEL;
+    public static final Material SLIME_BALL = Material.SLIME_BALL;
+    public static final Material ROSE_RED = Material.RED_TULIP;
+    public static final Material REDSTONE_BLOCK = Material.REDSTONE_BLOCK;
+    public static final Material BARRIER = Material.BARRIER;
+    public static final Material EMERALD = Material.EMERALD;
+    public static final Material REDSTONE = Material.REDSTONE;
+    public static final Material LEAVES = Material.OAK_LEAVES;
+    public static final Material TRAPPED_CHEST = Material.TRAPPED_CHEST;
+    public static final Material BARREL = Material.BARREL;
 
-		EMERALD = Material.EMERALD;
-		REDSTONE = Material.REDSTONE;
-		CHEST = Material.CHEST;
-		STICK =Material.STICK;
-		GOLD_NUGGET = Material.GOLD_NUGGET;
-		GOLD_INGOT = Material.GOLD_INGOT;
-		GOLD_BLOCK = Material.GOLD_BLOCK;
-		DIAMOND = Material.DIAMOND;
-		EMERALD_BLOCK = Material.EMERALD_BLOCK;
-		ENDER_CHEST= Material.ENDER_CHEST;
-		ELDER_GUARDIAN_SPAWN_EGG = Material.EGG;
-		SILVERFISH_SPAWN_EGG = Material.EGG;
-		WITCH_SPAWN_EGG = Material.EGG;
-		POINTED_DRIPSTONE = STONE;
-		LEAVES = STONE;
-		COBWEB = STONE;
-		
-		
-		if(v>7){
-			if(v>8) {
-				END_ROD = Material.valueOf("END_ROD");
-			}
-			WATER = Material.WATER_BUCKET;
-			BARRIER = Material.valueOf("BARRIER");
-			PRISMARINE = Material.valueOf("PRISMARINE_CRYSTALS");
-		}
-		else {
-			CAMPFIRE = Material.FIRE;
-			BARRIER = Material.valueOf("WOOL");
-			PRISMARINE = Material.valueOf("ENDER_PEARL");
-		}
-		if(v>=6 && v <=12 ) {
-			if(v>8) DRAGONS_BREATH = Material.valueOf("DRAGONS_BREATH"); 
-			VILLAGER_SPAWN_EGG = Material.valueOf("MONSTER_EGG");
-			SPAWNER = Material.valueOf("MOB_SPAWNER"); 
-			SIGN = Material.valueOf("SIGN");
-			FIREWORK = Material.valueOf("FIREWORK");
-			MYCELIUM = Material.valueOf("MYCEL");
-			END_PORTAL_FRAME = Material.valueOf("ENDER_PORTAL_FRAME");
-			ENCHANTING_TABLE = Material.valueOf("ENCHANTMENT_TABLE");
-			SNOW_BALL = Material.valueOf("SNOW_BALL");
-			IRON_SHOVEL = Material.valueOf("IRON_SPADE");
-			ROSE_RED = Material.valueOf("RED_ROSE");
-			CLOCK = Material.valueOf("WATCH");
-			ENDER_EYE = Material.valueOf("EYE_OF_ENDER");
-			TOTEM_OF_UNDYING = Material.valueOf("STONE");
-			INK_SACK = Material.valueOf("INK_SACK");
-			WHITE_DYE = INK_SACK;
-			LEAVES = Material.valueOf("LEAVES");
-			COBWEB = Material.valueOf("WEB");
-		}
-		else {
-			
-			if(v>13){
-				if(v>14) {
-					if(v>15) {
-						if(v>16) {
-							SPORE_BLOSSOM = Material.valueOf("SPORE_BLOSSOM");
-							GLOW_INK_SAC = Material.valueOf("GLOW_INK_SAC");
-							if(v>18) {
-								SCULK = Material.valueOf("SCULK");
-								SCULK_SHRIEKER = Material.valueOf("SCULK_SHRIEKER");
-							}
-						}
-						WARPED_FUNGUS = Material.valueOf("WARPED_FUNGUS");
-						CRIMSON_FUNGUS = Material.valueOf("CRIMSON_FUNGUS");
-						CRYING_OBSIDIAN = Material.valueOf("CRYING_OBSIDIAN");
-						SOUL_LANTERN = Material.valueOf("SOUL_LANTERN");
-					}
-					
-					HONEY_BLOCK = Material.valueOf("HONEYCOMB");
-				}else {
-					SOUL_LANTERN = Material.valueOf("LANTERN");
-				}
-				CAMPFIRE = Material.valueOf("CAMPFIRE");
-				COMPOSTER = Material.valueOf("COMPOSTER");
-				SIGN = Material.valueOf("OAK_SIGN");
-				BARREL = Material.valueOf("BARREL");
-			}
-			else {
-				SIGN = Material.valueOf("SIGN");
-			}
-			COBWEB = Material.valueOf("COBWEB");
-			LEAVES = Material.valueOf("OAK_LEAVES");
-			WHITE_DYE = Material.valueOf("GRAY_DYE");
-			RED_CONCRETE= Material.valueOf("RED_CONCRETE");
-			VILLAGER_SPAWN_EGG = Material.valueOf("VILLAGER_SPAWN_EGG");
-			
-			SPAWNER = Material.valueOf("SPAWNER");
-			DRAGONS_BREATH = Material.valueOf("DRAGON_BREATH");
-			INK_SACK = Material.valueOf("INK_SAC");
-			NAUTILUS_SHELL = Material.valueOf("NAUTILUS_SHELL");
-			DOLPHIN_SPAWN_EGG = Material.valueOf("DOLPHIN_SPAWN_EGG");
-			FIREWORK = Material.valueOf("FIREWORK_ROCKET");
-			MYCELIUM = Material.valueOf("MYCELIUM");
-			END_PORTAL_FRAME = Material.valueOf("END_PORTAL_FRAME");
-			ENCHANTING_TABLE = Material.valueOf("ENCHANTING_TABLE");
-			SNOW_BALL = Material.valueOf("SNOWBALL");
-			IRON_SHOVEL = Material.valueOf("IRON_SHOVEL");
-			ROSE_RED = Material.valueOf("RED_TULIP");
-			CLOCK = Material.valueOf("CLOCK");
-			ENDER_EYE = Material.valueOf("ENDER_EYE");
-			TOTEM_OF_UNDYING = Material.valueOf("TOTEM_OF_UNDYING");
-			BUBBLE_CORAL = Material.valueOf("BUBBLE_CORAL");
-			if(v >=17) {
-				POINTED_DRIPSTONE = Material.valueOf("POINTED_DRIPSTONE");
-				LIGHTNING_ROD = Material.valueOf("LIGHTNING_ROD");
-			}
-			if (v >=20 ){
-				ELDER_GUARDIAN_SPAWN_EGG = Material.valueOf("ELDER_GUARDIAN_SPAWN_EGG");
-				SILVERFISH_SPAWN_EGG = Material.valueOf("SILVERFISH_SPAWN_EGG");
-				WITCH_SPAWN_EGG = Material.valueOf("WITCH_SPAWN_EGG");
-			}
-		}
-		
+    private Mat() {
+    }
 
-	}
-	
-	public static boolean isALootChestBlock(Block block) {
-		Material type = block.getType();
-		return type.toString().contains("SHULKER_BOX") || isCopperChest(type) || type.equals(Mat.CHEST) || type.equals(Mat.TRAPPED_CHEST) || type.equals(Mat.BARREL);
-	}
+    public static boolean isALootChestBlock(Block block) {
+        Material type = block.getType();
+        return type.name().contains("SHULKER_BOX")
+                || isCopperChest(type)
+                || type == CHEST
+                || type == TRAPPED_CHEST
+                || type == BARREL;
+    }
 
-	public static boolean isCopperChest(Material material) {
-		return material.isBlock() && material.name().endsWith("COPPER_CHEST");
-	}
+    public static boolean isCopperChest(Material material) {
+        return material.isBlock() && material.name().endsWith("COPPER_CHEST");
+    }
 }

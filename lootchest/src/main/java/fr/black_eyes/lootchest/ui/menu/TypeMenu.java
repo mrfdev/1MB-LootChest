@@ -3,7 +3,6 @@ package fr.black_eyes.lootchest.ui.menu;
 import fr.black_eyes.lootchest.Messages;
 
 import fr.black_eyes.lootchest.Lootchest;
-import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.ui.ChestUi;
@@ -31,19 +30,17 @@ public class TypeMenu extends ChestUi {
 		if (Mat.BARREL != Mat.CHEST) {
 			setItem(2, new ItemStack(Mat.BARREL), p -> changeChestType(p, Mat.BARREL));
 		}
-		if (Main.getVersion() >= 11) {
-			int cpt = 3;
-			for (Material mat : Material.values()) {
-				if (Mat.isCopperChest(mat)) {
-					setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
-					cpt++;
-				}
+		int cpt = 3;
+		for (Material mat : Material.values()) {
+			if (Mat.isCopperChest(mat)) {
+				setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
+				cpt++;
 			}
-			for (Material mat : Material.values()) {
-				if (mat.toString().contains("SHULKER_BOX")) {
-					setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
-					cpt++;
-				}
+		}
+		for (Material mat : Material.values()) {
+			if (mat.toString().contains("SHULKER_BOX")) {
+				setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
+				cpt++;
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
+import net.kyori.adventure.text.Component;
 
 /**
  * A menu to add or remove items from a loot chest
@@ -40,11 +41,9 @@ public class ContentsMenu extends ChestUi {
 		return false;
 	}
 
-	// (for the compatibility with 1.7, we need deprecated code)
-	@SuppressWarnings("deprecation")
-	@Override
-	public void onClose(Player player) {
-		Inventory inv = Bukkit.createInventory(null, 27, "");
+		@Override
+		public void onClose(Player player) {
+			Inventory inv = Bukkit.createInventory(null, 27, Component.empty());
 		inv.setContents(getContents());
 		chest.setInventory(inv);
 		chest.updateData();

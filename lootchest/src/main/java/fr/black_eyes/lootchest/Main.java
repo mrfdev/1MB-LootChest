@@ -41,7 +41,6 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
 	private boolean simplePluginStarted;
-	private static int version = 0;
 
 
 	@Override
@@ -67,64 +66,13 @@ public class Main extends SimpleJavaPlugin {
         return (bungee && !onlineMode);
     }
 	
-	/**
-	 * Returns the version of your server (the x in 1.x.y)
-	 * 
-	 * @return The version number
-	 */
-	public static int getVersion() {
-		if(version == 0) {
-			String completeVer = getCleanBukkitVersion();
-            // there is now an exception: version can now be just "26.1". Let's add a "1." before it if there's no "1"
-            if(!completeVer.startsWith("1"))
-                completeVer = "1." + completeVer;
-			// version can be 1.8.4 or 1.12.2 or 1.8, we need to get all the digits after the first dot, and ignore the second dot IF THERE IS ONE
-			version = Integer.parseInt(completeVer.split("\\.")[1]);
-		}
-		return version;
-	}
-
-	public static String getCleanBukkitVersion() {
-		String completeVer = Bukkit.getBukkitVersion().split("-")[0];
-		return completeVer.replaceFirst("^([0-9]+(?:\\.[0-9]+)*).*$", "$1");
-	}
-
-	/**
-	 * Get the version a different way:
-	 * 1.8.4 = 184, 1.20.6 = 1206, etc.
-	 * @return the version number
-	 */
-	public static int getCompleteVersion(){
-		String completeVer = getCleanBukkitVersion();
-		String sversion = completeVer.replace(".", "");
-		if(sversion.startsWith("18") || sversion.startsWith("19") || sversion.startsWith("17")){
-			//add a 0 between the first and second digit
-			sversion = sversion.charAt(0) + "0" + sversion.substring(1);
-			if(sversion.endsWith("10")) {
-				//remove the 0 at the end
-				sversion = sversion.substring(0, sversion.length()-1);
-			}
-		}
-		if(sversion.length() == 3) {
-			//add a 0 at the end
-			sversion = sversion + "0";
-		}
-		// we just have to remove the dots and parse string as integer
-		return Integer.parseInt(sversion);
-	}
-    
-	@Override
-	public void onEnable() {
+		@Override
+		public void onEnable() {
 		setInstance(this);
 
 		lootChest = new HashMap<>();
 		useArmorStands = true;
-		//initialisation des matériaux dans toutes les verions du jeu
-        //initializing materials in all game versions, to allow cross-version compatibility
-        Mat.init_materials();
-
-
-			//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
+				//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
 			super.onEnable();
 			simplePluginStarted = true;
 			if(configFiles.getLang() == null) {
@@ -132,7 +80,7 @@ public class Main extends SimpleJavaPlugin {
 			return;
 		}
 		Messages.log("config files loaded");
-		Messages.log("Server version: " + getCleanBukkitVersion());
+			Messages.log("Server version: " + Bukkit.getMinecraftVersion());
 		updateOldConfig();
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
@@ -166,15 +114,7 @@ public class Main extends SimpleJavaPlugin {
 			new Updater(this, "lootchest.61564");
 		}
 
-		//if 1.7, disable world border check
-		if(getVersion()<=7) {
-			configs.usehologram = false;
-			configs.worldborderCheckForSpawn = false;
-			Messages.log("<#f6c177>World-border checks are unavailable on this server version.");
-			Messages.log("<#f6c177>Holograms are unavailable on this server version.");
-					
-		}
-        Messages.log("Starting particles...");
+	        Messages.log("Starting particles...");
         
 		reloadParticleCatalog();
         if(configs.partEnable) {
@@ -189,7 +129,7 @@ public class Main extends SimpleJavaPlugin {
 	}
 
 	private void startCmiHolograms() {
-		if (getCompleteVersion() < 1080 || !configs.usehologram) {
+			if (!configs.usehologram) {
 			return;
 		}
 		if (Bukkit.getPluginManager().getPlugin("CMI") == null
@@ -206,7 +146,7 @@ public class Main extends SimpleJavaPlugin {
 				return;
 			}
 			cmiHologramsAvailable = true;
-			Messages.log("<#a6e3a1>Using CMI holograms: " + cmi.getDescription().getVersion());
+				Messages.log("<#a6e3a1>Using CMI holograms: " + cmi.getPluginMeta().getVersion());
 		} catch (RuntimeException | LinkageError e) {
 			configs.usehologram = false;
 			cmiHologramsAvailable = false;
@@ -273,7 +213,7 @@ public class Main extends SimpleJavaPlugin {
 	/**
 	 * Loads all chests asynchronously
 	 */
-	@SuppressWarnings("deprecation") //compatibility with 1.7
+	@SuppressWarnings("deprecation") // Scheduler modernization is tracked in TODO item 2.
 	private void loadChests() {
 		long countdown = configs.cooldownBeforePluginStart;
     	if(countdown>0) 

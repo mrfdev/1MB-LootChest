@@ -23,6 +23,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -140,8 +141,9 @@ public final class Fallv_26_2 implements IFallPacket {
     }
 
     public ItemStack getNmsItemStackFromMaterial(Material material) {
-        String itemKey = "item." + material.getKey().toString().replace(":", ".");
-        String blockKey = "block." + material.getKey().toString().replace(":", ".");
+        String materialKey = "minecraft:" + material.name().toLowerCase(Locale.ROOT);
+        String itemKey = "item." + materialKey.replace(":", ".");
+        String blockKey = "block." + materialKey.replace(":", ".");
         if (headItem != null && (Objects.requireNonNull(headItem.getItem().getDescriptionId()).equals(itemKey)
                 || headItem.getItem().getDescriptionId().equals(blockKey))) {
             return headItem;

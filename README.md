@@ -66,7 +66,7 @@ mvn package
 The release artifact is written to:
 
 ```text
-target/LootChest-2.5.9.1-paper-26.2-j25-CMI.jar
+target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar
 ```
 
 The project contains a native `v_26_2` falling-package adapter and emits Java 25

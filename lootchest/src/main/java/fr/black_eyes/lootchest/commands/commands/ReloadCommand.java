@@ -36,9 +36,7 @@ public class ReloadCommand extends SubCommand {
 		Main.setConfigs(Config.getInstance(configFiles.getConfig()));
 		main.reloadParticleCatalog();
 		main.getPart().clear();
-		if (!Bukkit.getVersion().contains("1.7")) {
 			Main.getInstance().getLootChest().values().forEach(chest -> chest.getHologram().remove());
-		}
 		Main.getInstance().getLootChest().clear();
 		for (String keys : Objects.requireNonNull(configFiles.getData().getConfigurationSection("chests")).getKeys(false)) {
 			String name = configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world");

@@ -13,7 +13,8 @@
     <description>Create higly customizable lootboxes for your minecraft server</description>
 
     <properties>
-        <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <release>25</release>
         <source>25</source>
         <target>25</target>
@@ -21,8 +22,10 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <revision>2.5.9.1</revision>
+        <buildNumber>195</buildNumber>
         <paperVersion>26.2</paperVersion>
-        <paperApiVersion>26.2.build.29-alpha</paperApiVersion>
+        <paperApiVersion>26.2.build.60-beta</paperApiVersion>
+        <lombokVersion>1.18.46</lombokVersion>
     </properties>
     <repositories>
         <repository>
@@ -49,6 +52,9 @@
                         <release>${maven.compiler.release}</release>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
                     </configuration>
                 </plugin>
             </plugins>

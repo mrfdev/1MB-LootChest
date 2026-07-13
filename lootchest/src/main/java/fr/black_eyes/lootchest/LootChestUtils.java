@@ -234,10 +234,7 @@ public class LootChestUtils  {
             return null;
         }
 
-        int y = world.getHighestBlockYAt((int) randomX, (int) randomZ);
-        if (Main.getCompleteVersion() >= 1150) {
-            y += 1;
-        }
+        int y = world.getHighestBlockYAt((int) randomX, (int) randomZ) + 1;
         Location loc = new Location(world, randomX, y, randomZ);
         return (loc.getBlock().getType() == Material.AIR)? loc.getBlock().getLocation():loc.getBlock().getRelative(0,1,0).getLocation();
 
@@ -443,23 +440,13 @@ public class LootChestUtils  {
 	 * @param chest a container Block
 	 * @return the direction of the container
 	 */
-	@SuppressWarnings("removal")
 	public static String getDirection(Block chest) {
         if(chest.getType().toString().contains("SHULKER_BOX")) return "NULL";
-		if(Main.getVersion() ==7) return "NORTH";
-        // before 1.13. This method also compiles in later versions but does not work properly.
-        try {
-            if (Main.getVersion() < 13) {
-                org.bukkit.material.MaterialData data = chest.getState().getData();
-                return ((org.bukkit.material.DirectionalContainer) data).getFacing().name();
-            } else {
-                org.bukkit.block.data.BlockData data = chest.getBlockData();
-                return ((org.bukkit.block.data.Directional) data).getFacing().name();
-            }
-        }catch (ClassCastException e){
-			Messages.log("<#f38ba8>Could not determine the chest direction on " + Bukkit.getBukkitVersion() + ".");
-            return "NORTH";
-        }
+		org.bukkit.block.data.BlockData data = chest.getBlockData();
+		if (data instanceof org.bukkit.block.data.Directional directional) {
+			return directional.getFacing().name();
+		}
+		return "NULL";
 	}
 
 	public static Block getWatchedBlock(LivingEntity player){

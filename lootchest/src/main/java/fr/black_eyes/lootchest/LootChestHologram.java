@@ -4,9 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.Zrips.CMI.CMI;
 import com.Zrips.CMI.Modules.Holograms.CMIHologram;
@@ -28,23 +26,7 @@ public class LootChestHologram {
 			Arrays.asList("\"\"" ,"\" \"" ,"null" ,"" ," " ,"_" ,"none")
 			); 
 
-	/**
-	 * Holograms don't spawn at same height on each version, so we need to modify the y position
-	 * Key is the version, value is the y modifier
-	 * @return the yPosModifier
-	 */
-	private static final Map<Integer, Double> yPosModifier = initializeRates();
-
 	private static final double DEFAULT_RATE = 0.5;
-
-	private static Map<Integer, Double> initializeRates() {
-		Map<Integer, Double> rates = new HashMap<>();
-		rates.put(8, 0.6);
-		for (int i = 9; i <= 20; i++) {
-			rates.put(i, DEFAULT_RATE);
-		}
-		return rates;
-	}
 
 	/**
 	 * @return the text displayed by the hologram
@@ -70,9 +52,9 @@ public class LootChestHologram {
 	 * @param location The location to set the hologram
 	 */
 	public void setLoc(Location location) {
-		if(Main.getCompleteVersion()>=1080 && Main.configs.usehologram){
+		if(Main.configs.usehologram){
 			Location loc2 = location.clone();
-			loc2.add(0.5, Main.configs.Hologram_distance_to_chest+  yPosModifier.getOrDefault(Main.getVersion(), 0.5), 0.5);
+			loc2.add(0.5, Main.configs.Hologram_distance_to_chest + DEFAULT_RATE, 0.5);
 			this.location = loc2;
 			remove();
 			this.setText(chest.getHolo());
@@ -80,7 +62,7 @@ public class LootChestHologram {
 				if(runnable == null) {
 					startShowTime();
 				}
-				if(Main.getCompleteVersion()>=1094 && runnable.isCancelled()) {
+				if(runnable.isCancelled()) {
 					try {
 						runnable.runTaskTimer(Main.getInstance(), 0, 20);
 					}catch(IllegalStateException e) {
@@ -102,7 +84,7 @@ public class LootChestHologram {
 	 * Kills the hologram
 	 */
 	public void remove() {
-		if(Main.getCompleteVersion()>=1080 && Main.configs.usehologram) {
+		if(Main.configs.usehologram) {
 			if(runnable != null) {
 				runnable.cancel();
 				runnable = null;
@@ -125,7 +107,7 @@ public class LootChestHologram {
 	 */
 	public void setText(String name) {
 		text = name;
-		if(Main.getCompleteVersion()<1080 || !Main.configs.usehologram) return;
+		if(!Main.configs.usehologram) return;
 		if(!NULL_NAME.contains(name)) {
 			try {
 				getHologram();

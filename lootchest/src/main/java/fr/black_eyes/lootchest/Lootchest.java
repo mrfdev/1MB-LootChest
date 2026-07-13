@@ -431,32 +431,24 @@ public class Lootchest {
 	 * @param block - The block concerned, where the spawn will append
 	 * @param blockLocation - Location of the block
 	 */
-	@SuppressWarnings("removal")
 	public void createchest( Block block, Location blockLocation) {
 		block.setType(getType());
 		Inventory inventory = ((InventoryHolder) block.getState()).getInventory();
 		LootChestUtils.fillInventory(this, inventory, true, null);
 
-		// set the direction of the chest
-		try {
-            if(!block.getType().toString().contains("SHULKER_BOX")) {
-                if (Main.getCompleteVersion() >= 1110) {
-                    org.bukkit.block.data.BlockData data;
-                    data = block.getBlockData();
-                    ((org.bukkit.block.data.Directional) data).setFacing(BlockFace.valueOf(direction));
-                    BlockState state = block.getState();
-                    state.setBlockData(data);
-                    state.update();
-                } else {
-                    org.bukkit.material.MaterialData data = block.getState().getData();
-                    ((org.bukkit.material.DirectionalContainer) data).setFacingDirection(BlockFace.valueOf(direction));
-                    BlockState state = block.getState();
-                    state.setData(data);
-                    state.update();
-                }
-            }
-		}catch(Exception e){
-			Messages.log("<#f6c177>Could not restore the direction of LootChest " + getName() + ". The chest will otherwise continue to work.");
+		// Preserve an existing facing when one was saved. Legacy data may omit it.
+		org.bukkit.block.data.BlockData data = block.getBlockData();
+		if (direction != null && !direction.equals("NULL")
+				&& data instanceof org.bukkit.block.data.Directional directional) {
+			try {
+				BlockFace facing = BlockFace.valueOf(direction);
+				if (directional.getFaces().contains(facing)) {
+					directional.setFacing(facing);
+					block.setBlockData(data, false);
+				}
+			} catch (IllegalArgumentException e) {
+				Messages.log("<#f6c177>Could not restore the direction of LootChest " + getName() + ". The chest will otherwise continue to work.");
+			}
 		}
 
 		// check if lootin is installed

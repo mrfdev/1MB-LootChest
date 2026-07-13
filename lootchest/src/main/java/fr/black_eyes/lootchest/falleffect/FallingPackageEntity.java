@@ -5,11 +5,10 @@ import fr.black_eyes.lootchest.Messages;
 import java.lang.reflect.InvocationTargetException;
 
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Firework;
 import org.bukkit.util.Vector;
 
@@ -25,7 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class FallingPackageEntity {
 
-
+    private static final String FALL_ADAPTER_VERSION = "26_2";
     final World world;
     final Location startLoc;
     final Material material;
@@ -50,33 +49,18 @@ public final class FallingPackageEntity {
         this.world = loc.getWorld();
         this.material = Material.valueOf(Main.configs.fallBlock);
         this.speed = Main.configs.FALL_Speed;
-        if (Bukkit.getVersion().contains("1.7")) {
-        	this.armorstand = false;
-        }
         if(loaded)
             this.summon();
     }
     
 
 	public void summon() {
-        if(Main.getCompleteVersion() < 1083) this.armorstand = false;
-        String version = Main.getCleanBukkitVersion().replace(".", "_");
-        if (version.startsWith("26_2")) {
-            version = "26_2";
-        } else if (version.startsWith("26_1_")) {
-            version = "26_1";
-        }
-        try {
-            Class.forName("fr.black_eyes.lootchest.falleffect.Fallv_" + version);
-        }  catch (ClassNotFoundException e) {
-            this.armorstand = false;
-        }
 		if(!this.armorstand) {
-			this.blocky = this.world.spawnFallingBlock(startLoc, this.material, (byte)0);
+			this.blocky = spawnFallingBlock(startLoc);
 		}else {	
             
             try {
-                this.armorstandFall = (IFallPacket) Class.forName("fr.black_eyes.lootchest.falleffect.Fallv_" + version)
+                this.armorstandFall = (IFallPacket) Class.forName("fr.black_eyes.lootchest.falleffect.Fallv_" + FALL_ADAPTER_VERSION)
                         .getDeclaredConstructor(Location.class, Material.class, int.class, double.class, JavaPlugin.class)
                         .newInstance(startLoc, this.material, this.height, this.speed, Main.getInstance());
             } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException ex) {
@@ -85,12 +69,12 @@ public final class FallingPackageEntity {
             }
             if (armorstandFall != null) {
                 if (Main.configs.debug) {
-					Messages.log("<#a6e3a1>Using falling package adapter: v_" + version);
+					Messages.log("<#a6e3a1>Using falling package adapter: v_" + FALL_ADAPTER_VERSION);
                 }
                 armorstandFall.sendPacketToAll();
             } else {
                 this.armorstand = false;
-                this.blocky = this.world.spawnFallingBlock(startLoc, this.material, (byte)0);
+                this.blocky = spawnFallingBlock(startLoc);
             }
 		}
         if(fireworks) {
@@ -121,7 +105,7 @@ public final class FallingPackageEntity {
             this.world.spawnParticle(Particle.SMOKE, goodLocation(), 1, 0.1, 0.1, 0.1, 0.1);
             if (!this.armorstand && ((Entity) this.blocky).isDead()) {
                 final Vector oldVelocity = ((Entity) this.blocky).getVelocity().setY(-(speed));
-                this.blocky = this.world.spawnFallingBlock(locPackage, this.material, (byte) 0);
+                this.blocky = spawnFallingBlock(locPackage);
                 ((Entity) (this.blocky)).setVelocity(oldVelocity);
             }
 
@@ -143,14 +127,14 @@ public final class FallingPackageEntity {
         	((Entity) this.blocky).remove();
         }
     }
+
+    private FallingBlock spawnFallingBlock(Location location) {
+        return world.spawn(location, FallingBlock.class,
+                fallingBlock -> fallingBlock.setBlockData(material.createBlockData()));
+    }
     
     private void summonUpdateFireworks(FireworkEffect.Type type) {
-            final Firework fw; 
-            if(Main.getCompleteVersion() < 1206) {
-                fw = (Firework)this.world.spawnEntity(goodLocation(), EntityType.valueOf("FIREWORK"));
-            }else {
-                fw = (Firework)this.world.spawnEntity(goodLocation(), EntityType.valueOf("FIREWORK_ROCKET"));
-            }
+            final Firework fw = this.world.spawn(goodLocation(), Firework.class);
             final FireworkMeta fwm = fw.getFireworkMeta();
             fwm.addEffect(FireworkEffect.builder().with(type).withColor(Color.RED).withColor(Color.WHITE).build());
             fwm.setPower(1);

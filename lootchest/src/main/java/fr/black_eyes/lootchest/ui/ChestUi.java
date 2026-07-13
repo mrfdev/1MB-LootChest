@@ -23,8 +23,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 /**
  * A custom inventory UI that allows for actions to be assigned to each slot.
  */
-// (for the compatibility with 1.7, we need deprecated code)
-@SuppressWarnings("deprecation")
 public class ChestUi {
 
 	@Getter
@@ -148,11 +146,20 @@ public class ChestUi {
 		return item;
 	}
 
+	protected ItemStack setItemLore(ItemStack item, String lore) {
+		ItemMeta meta = item.getItemMeta();
+		meta.lore(splitTooltipLines(lore).stream()
+				.map(ChestUi::tooltipComponent)
+				.toList());
+		item.setItemMeta(meta);
+		return item;
+	}
+
 	private static List<String> splitTooltipLines(String text) {
 		return Arrays.asList(text.split("(?i)<newline>|\\|\\||\\R"));
 	}
 
-	private static Component tooltipComponent(String text) {
+	protected static Component tooltipComponent(String text) {
 		return Messages.component(text).decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE);
 	}
 }

@@ -4,7 +4,7 @@
 
 - Paper 26.2.
 - Java 25.
-- The release jar `LootChest-2.5.9.1-paper-26.2-j25-CMI.jar`.
+- The release jar `1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar`.
 - CMI and CMILib for holograms. Lootboxes continue without holograms when CMI is absent.
 
 Do not install this build on Spigot, legacy Minecraft versions, Paper 26.1, or an

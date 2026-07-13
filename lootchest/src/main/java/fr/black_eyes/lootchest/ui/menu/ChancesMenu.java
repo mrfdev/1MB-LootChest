@@ -14,14 +14,15 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import net.kyori.adventure.text.Component;
 
 /**
  * A menu to change the chances of each item to be spawned in a loot chest
  */
-// (for the compatibility with 1.7, we need deprecated code)
-@SuppressWarnings("deprecation")
 public class ChancesMenu extends ChestUi {
 
 	private final Lootchest chest;
@@ -51,7 +52,7 @@ public class ChancesMenu extends ChestUi {
 				continue;
 			}
 			ItemStack item = Objects.requireNonNull(chestInv.getItem(i)).clone();
-			renameItem(item, item.getItemMeta().getDisplayName(), lore + "||" + chest.getChances()[i] + "%");
+				setItemLore(item, lore + "||" + chest.getChances()[i] + "%");
 			setItem(i, item, null);
 		}
 	}
@@ -90,11 +91,12 @@ public class ChancesMenu extends ChestUi {
 		}
 		//updates the item's chance and the item in the UI
 		chance = Math.max(1, Math.min(100, chance));
-		List<String> lore = meta.getLore();
-        if (lore != null) {
-            lore.set(lore.size() - 1, chance + "%");
-        }
-        meta.setLore(lore);
+			List<Component> lore = meta.lore();
+	        if (lore != null && !lore.isEmpty()) {
+				lore = new ArrayList<>(lore);
+	            lore.set(lore.size() - 1, tooltipComponent(chance + "%"));
+	        }
+	        meta.lore(lore);
 		item.setItemMeta(meta);
 		chest.setChance(slot, chance);
 		return true;

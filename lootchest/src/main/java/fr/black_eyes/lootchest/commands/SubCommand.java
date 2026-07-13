@@ -61,7 +61,6 @@ public abstract class SubCommand {
 		return args;
 	}
 
-	@SuppressWarnings("deprecation")
 	public void execute(CommandSender sender, String[] args) {
 		if (isPlayerRequired && !(sender instanceof Player)) {
 			Messages.send(sender, "<#f38ba8>Please run this command in-game.");

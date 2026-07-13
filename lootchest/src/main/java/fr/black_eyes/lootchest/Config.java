@@ -1,7 +1,6 @@
 package fr.black_eyes.lootchest;
 
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
 /**
@@ -118,7 +117,7 @@ public Config(FileConfiguration config) {
 	allowSpawningOnWater = config.getBoolean("allow_spawning_on_water");
 	usePlayersLocationsForRandomSpawn = config.getBoolean("use_players_locations_for_randomspawn");
 	saveChestLocationsAtEverySpawn = config.getBoolean("save_Chest_Locations_At_Every_Spawn");
-	usehologram = config.getBoolean("UseHologram") && !Bukkit.getVersion().contains("1.7");
+		usehologram = config.getBoolean("UseHologram");
 	removeEmptyChests = config.getBoolean("RemoveEmptyChests");
 	checkForUpdates = config.getBoolean("CheckForUpdates");
 	debug = config.getBoolean("Debug");
@@ -137,7 +136,7 @@ public Config(FileConfiguration config) {
 	noteAllcmdE = config.getBoolean("respawn_notify.respawn_all_with_command.enabled");
 	noteAllcmdWorldE = config.getBoolean("respawn_notify.respawn_all_with_command_in_world.enabled");
 	protectFromExplosions = config.getBoolean("Protect_From_Explosions");
-	worldborderCheckForSpawn = config.getBoolean("WorldBorder_Check_For_Spawn") && !Bukkit.getVersion().contains("1.7");
+		worldborderCheckForSpawn = config.getBoolean("WorldBorder_Check_For_Spawn");
 	destroyNaturallyInsteadOfRemovingChest = config.getBoolean("Destroy_Naturally_Instead_Of_Removing_Chest");
 	timerShowTimer = config.getBoolean("Timer_on_hologram.Show_Timer_On_Hologram");
 	lootin = config.getBoolean("EnableLootin");
