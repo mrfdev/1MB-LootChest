@@ -55,9 +55,10 @@ The `origin` remote is the canonical 1MB repository
 (`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
 careful comparison only; do not build releases from an upstream branch.
 
-The known-good live baseline is preserved by the
-`1mb-lootchest-v2.5.9.1-build195-live` tag. Use that tag and its GitHub release
-artifact for an emergency rollback; do not revive one of the retired branches.
+The validated Paper 26.2 baseline for the 1MoreBlock server is preserved by the
+`1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag. All future work starts on
+top of that snapshot. Build 195 remains available as the previous rollback
+release; do not revive one of the retired branches.
 
 Start future work from an up-to-date `master`:
 
@@ -115,7 +116,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 The current tested release is:
 
 ```text
-target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar
 ```
 
 The project contains a native `v_26_2` falling-package adapter and emits Java 25
@@ -126,7 +127,7 @@ Run the central smoke test before merging or publishing:
 ```bash
 /Users/floris/Projects/Codex/servers/run-test-server \
   --paper 26.2 \
-  --plugin target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar \
+  --plugin target/1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar \
   --foreground
 ```
 

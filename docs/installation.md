@@ -4,7 +4,7 @@
 
 - Paper 26.2.
 - Java 25.
-- The release jar `1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar`.
+- The release jar `1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar`.
 - CMI and CMILib for holograms. Lootboxes continue without holograms when CMI is absent.
 
 DecentHolograms is not a supported backend for this build.
@@ -32,8 +32,9 @@ older Java runtime.
 5. Start Paper and inspect `logs/latest.log` for LootChest errors.
 6. Run `/lc reload` and `/lc respawnall`, then verify representative container types.
 
-The source and binary for the known-good live build are preserved by the
-`1mb-lootchest-v2.5.9.1-build195-live` GitHub tag and release.
+The source and binary for the validated 1MoreBlock 2026 snapshot are preserved
+by the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` GitHub tag and release.
+Build 195 remains available as the previous rollback point.
 
 Saved particle names are validated against the running Paper API. Removed or typed
 particles use `Particles.fallback_particle` and produce a concise warning.
