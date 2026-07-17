@@ -12,8 +12,11 @@ candidate testing happen on a `codex/<feature>` branch.
 5. Build from that clean commit with JDK 25.
 6. Confirm `/lc info` reports the expected build, source commit, Paper target,
    Paper API, Java target, and artifact filename without a `-dirty` suffix.
-7. Run the central Paper smoke test and scan the log for load, command, scheduler,
-   event, reflection, class-loading, reload, and shutdown exceptions.
+7. Run the repeatable central Paper smoke test against the exact candidate:
+   `./scripts/smoke-paper-26.2.sh target/<candidate>.jar`. It verifies enable,
+   info/help/list commands, reload, despawn, respawn, clean shutdown, compatibility
+   exceptions, and port release. Review the retained logs under
+   `target/smoke-paper-26.2/<timestamp>/`.
 8. Move the current approved jar into the test server's `archive/` directory and
    install the candidate as the only top-level LootChest jar.
 9. Manually test create, edit, open, empty, break, respawn, reload, particles,

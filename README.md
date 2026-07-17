@@ -108,7 +108,8 @@ root with JDK 25:
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 25)
-mvn -DskipTests clean package
+mvn clean test
+mvn clean package
 ```
 
 Release artifacts use this format:
@@ -143,14 +144,19 @@ adapters were removed after build 197. Every artifact embeds its build number,
 source commit, clean/dirty state, Paper target/API, Java target, and filename.
 These details are printed during startup and by `/lc info`.
 
-Run the central smoke test before merging or publishing:
+Run the repeatable central smoke test against the exact candidate jar before
+merging or publishing:
 
 ```bash
-/Users/floris/Projects/Codex/servers/run-test-server \
-  --paper 26.2 \
-  --plugin target/1MB-LootChest-v2.5.9.1-200-CMI-j25-26.2.jar \
-  --foreground
+./scripts/smoke-paper-26.2.sh \
+  target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 ```
+
+The smoke test creates an isolated Paper 26.2 instance through the centralized
+runner, verifies enable, `/lc info`, help, list, reload, despawn, respawn, and
+clean shutdown, scans for compatibility exceptions, and confirms its port is
+released. Raw and ANSI-clean logs are retained under
+`target/smoke-paper-26.2/<timestamp>/`.
 
 ## Developer API
 

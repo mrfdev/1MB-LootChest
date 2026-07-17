@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import com.Zrips.CMI.CMI;
 import fr.black_eyes.lootchest.commands.SubCommand;
+import fr.black_eyes.lootchest.compat.CompatibilityMigrations;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -16,6 +17,7 @@ import org.bukkit.plugin.PluginManager;
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
+import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
 import fr.black_eyes.lootchest.ui.ChestUi;
@@ -29,7 +31,6 @@ import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
 public class Main extends SimpleJavaPlugin {
 	public static final String MENU_MAIN_TYPE = "Menu.main.type";
-	public static final String MENU_CHANCES_LORE = "Menu.chances.lore";
 	private static final String PARTICLE_TASK = "particles";
 	private static final String STARTUP_TASK = "startup";
 	private static final String CHEST_LOAD_TASK = "chest-load";
@@ -281,10 +282,11 @@ public class Main extends SimpleJavaPlugin {
 		} else {
 			configFiles.reloadData();
 		}
-		lootChest.values().forEach(chest -> chest.getHologram().remove());
-		lootChest.clear();
-		part.clear();
-		protection.clear();
+		ChestLifecycle.clearForReload(
+				lootChest,
+				chest -> chest.getHologram().remove(),
+				part,
+				protection);
 
 		configFiles.reloadConfig();
 		setConfigs(Config.getInstance(configFiles.getConfig()));
@@ -380,23 +382,10 @@ public class Main extends SimpleJavaPlugin {
 	* These lines are done to update config and language files without erasing options that are already set
 	*/
 	private void updateOldConfig() {
-		// hotfix
-		// in chances.lore, replace all % by nothing
-		if(Objects.requireNonNull(configFiles.getLang().getString(MENU_CHANCES_LORE)).contains("%")) {
-			String lore = configFiles.getLang().getString(MENU_CHANCES_LORE);
-			if (lore != null) {
-				lore = lore.replace("%", "");
-			}
-			configFiles.getLang().set(MENU_CHANCES_LORE, lore);
-		}
-		if(configFiles.getConfig().getInt("Particles.respawn_ticks") == 5){
-			configFiles.getConfig().set("Particles.respawn_ticks", 20);
-		}
-		if(configFiles.getConfig().isSet("RemoveChestAfterFirstOpenning")){
-			boolean remove = configFiles.getConfig().getBoolean("RemoveChestAfterFirstOpenning");
-			configFiles.getConfig().set("RemoveChestAfterFirstOpenning", null);
-			configFiles.getConfig().set("RemoveChestAfterFirstOpening", remove);
-		}
+		CompatibilityMigrations.migrateConfig(configFiles.getConfig());
+		CompatibilityMigrations.migrateLanguage(configFiles.getLang());
+		boolean savedChestDataChanged =
+				CompatibilityMigrations.migrateSavedChestData(configFiles.getData());
 		configFiles.setConfig("spawn_on_non_solid_blocks", false);
 		configFiles.setConfig("Minimum_Height_For_Random_Spawn", 0);
 		configFiles.setConfig("Max_Height_For_Random_Spawn", 200);
@@ -408,8 +397,6 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("EnableLootin", false);
 		configFiles.setConfig("Particles.fallback_particle", "FLAME");
 		configFiles.setConfig("Scheduler.Chests_Per_Tick", 1);
-		// Keep legacy files rollback-readable while permanently disabling the removed effect.
-		configFiles.getConfig().set("Fall_Effect.Enabled", false);
 		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
 		configFiles.setLang("info.title", "<#cba6f7><bold>Lootbox</bold> <#6c7086>v[Version]");
 		configFiles.setLang("info.release", "<#a6e3a1>Build <#89dceb>[Build] <#6c7086>| <#bac2de>[Artifact]");
@@ -419,7 +406,6 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");
-		configFiles.getConfig().set("Fall_Effect.Let_Block_Above_Chest_After_Fall", null);
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
 		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
 		configFiles.setLang("blockIsAlreadyLootchest", "<#f38ba8>This block is already registered as a LootChest.");
@@ -428,8 +414,6 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setLang("NotEnoughPlayers", "<#f38ba8>At least <#f9e2af>[Number] players <#f38ba8>are required to spawn LootChests.");
 		configFiles.setLang("ChestDespawned", "<#a6e3a1>Despawned <#89dceb>[Chest]<#a6e3a1>.");
 		configFiles.setLang("NoChestAtLocation", "<#f38ba8>That LootChest is already absent.");
-		if(configFiles.getConfig().isSet("Fall_Effect.Optionnal_Color_If_Block_Is_Wool"))
-			configFiles.setConfig("Fall_Effect.Optionnal_Color_If_Block_Is_Wool", null);
 		configFiles.setLang("AllChestsDespawned", "<#a6e3a1>All LootChests were despawned.");
 		configFiles.setLang("AllChestsDespawnedInWorld", "<#a6e3a1>All LootChests were despawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setLang("ChestOperationInProgress", "<#f9e2af>LootChest is still loading or processing another bulk chest command. Please try again in a moment.");
@@ -460,36 +444,23 @@ public class Main extends SimpleJavaPlugin {
 			configFiles.saveLang();
 		}
 		List<String> commandHelp = configFiles.getLang().getStringList("help");
-		commandHelp.removeIf(line -> line.toLowerCase(Locale.ROOT).contains("togglefall"));
 		for (int i = 0; i < commandHelp.size(); i++) {
 			if (commandHelp.get(i).contains("/lc settime")) {
 				commandHelp.set(i, "<#a6e3a1>/lc settime <#bac2de>\\<name> \\<minutes> <#6c7086>- Set respawn time");
 			}
 		}
 		configFiles.getLang().set("help", commandHelp);
-		configFiles.getLang().set("enabledFallEffect", null);
-		configFiles.getLang().set("disabledFallEffect", null);
-		configFiles.getLang().set("Menu.main.disable_fall", null);
-		configFiles.getLang().set("Menu.main.enable_fall", null);
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawn ")){
 			  List<String> help = configFiles.getLang().getStringList("help");
 			  help.add("<#a6e3a1>/lc despawn <#bac2de>\\<name> <#6c7086>- Despawn a LootChest");
 			  configFiles.getLang().set("help", help);
 			  configFiles.saveLang();
-		}
-		//remove useless command
-		if(configFiles.getLang().getStringList("help").toString().contains("removeAllHolo")){
-			List<String> help = configFiles.getLang().getStringList("help");
-			//get line and remove it
-			int index = help.stream().filter(s -> s.contains("removeAllHolo")).findFirst().map(help::indexOf).orElse(-1);
-			if(index!=-1) {
-				help.remove(index);
 			}
-			configFiles.getLang().set("help", help);
-			configFiles.saveLang();
-		}
 		configFiles.saveLang();
 		configFiles.saveConfig();
+		if (savedChestDataChanged) {
+			configFiles.saveData();
+		}
 
 	}
 	

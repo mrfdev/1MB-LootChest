@@ -52,9 +52,9 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [ ] Preserve existing YAML files, defaults, comments where possible, and migration behavior.
   - [ ] Remove the shaded framework dependency after reload and failure-path testing.
 - [ ] **7. Automated compatibility coverage**
-  - [ ] Add tests for config and saved chest-data migration.
-  - [ ] Add tests for particle fallback and supported container classification.
-  - [ ] Add regression coverage for emptying, breaking, despawning, reloading, and hologram cleanup.
-  - [ ] Add a repeatable Paper 26.2 smoke test for enable, commands, reload, respawn, and clean shutdown.
+  - [x] Add tests for config and saved chest-data migration.
+  - [x] Add tests for particle fallback and supported container classification.
+  - [x] Add regression coverage for emptying, breaking, despawning, reloading, and hologram cleanup.
+  - [x] Add a repeatable Paper 26.2 smoke test for enable, commands, reload, respawn, and clean shutdown.
   - [ ] Assert release jars contain no updater, metrics, DecentHolograms, proxy, NMS, or legacy adapter classes.
   - [ ] Validate chest, trapped chest, barrel, shulker, and every copper chest state.

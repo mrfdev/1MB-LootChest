@@ -44,6 +44,7 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.LootChestUtils;
+import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 
 
 public class DeleteListener implements Listener  {
@@ -181,14 +182,18 @@ public class DeleteListener implements Listener  {
 		if(key == null) {
 			return;
 		}
-		if((Main.configs.removeEmptyChests && LootChestUtils.isEmpty(inv)) || Main.configs.removeChestAfterFirstOpening) {
+		boolean inventoryEmpty = LootChestUtils.isEmpty(inv);
+		if(ChestLifecycle.shouldCollectAfterClose(
+				inventoryEmpty,
+				Main.configs.removeEmptyChests,
+				Main.configs.removeChestAfterFirstOpening)) {
 			// if we should break chest naturally, drop an item of key.getType() at the location of the chest
 			if(Main.configs.destroyNaturallyInsteadOfRemovingChest)
 				loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
 			key.despawnAtValidatedLocation(loc);
 			key.spawn(false);
 		}
-		if(LootChestUtils.isEmpty(inv)) {
+		if(inventoryEmpty) {
 			sendChestTakeMessageIfEnabled(key, p);
 		}
 	}
@@ -297,12 +302,9 @@ public class DeleteListener implements Listener  {
 		}
 
 		event.setCancelled(true);
-		for(ItemStack item : container.getInventory().getContents()) {
-			if(item != null && item.getType() != Material.AIR) {
-				block.getWorld().dropItemNaturally(block.getLocation(), item);
-			}
-		}
-		container.getInventory().clear();
+		ChestLifecycle.collectBreakContents(
+				container.getInventory(),
+				item -> block.getWorld().dropItemNaturally(block.getLocation(), item));
 		if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
 			lootChestLocation.getWorld().dropItemNaturally(
 					lootChestLocation,

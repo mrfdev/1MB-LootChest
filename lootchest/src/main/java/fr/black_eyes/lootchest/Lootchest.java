@@ -17,6 +17,7 @@ import org.bukkit.inventory.InventoryHolder;
 import fr.black_eyes.api.events.LootChestSpawnEvent;
 import org.bukkit.Particle;
 import fr.black_eyes.simpleJavaPlugin.Files;
+import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -358,11 +359,16 @@ public class Lootchest {
 		int chunkZ = startLocation.getBlockZ() >> 4;
 		boolean loaded = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
 		if(LootChestUtils.isWorldLoaded(getWorld()) && isGoodType(startLocation.getBlock())) {
-			Block chest = startLocation.getBlock();
-			((InventoryHolder) chest.getLocation().getBlock().getState()).getInventory().clear();
-			chest.setType(Material.AIR);
-			Main.getInstance().getPart().remove(getParticleLocation());
-			hologram.remove();
+			ChestLifecycle.removePhysicalContainer(
+					startLocation.getBlock(),
+					getParticleLocation(),
+					Main.getInstance().getPart(),
+					hologram::remove);
+		} else {
+			ChestLifecycle.removeEffects(
+					getParticleLocation(),
+					Main.getInstance().getPart(),
+					hologram::remove);
 		}
 		boolean loaded2 = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
 		if(loaded != loaded2) {
@@ -380,12 +386,11 @@ public class Lootchest {
 		}
 
 		Block block = location.getBlock();
-		if(block.getState() instanceof InventoryHolder inventoryHolder) {
-			inventoryHolder.getInventory().clear();
-		}
-		block.setType(Material.AIR);
-		Main.getInstance().getPart().remove(getParticleLocation());
-		hologram.remove();
+		ChestLifecycle.removePhysicalContainer(
+				block,
+				getParticleLocation(),
+				Main.getInstance().getPart(),
+				hologram::remove);
 	}
 
 	/**
