@@ -31,6 +31,10 @@
                 </includes>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>${project.build.directory}/generated-resources/lootchest</directory>
+                <filtering>false</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -67,12 +71,66 @@
                 <version>1.8</version>
                 <executions>
                     <execution>
+                        <id>generate-build-metadata</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/generated-resources/lootchest" />
+                                <exec executable="git"
+                                      failifexecutionfails="false"
+                                      failonerror="false"
+                                      outputproperty="lootchest.git.commit">
+                                    <arg value="-C" />
+                                    <arg value="${maven.multiModuleProjectDirectory}" />
+                                    <arg value="log" />
+                                    <arg value="-1" />
+                                    <arg value="--abbrev=12" />
+                                    <arg value="--pretty=format:%h" />
+                                </exec>
+                                <condition property="lootchest.git.commit.resolved"
+                                           value="${lootchest.git.commit}"
+                                           else="unknown">
+                                    <and>
+                                        <isset property="lootchest.git.commit" />
+                                        <not>
+                                            <equals arg1="${lootchest.git.commit}" arg2="" trim="true" />
+                                        </not>
+                                    </and>
+                                </condition>
+                                <exec executable="git"
+                                      failifexecutionfails="false"
+                                      failonerror="false"
+                                      outputproperty="lootchest.git.status">
+                                    <arg value="-C" />
+                                    <arg value="${maven.multiModuleProjectDirectory}" />
+                                    <arg value="status" />
+                                    <arg value="--porcelain" />
+                                    <arg value="--untracked-files=normal" />
+                                </exec>
+                                <condition property="lootchest.git.dirty" value="true" else="false">
+                                    <and>
+                                        <isset property="lootchest.git.status" />
+                                        <not>
+                                            <equals arg1="${lootchest.git.status}" arg2="" trim="true" />
+                                        </not>
+                                    </and>
+                                </condition>
+                                <echo file="${project.build.directory}/generated-resources/lootchest/lootchest-build.properties"
+                                      encoding="UTF-8"
+                                      message="plugin.version=${project.version}&#10;build.number=${buildNumber}&#10;source.commit=${lootchest.git.commit.resolved}&#10;source.dirty=${lootchest.git.dirty}&#10;paper.target=${paperVersion}&#10;paper.api=${paperApiVersion}&#10;java.target=${maven.compiler.release}&#10;artifact.name=1MB-LootChest-v${project.version}-${buildNumber}-CMI-j${maven.compiler.release}-${paperVersion}.jar&#10;" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
                         <id>copy-and-rename-resource</id>
                         <phase>package</phase>
                         <configuration>
                             <target>
-                    <copy file="${project.build.directory}/lootchest.jar"
-                          tofile="${basedir}/../target/1MB-LootChest-v${project.version}-${buildNumber}-CMI-j25-26.2.jar" />
+                                <copy file="${project.build.directory}/lootchest.jar"
+                                      tofile="${basedir}/../target/1MB-LootChest-v${project.version}-${buildNumber}-CMI-j${maven.compiler.release}-${paperVersion}.jar" />
                             </target>
                         </configuration>
                         <goals>

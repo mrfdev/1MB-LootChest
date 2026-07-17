@@ -4,8 +4,8 @@ Lootbox is the custom 1MoreBlock edition of LootChest. It creates repeatable,
 staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
-This fork is intentionally focused on **Paper 26.2** and **Java 25**. It is not a
-general-purpose legacy Bukkit or Spigot build.
+The maintained runtime, build, documentation, and test target is **Paper 26.2**
+with **Java 25**.
 
 Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/lootbox/)
 
@@ -29,7 +29,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - Runtime particle choices sourced directly from Paper. Only particles that can
   be spawned safely without an additional payload are shown in the editor.
 - Automatic fallback when a saved particle is unavailable after an upgrade.
-- Optional region-aware spawn checks, proxy-wide announcements, and Lootin support.
+- Optional region-aware spawn checks and Lootin support.
 - MiniMessage formatting for locale, console, menu, notification, and hologram text.
 - Persistent chest definitions in `plugins/LootChest/data.yml`.
 
@@ -40,6 +40,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Permissions](docs/permissions.md)
 - [Configuration](docs/configuration.md)
 - [Installation and updates](docs/installation.md)
+- [Release process](docs/release-process.md)
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
@@ -47,18 +48,19 @@ Lootbox does not currently expose or require PlaceholderAPI placeholders.
 
 ## Canonical Development Branch
 
-`master` is the only supported development and release branch. The supported
-hologram backend is CMI/CMILib; retired DecentHolograms work is kept only as an
-archive tag and must not be merged into release builds.
+`master` is the canonical integration and release branch. Development happens on
+short-lived `codex/<feature>` branches. The supported hologram backend is
+CMI/CMILib; retired DecentHolograms work is kept only as an archive tag and must
+not be merged into release builds.
 
 The `origin` remote is the canonical 1MB repository
 (`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
 careful comparison only; do not build releases from an upstream branch.
 
-The validated Paper 26.2 baseline for the 1MoreBlock server is preserved by the
-`1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag. All future work starts on
-top of that snapshot. Build 195 remains available as the previous rollback
-release; do not revive one of the retired branches.
+The current live-approved Paper 26.2 baseline is build 199, preserved by the
+`1mb-lootchest-v2.5.9.1-build199-approved` tag. Build 198 is the immediately
+previous rollback release. Older snapshots remain tagged for history but are not
+development baselines.
 
 Start future work from an up-to-date `master`:
 
@@ -68,8 +70,10 @@ git pull --ff-only origin master
 git switch -c codex/<short-feature-name>
 ```
 
-Build and test the feature branch, then fast-forward `master` only after it passes.
-Release jars must be built from a clean `master` checkout.
+Build and test on the feature branch. Promote its clean source commit to `master`
+only after the exact candidate jar passes the central Paper smoke test and manual
+gameplay approval. Tag that approved commit and retain the previous approved jar.
+The complete checklist is in [Release process](docs/release-process.md).
 
 ## Administrative Quick Start
 
@@ -113,22 +117,24 @@ Release artifacts use this format:
 target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 ```
 
-The current tested release is:
+The current live-approved release is:
 
 ```text
-target/1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.1-199-CMI-j25-26.2.jar
 ```
 
 The project emits Java 25 class files and uses only the Paper API for Minecraft
 integration. The unused falling-package feature and its version-specific NMS
-adapters were removed after build 197.
+adapters were removed after build 197. Every artifact embeds its build number,
+source commit, clean/dirty state, Paper target/API, Java target, and filename.
+These details are printed during startup and by `/lc info`.
 
 Run the central smoke test before merging or publishing:
 
 ```bash
 /Users/floris/Projects/Codex/servers/run-test-server \
   --paper 26.2 \
-  --plugin target/1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar \
+  --plugin target/1MB-LootChest-v2.5.9.1-199-CMI-j25-26.2.jar \
   --foreground
 ```
 

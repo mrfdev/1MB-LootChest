@@ -58,11 +58,6 @@ specific `lootchest.<subcommand>` permission or use `lootchest.admin`/
 `lootchest.*` for trusted administrators. `/lc create`, `/lc edit`, `/lc getname`,
 `/lc setpos`, and `/lc tp` must be run in-game.
 
-## No Proxy Announcement
-
-Confirm proxy support is enabled, `respawn_notify.bungee_broadcast: true`, and a
-player is online. Otherwise use global or per-world announcements.
-
 ## Privacy
 
 The custom build contains neither the upstream update checker nor bStats metrics.

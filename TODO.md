@@ -3,12 +3,13 @@
 This roadmap starts from the known-good Paper 26.2 / Java 25 CMI build on `master`.
 Each stage should leave a buildable, testable plugin and should be committed separately.
 
-- [ ] **Release baseline discipline**
+- [x] **Release baseline discipline**
   - [x] Preserve build 196 with the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag.
   - [x] Preserve manually approved build 198 with the `1mb-lootchest-v2.5.9.1-build198-approved` tag.
-  - [ ] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
-  - [ ] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
-  - [ ] Tag every live-approved artifact and retain the immediately previous rollback jar.
+  - [x] Preserve manually approved build 199 with the `1mb-lootchest-v2.5.9.1-build199-approved` tag.
+  - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
+  - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
+  - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
 
 - [x] **1. Low-risk modernization**
   - [x] Compile against the latest Paper 26.2 API while retaining Java 25 bytecode.
@@ -33,7 +34,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [ ] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
-  - [ ] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
+  - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
   - [ ] Update WorldGuard to its current Paper-compatible API and remove the WorldGuard 6 path.
   - [ ] Inventory the actual 1MoreBlock protection plugins and remove every unused compatibility integration and Maven dependency.
   - [ ] Keep CMI/CMILib integration runtime-optional and document the supported versions.

@@ -33,14 +33,6 @@ barrel containers with Lootin when that plugin is enabled. Test reward semantics
 carefully before enabling it on a live server because per-player looting changes
 how shared physical inventory behavior is experienced.
 
-## Proxy Messaging
-
-`respawn_notify.bungee_broadcast` sends configured announcements through the
-`BungeeCord` plugin messaging channel. Proxy support must be enabled in the server
-configuration, and at least one player must be online for plugin messages to be
-carried. Without proxy broadcasting, messages can be global or limited to the
-Lootbox's world.
-
 ## World Managers
 
 World-manager plugins listed as soft dependencies are used for load ordering. A

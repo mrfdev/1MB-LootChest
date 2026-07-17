@@ -45,6 +45,7 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
 	@Getter private TaskRegistry taskRegistry;
+	@Getter private BuildInfo buildInfo = BuildInfo.unknown();
 	@Getter private boolean chestWorkInProgress;
 	private boolean simplePluginStarted;
 
@@ -78,6 +79,7 @@ public class Main extends SimpleJavaPlugin {
 		@Override
 		public void onEnable() {
 		setInstance(this);
+		buildInfo = BuildInfo.load(getLogger());
 
 		lootChest = new HashMap<>();
 		taskRegistry = new TaskRegistry(this);
@@ -90,6 +92,17 @@ public class Main extends SimpleJavaPlugin {
 		}
 		Messages.log("config files loaded");
 			Messages.log("Server version: " + Bukkit.getMinecraftVersion());
+		Messages.log(
+				"<#a6e3a1>Release: <#89dceb>[Artifact] <#6c7086>| <#a6e3a1>build <#89dceb>[Build] "
+						+ "<#6c7086>| <#a6e3a1>source <#89dceb>[Source] <#6c7086>| "
+						+ "<#a6e3a1>Paper <#89dceb>[Paper] <#6c7086>(API [PaperApi]) | "
+						+ "<#a6e3a1>Java <#89dceb>[Java]",
+				"[Artifact]", buildInfo.artifactName(),
+				"[Build]", buildInfo.buildNumber(),
+				"[Source]", buildInfo.sourceDisplay(),
+				"[Paper]", buildInfo.paperTarget(),
+				"[PaperApi]", buildInfo.paperApi(),
+				"[Java]", buildInfo.javaTarget());
 		updateOldConfig();
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
@@ -361,6 +374,9 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.getConfig().set("Fall_Effect.Enabled", false);
 		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
 		configFiles.setLang("info.title", "<#cba6f7><bold>Lootbox</bold> <#6c7086>v[Version]");
+		configFiles.setLang("info.release", "<#a6e3a1>Build <#89dceb>[Build] <#6c7086>| <#bac2de>[Artifact]");
+		configFiles.setLang("info.source", "<#a6e3a1>Source <#89dceb>[Source]");
+		configFiles.setLang("info.target", "<#a6e3a1>Targets <#89dceb>Paper [Paper] <#6c7086>(API [PaperApi]) <#a6e3a1>and <#89dceb>Java [Java]");
 		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");

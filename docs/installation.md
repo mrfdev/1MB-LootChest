@@ -4,13 +4,10 @@
 
 - Paper 26.2.
 - Java 25.
-- The release jar `1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar`.
+- The release jar `1MB-LootChest-v2.5.9.1-199-CMI-j25-26.2.jar`.
 - CMI and CMILib for holograms. Lootboxes continue without holograms when CMI is absent.
 
 DecentHolograms is not a supported backend for this build.
-
-Do not install this build on Spigot, legacy Minecraft versions, Paper 26.1, or an
-older Java runtime.
 
 ## Fresh Installation
 
@@ -32,9 +29,9 @@ older Java runtime.
 5. Start Paper and inspect `logs/latest.log` for LootChest errors.
 6. Run `/lc reload` and `/lc respawnall`, then verify representative container types.
 
-The source and binary for the validated 1MoreBlock 2026 snapshot are preserved
-by the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` GitHub tag and release.
-Build 195 remains available as the previous rollback point.
+The current live-approved source is preserved by the
+`1mb-lootchest-v2.5.9.1-build199-approved` tag. Build 198 is retained as the
+immediately previous rollback point.
 
 Saved particle names are validated against the running Paper API. Removed or typed
 particles use `Particles.fallback_particle` and produce a concise warning.
@@ -53,4 +50,5 @@ mvn -DskipTests clean package
 
 The active reactor compiles against Paper API `26.2.build.60-beta`, emits Java 25
 bytecode, and writes the named release jar to the root `target/` directory. It
-does not compile or package version-specific Minecraft internals.
+does not compile or package version-specific Minecraft internals. Follow the
+[release process](release-process.md) before promoting a candidate to `master`.

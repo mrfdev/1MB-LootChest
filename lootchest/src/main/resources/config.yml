@@ -93,7 +93,7 @@ Timer_on_hologram:
   Format: '<#bac2de>%Hours%Hsep%Minutes%Msep%Seconds%Ssep left for <#89dceb>%Hologram <#bac2de>to respawn'
 #you can edit or disable all these messages
 respawn_notify:
-      #If you haven't bungeecord, the message will still be sent correctly, and if you have it, it should send bungee message everywhare
+      # Legacy proxy-broadcast setting retained for existing configuration files; it is not a maintained 1MoreBlock feature.
   bungee_broadcast: false
       #should the message only appear in the world the chest is in?
   per_world_message: false

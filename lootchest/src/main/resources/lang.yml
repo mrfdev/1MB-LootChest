@@ -39,6 +39,9 @@ ChestDespawned: '<#a6e3a1>Despawned <#89dceb>[Chest]<#a6e3a1>.'
 NoChestAtLocation: '<#f38ba8>That LootChest is already absent.'
 info:
   title: '<#cba6f7><bold>Lootbox</bold> <#6c7086>v[Version]'
+  release: '<#a6e3a1>Build <#89dceb>[Build] <#6c7086>| <#bac2de>[Artifact]'
+  source: '<#a6e3a1>Source <#89dceb>[Source]'
+  target: '<#a6e3a1>Targets <#89dceb>Paper [Paper] <#6c7086>(API [PaperApi]) <#a6e3a1>and <#89dceb>Java [Java]'
   introduction: '<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.'
   commands: '<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.'
   documentation: "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>"
