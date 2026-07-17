@@ -9,8 +9,6 @@ import fr.black_eyes.lootchest.compatibilties.*;
 
 public class ProtectedRegions {
 	public static Boolean isProtected(Location loc) {
-    	if(Bukkit.getServer().getPluginManager().isPluginEnabled("WorldGuard") && Worldguard.isInRegion(loc)) return true;
-
 		if(Bukkit.getServer().getPluginManager().isPluginEnabled("Residence") && Residences.isInResidence(loc)) return true;
 
 		if(Bukkit.getServer().getPluginManager().isPluginEnabled("Factions") && Factions.isInClaim(loc)) return true;

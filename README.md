@@ -123,6 +123,20 @@ The current live-approved release is:
 target/1MB-LootChest-v2.5.9.1-200-CMI-j25-26.2.jar
 ```
 
+The final rollback build containing direct WorldGuard random-spawn filtering is:
+
+```text
+Artifact:      1MB-LootChest-v2.5.9.1-203-CMI-j25-26.2.jar
+Local archive: servers/Paper-26.2/archive/1MB-LootChest-v2.5.9.1-203-CMI-j25-26.2-LAST-WORLDGUARD-SUPPORT.jar
+Commit:        f863a03fa374
+Tag:           1mb-lootchest-v2.5.9.1-build203-last-worldguard-support
+SHA-256:       9027167883a01ad7f904234f32b3f77ffde9adb36bb904f84946462edaa8b0c1
+```
+
+Later builds intentionally allow randomized Lootboxes inside WorldGuard regions.
+WorldGuard itself may remain installed and continues to enforce its own access,
+breaking, and region flags independently.
+
 The project emits Java 25 class files and uses only the Paper API for Minecraft
 integration. The unused falling-package feature and its version-specific NMS
 adapters were removed after build 197. Every artifact embeds its build number,

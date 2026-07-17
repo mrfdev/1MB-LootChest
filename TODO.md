@@ -8,6 +8,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve manually approved build 198 with the `1mb-lootchest-v2.5.9.1-build198-approved` tag.
   - [x] Preserve manually approved build 199 with the `1mb-lootchest-v2.5.9.1-build199-approved` tag.
   - [x] Preserve manually approved build 200 with the `1mb-lootchest-v2.5.9.1-build200-approved` tag.
+  - [x] Preserve build 203 as the final direct WorldGuard integration rollback with the `1mb-lootchest-v2.5.9.1-build203-last-worldguard-support` tag.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
@@ -36,7 +37,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
 - [ ] **4. Remove unsupported platforms and integrations**
   - [ ] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
-  - [ ] Update WorldGuard to its current Paper-compatible API and remove the WorldGuard 6 path.
+  - [x] Remove the unused direct WorldGuard random-spawn integration and its compile dependency; retain only soft load ordering for protection interoperability.
   - [ ] Inventory the actual 1MoreBlock protection plugins and remove every unused compatibility integration and Maven dependency.
   - [x] Keep CMI/CMILib integration runtime-optional and document the supported versions.
 - [ ] **5. Remove version-specific NMS falling packages**

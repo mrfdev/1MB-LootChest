@@ -49,7 +49,7 @@ time are stored per Lootbox in `data.yml`.
 | `Minimum_Height_For_Random_Spawn` | `0` | Lower random-spawn Y boundary. |
 | `Max_Height_For_Random_Spawn` | `200` | Upper random-spawn Y boundary. |
 | `WorldBorder_Check_For_Spawn` | `true` | Reject locations outside the world border. |
-| `Prevent_Chest_Spawn_In_Protected_Places` | `false` | Consult supported claim/region plugins before random spawning. |
+| `Prevent_Chest_Spawn_In_Protected_Places` | `false` | Consult supported Residence, Factions, FactionsX, Towny, and GriefPrevention claims before random spawning. WorldGuard regions are intentionally not excluded. |
 
 ## Particles
 

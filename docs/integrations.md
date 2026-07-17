@@ -35,7 +35,6 @@ hologram hooks are established normally.
 When `Prevent_Chest_Spawn_In_Protected_Places` is enabled, random candidate
 locations are rejected inside supported protected areas from:
 
-- WorldGuard
 - Residence
 - Factions
 - FactionsX
@@ -44,6 +43,11 @@ locations are rejected inside supported protected areas from:
 
 These checks affect random spawning. They do not replace each protection plugin's
 own player interaction rules.
+
+WorldGuard is intentionally not queried when Lootbox selects a random location.
+WorldGuard may remain installed and independently controls chest access, block
+breaking, explosions, and other region behavior through its own flags. It remains
+a soft dependency only so its protection listeners load before Lootbox.
 
 ## Lootin
 

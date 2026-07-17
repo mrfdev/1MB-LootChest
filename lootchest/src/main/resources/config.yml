@@ -49,7 +49,8 @@ UseHologram: true
 RemoveEmptyChests: true
     #protect Loot Chests from tnt/creepers?
 Protect_From_Explosions: false
-    #this detects factions, residence and worldguard regions
+    #Checks supported claim plugins before choosing a randomized respawn location.
+    #WorldGuard regions are intentionally not excluded by the 1MoreBlock edition.
 Prevent_Chest_Spawn_In_Protected_Places: false
     #removes the chest when a player closes it, even if there's still items in it
 RemoveChestAfterFirstOpening: false
