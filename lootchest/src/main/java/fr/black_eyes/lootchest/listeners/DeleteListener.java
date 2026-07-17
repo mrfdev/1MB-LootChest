@@ -97,29 +97,51 @@ public class DeleteListener implements Listener  {
 			return;
 		}
 
-		if(Main.configs.radiusWithoutMonstersForOpeningChest >0) {
-			Player player = event.getPlayer();
-			int nearbyMonsters = 0;
-			List<Entity> entities = player.getNearbyEntities(
-					Main.configs.radiusWithoutMonstersForOpeningChest,
-					Main.configs.radiusWithoutMonstersForOpeningChest,
-					Main.configs.radiusWithoutMonstersForOpeningChest);
-			for(Entity ent: entities) {
-				if(ent instanceof Monster) {
-					nearbyMonsters++;
-				}
-			}
-			if(nearbyMonsters != 0) {
-				event.setCancelled(true);
-				Messages.msg(
-						player,
-						"CantOpenLootchestBecauseMonster",
-						"[Number]",
-						Integer.toString(nearbyMonsters));
-				return;
-			}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onBeforeOpenInventory(InventoryOpenEvent event) {
+		if (!(event.getPlayer() instanceof Player player)) {
+			return;
+		}
+		LootChestContainer lootChestContainer = findLootChestContainer(event.getInventory());
+		if (lootChestContainer == null) {
+			return;
 		}
 
+		long protectionTime = isProtected(lootChestContainer.location().getBlock());
+		if (protectionTime > 0) {
+			event.setCancelled(true);
+			long secondsRemaining = Math.max(1, (protectionTime + 999) / 1000);
+			Messages.msg(
+					player,
+					"CantBreakBlockBecauseProtected",
+					"[Time]",
+					Long.toString(secondsRemaining));
+			return;
+		}
+
+		if (Main.configs.radiusWithoutMonstersForOpeningChest <= 0) {
+			return;
+		}
+		int nearbyMonsters = 0;
+		List<Entity> entities = player.getNearbyEntities(
+				Main.configs.radiusWithoutMonstersForOpeningChest,
+				Main.configs.radiusWithoutMonstersForOpeningChest,
+				Main.configs.radiusWithoutMonstersForOpeningChest);
+		for(Entity entity: entities) {
+			if(entity instanceof Monster) {
+				nearbyMonsters++;
+			}
+		}
+		if(nearbyMonsters != 0) {
+			event.setCancelled(true);
+			Messages.msg(
+					player,
+					"CantOpenLootchestBecauseMonster",
+					"[Number]",
+					Integer.toString(nearbyMonsters));
+		}
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

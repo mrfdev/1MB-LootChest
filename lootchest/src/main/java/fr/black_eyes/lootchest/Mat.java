@@ -81,21 +81,23 @@ public final class Mat {
     }
 
     public static boolean isALootChestBlock(Block block) {
-        Material type = block.getType();
-        return isShulkerBox(type)
-                || isCopperChest(type)
-                || type == CHEST
-                || type == TRAPPED_CHEST
-                || type == BARREL;
+        return isLootChestMaterial(block.getType());
+    }
+
+    public static boolean isLootChestMaterial(Material material) {
+        return isShulkerBox(material)
+                || isCopperChest(material)
+                || material == CHEST
+                || material == TRAPPED_CHEST
+                || material == BARREL;
     }
 
     public static boolean isShulkerBox(Material material) {
-        return material.isBlock()
-                && material.name().endsWith("SHULKER_BOX")
+        return material.name().endsWith("SHULKER_BOX")
                 && !material.name().startsWith("LEGACY_");
     }
 
     public static boolean isCopperChest(Material material) {
-        return material.isBlock() && material.name().endsWith("COPPER_CHEST");
+        return material.name().endsWith("COPPER_CHEST");
     }
 }

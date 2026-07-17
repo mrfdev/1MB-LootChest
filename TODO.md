@@ -31,7 +31,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
 - [ ] **3. Listener and lifecycle hardening**
   - [x] Correct inventory raw-slot, drag, close, and quit handling.
   - [x] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
-  - [ ] Audit explosion, hopper, piston, and protection handling for every supported container.
+  - [x] Audit explosion, hopper, piston, and protection handling for every supported container.
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
 - [ ] **4. Remove unsupported platforms and integrations**
