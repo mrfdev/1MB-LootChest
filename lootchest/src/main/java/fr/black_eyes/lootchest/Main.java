@@ -71,7 +71,17 @@ public class Main extends JavaPlugin {
 			taskRegistry.cancelAll();
 		}
 		if (lootChest != null) {
-			lootChest.values().forEach(chest -> chest.getHologram().remove());
+			for (Lootchest chest : lootChest.values()) {
+				try {
+					chest.finishPendingRemoval();
+					chest.getHologram().remove();
+				} catch (RuntimeException | LinkageError exception) {
+					getLogger().log(
+							Level.SEVERE,
+							"Could not finish runtime cleanup for LootChest " + chest.getName(),
+							exception);
+				}
+			}
 		}
 		if (lootChest != null && configFiles != null && configFiles.isInitialized()) {
 			try {

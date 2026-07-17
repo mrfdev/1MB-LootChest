@@ -2,6 +2,8 @@ package fr.black_eyes.lootchest;
 
 import java.sql.Timestamp;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -143,6 +145,7 @@ public class Lootchest {
 	 * @return the hologram object attached to this lootchest
 	 */
 	@Getter private final LootChestHologram hologram;
+	@Getter private final ChestLifecycle lifecycle;
 
 	@Getter @Setter private long protectionTime;
 
@@ -228,6 +231,7 @@ public class Lootchest {
 		lastReset = configFiles.getData().getLong(DATA_CHEST_PATH + name + ".lastreset");
 		
 		hologram = new LootChestHologram(this);
+		lifecycle = new ChestLifecycle(isGoodType(getActualLocation().getBlock()));
 	}
 	
 	
@@ -268,6 +272,7 @@ public class Lootchest {
 	   	world = LootChestUtils.getWorldName(chest.getWorld());
 		protectionTime = Main.configs.defaultRespawnProtection;
 		hologram = new LootChestHologram(this);
+		lifecycle = new ChestLifecycle(true);
 	}
 	
 	public Lootchest(Lootchest lc, String name){
@@ -296,6 +301,7 @@ public class Lootchest {
 		world = lc.getWorld();
 		protectionTime = lc.getProtectionTime();
 		hologram = new LootChestHologram(this);
+		lifecycle = new ChestLifecycle(false);
 	}
 	
 	/**
@@ -353,43 +359,126 @@ public class Lootchest {
 	 * If the chunk isn't loaded before doing this, it will be unloaded after (hopefully).
 	 */
 	public void despawn(){
-		Location startLocation = getActualLocation();
-		int chunkX = startLocation.getBlockX() >> 4;
-		int chunkZ = startLocation.getBlockZ() >> 4;
-		boolean loaded = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
-		if(LootChestUtils.isWorldLoaded(getWorld()) && isGoodType(startLocation.getBlock())) {
+		despawn(ChestLifecycle.RemovalCause.COMMAND);
+	}
+
+	public boolean canOpen() {
+		return lifecycle.canOpen() && isGoodType(getActualLocation().getBlock());
+	}
+
+	public ChestLifecycle.OpenToken open(UUID playerId) {
+		if (!canOpen()) {
+			return null;
+		}
+		return lifecycle.open(playerId);
+	}
+
+	public boolean close(ChestLifecycle.OpenToken token) {
+		return lifecycle.close(token);
+	}
+
+	public ChestLifecycle.Transition beginRemoval(ChestLifecycle.RemovalCause cause) {
+		return lifecycle.beginRemoval(cause);
+	}
+
+	public boolean completeRemoval(
+			ChestLifecycle.Transition transition,
+			Location location) {
+		if (!isSameBlock(getActualLocation(), location)
+				|| !lifecycle.isCurrent(transition)) {
+			return false;
+		}
+
+		try {
+			removePhysicalContainer(location);
+		} finally {
+			lifecycle.completeRemoval(transition);
+		}
+		return true;
+	}
+
+	public void completeRemovalNextTick(
+			ChestLifecycle.Transition transition,
+			Location location) {
+		Location expectedLocation = location.clone();
+		Main.getInstance().getTaskRegistry().runLater(removalTaskKey(), () -> {
+			try {
+				if (completeRemoval(transition, expectedLocation)) {
+					spawn(false);
+				}
+			} catch (RuntimeException | LinkageError exception) {
+				Main.getInstance().getLogger().log(
+						Level.SEVERE,
+						"Could not finish removing LootChest " + name,
+						exception);
+				LootChestUtils.scheduleReSpawn(this);
+			}
+		}, 1L);
+	}
+
+	public void finishPendingRemoval() {
+		if (lifecycle.state() != ChestLifecycle.State.REMOVING) {
+			return;
+		}
+		try {
+			removePhysicalContainer(getActualLocation());
+		} finally {
+			lifecycle.reconcile(false);
+		}
+	}
+
+	private boolean despawn(ChestLifecycle.RemovalCause cause) {
+		Location location = getActualLocation();
+		ChestLifecycle.Transition transition = lifecycle.beginRemoval(cause);
+		if (transition == null
+				&& lifecycle.state() == ChestLifecycle.State.DESPAWNED
+				&& isGoodType(location.getBlock())) {
+			lifecycle.reconcile(true);
+			transition = lifecycle.beginRemoval(cause);
+		}
+		if (transition == null) {
+			return false;
+		}
+		return completeRemoval(transition, location);
+	}
+
+	private void removePhysicalContainer(Location location) {
+		World locationWorld = location.getWorld();
+		int chunkX = location.getBlockX() >> 4;
+		int chunkZ = location.getBlockZ() >> 4;
+		boolean loaded = locationWorld != null && locationWorld.isChunkLoaded(chunkX, chunkZ);
+		if(LootChestUtils.isWorldLoaded(getWorld()) && isGoodType(location.getBlock())) {
 			ChestLifecycle.removePhysicalContainer(
-					startLocation.getBlock(),
-					getParticleLocation(),
+					location.getBlock(),
+					particleLocation(location),
 					Main.getInstance().getPart(),
 					hologram::remove);
 		} else {
 			ChestLifecycle.removeEffects(
-					getParticleLocation(),
+					particleLocation(location),
 					Main.getInstance().getPart(),
 					hologram::remove);
 		}
-		boolean loaded2 = startLocation.getWorld().isChunkLoaded(chunkX, chunkZ);
-		if(loaded != loaded2) {
-			startLocation.getWorld().unloadChunk(chunkX, chunkZ);
+		Main.getInstance().getProtection().remove(location.getBlock().getLocation());
+		boolean loadedAfter = locationWorld != null && locationWorld.isChunkLoaded(chunkX, chunkZ);
+		if(locationWorld != null && !loaded && loadedAfter) {
+			locationWorld.unloadChunk(chunkX, chunkZ);
 		}
 	}
 
-	public void despawnAtValidatedLocation(Location location) {
-		Location actualLocation = getActualLocation();
-		if(actualLocation.getWorld() != location.getWorld()
-				|| actualLocation.getBlockX() != location.getBlockX()
-				|| actualLocation.getBlockY() != location.getBlockY()
-				|| actualLocation.getBlockZ() != location.getBlockZ()) {
-			return;
-		}
+	private boolean isSameBlock(Location first, Location second) {
+		return first != null
+				&& second != null
+				&& first.getWorld() != null
+				&& second.getWorld() != null
+				&& first.getWorld().getUID().equals(second.getWorld().getUID())
+				&& first.getBlockX() == second.getBlockX()
+				&& first.getBlockY() == second.getBlockY()
+				&& first.getBlockZ() == second.getBlockZ();
+	}
 
-		Block block = location.getBlock();
-		ChestLifecycle.removePhysicalContainer(
-				block,
-				getParticleLocation(),
-				Main.getInstance().getPart(),
-				hologram::remove);
+	private String removalTaskKey() {
+		return "remove:" + name;
 	}
 
 	/**
@@ -422,7 +511,7 @@ public class Lootchest {
 	 * @param block - The block concerned, where the spawn will append
 	 * @param blockLocation - Location of the block
 	 */
-	public void createchest( Block block, Location blockLocation) {
+	private void createchest(Block block, Location blockLocation) {
 		block.setType(getType());
 		Inventory inventory = ((InventoryHolder) block.getState()).getInventory();
 		LootChestUtils.fillInventory(this, inventory, true, null);
@@ -464,9 +553,20 @@ public class Lootchest {
 	}
 
 	public void activateExistingContainer(Block block) {
+		ChestLifecycle.Transition transition = lifecycle.beginSpawn();
+		if (transition == null) {
+			return;
+		}
 		Location location = block.getLocation();
-		createchest(block, location);
-		resendContainerBlock(block);
+		try {
+			createchest(block, location);
+			if (lifecycle.completeSpawn(transition)) {
+				resendContainerBlock(block, transition.generation());
+			}
+		} catch (RuntimeException | LinkageError exception) {
+			lifecycle.failSpawn(transition);
+			throw exception;
+		}
 	}
 
 	/**
@@ -487,9 +587,17 @@ public class Lootchest {
 	 */
 	public boolean spawn(boolean forceSpawn, boolean forceDespawn) {
 		if(time == 0) time = -1;
-		if(forceDespawn) {
-			despawn();
+		if(forceDespawn && !forceSpawn) {
+			despawn(ChestLifecycle.RemovalCause.COMMAND);
 			setLastReset();
+			LootChestUtils.scheduleReSpawn(this);
+			return false;
+		}
+		if(forceDespawn) {
+			setLastReset();
+		}
+		if (!forceSpawn && lifecycle.state() == ChestLifecycle.State.REMOVING) {
+			return false;
 		}
 		// if world is not loaded or lootchest was deleted or not enough players
 		if(!LootChestUtils.isWorldLoaded(getWorld()) || !Main.getInstance().getLootChest().containsValue(this) ) {
@@ -520,39 +628,60 @@ public class Lootchest {
 				LootChestUtils.scheduleReSpawn(this);
 				return false;
 			}
-			// whatever happens after, the chest will spawn, so we can set this
-			despawn();
-			setRandomLoc(spawnLoc.clone());
 		}
-		// if the chest is already spawned, we despawn it
-		despawn();
 
-		// handle natural spawning messages - command respawn messages are handled in command class
-		if(!forceSpawn && isRespawnNaturalMsgEnabled() ) {
-			String naturalMsg = (((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world);
-			if(!Main.configs.notePerWorldMessage) {
-				for(World w : Bukkit.getWorlds()) {
-					for(Player p : w.getPlayers()) {
+		ChestLifecycle.Transition transition = lifecycle.beginSpawn();
+		if (transition == null) {
+			return false;
+		}
+		Main.getInstance().getTaskRegistry().cancel(removalTaskKey());
+		Location previousLocation = getActualLocation();
+		try {
+			removePhysicalContainer(previousLocation);
+			if(getRadius() != 0) {
+				setRandomLoc(spawnLoc.clone());
+			}
+
+			// Command respawn messages are handled in the command class.
+			if(!forceSpawn && isRespawnNaturalMsgEnabled() ) {
+				String naturalMsg = (((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world);
+				if(!Main.configs.notePerWorldMessage) {
+					for(World w : Bukkit.getWorlds()) {
+						for(Player p : w.getPlayers()) {
+							Messages.sendMultilineMessage(naturalMsg, p);
+						}
+					}
+				}else {
+					for(Player p : spawnLoc.getWorld().getPlayers()){
 						Messages.sendMultilineMessage(naturalMsg, p);
 					}
 				}
-			}else {
-				for(Player p : spawnLoc.getWorld().getPlayers()){
-					Messages.sendMultilineMessage(naturalMsg, p);
-				}
 			}
-		}
 
-		final Block newBlock = spawnLoc.getBlock();
-		createchest(newBlock, spawnLoc);
-		resendContainerBlock(newBlock);
-		
-		return true;
+			final Block newBlock = spawnLoc.getBlock();
+			createchest(newBlock, spawnLoc);
+			if (!lifecycle.completeSpawn(transition)) {
+				return false;
+			}
+			resendContainerBlock(newBlock, transition.generation());
+			return true;
+		} catch (RuntimeException | LinkageError exception) {
+			lifecycle.failSpawn(transition);
+			LootChestUtils.scheduleReSpawn(this);
+			Main.getInstance().getLogger().log(
+					Level.SEVERE,
+					"LootChest " + getName() + " failed to spawn",
+					exception);
+			return false;
+		}
 	}
 
-	private void resendContainerBlock(Block block) {
+	private void resendContainerBlock(Block block, long generation) {
 		Location location = block.getLocation();
 		Main.getInstance().getTaskRegistry().runLater(() -> {
+			if (!lifecycle.isCurrentGeneration(generation) || !lifecycle.isActive()) {
+				return;
+			}
 			Block current = location.getBlock();
 			if (!isGoodType(current)) {
 				return;
@@ -564,7 +693,11 @@ public class Lootchest {
 	}
 
 	public Location getParticleLocation() {
-		final Location loc2 = getActualLocation().clone();
+		return particleLocation(getActualLocation());
+	}
+
+	private Location particleLocation(Location location) {
+		final Location loc2 = location.clone();
 		loc2.add(0.5,0.5,0.5);
 		return loc2;
 	}
@@ -632,8 +765,15 @@ public class Lootchest {
 	 * Deletes the chest from data file and despawns it
 	 */
 	public void deleteChest() {
-		despawn();
+		Main.getInstance().getTaskRegistry().cancel(removalTaskKey());
 		LootChestUtils.cancelReSpawn(this);
+		Location location = getActualLocation();
+		ChestLifecycle.Transition transition =
+				lifecycle.beginRemoval(ChestLifecycle.RemovalCause.DELETE);
+		if (transition == null || !completeRemoval(transition, location)) {
+			removePhysicalContainer(location);
+		}
+		lifecycle.delete();
 		Main.getInstance().getLootChest().remove(getName());
 		Main.getInstance().getConfigFiles().getData().set(DATA_CHEST_PATH+ getName(), null);
 		Main.getInstance().getConfigFiles().saveData();
@@ -676,7 +816,11 @@ public class Lootchest {
 
 		Location loc = getActualLocation();
 		//if the lootchest isn't here, let's not spawn particles or anything
-		if(!isGoodType(loc.getBlock())) {
+		boolean physicalContainerPresent = isGoodType(loc.getBlock());
+		if (lifecycle.isActive() != physicalContainerPresent) {
+			lifecycle.reconcile(physicalContainerPresent);
+		}
+		if(!physicalContainerPresent) {
 			return;
 		}
 		getHologram().setLoc(loc);

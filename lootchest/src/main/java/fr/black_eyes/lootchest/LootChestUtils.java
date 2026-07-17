@@ -23,6 +23,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BlockIterator;
 
+import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
+
 import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
 public class LootChestUtils  {
@@ -115,6 +117,10 @@ public class LootChestUtils  {
 	 */
 	public static void scheduleReSpawn(Lootchest lc) {
 		String taskKey = respawnTaskKey(lc);
+		if (lc.getLifecycle().state() == ChestLifecycle.State.DELETED) {
+			Main.getInstance().getTaskRegistry().cancel(taskKey);
+			return;
+		}
 		long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime();
 		long minutes = lc.getTime();
 		if(minutes == 0) {

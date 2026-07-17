@@ -49,7 +49,7 @@ import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 public class DeleteListener implements Listener  {
 	
 
-	private final Map<UUID, Location> openInvs = new HashMap<>();
+	private final Map<UUID, OpenLootChest> openInvs = new HashMap<>();
 	//gère la destruction d'un coffre au niveau des hologrames
 	
 	
@@ -96,6 +96,9 @@ public class DeleteListener implements Listener  {
 					Long.toString(secondsRemaining));
 			return;
 		}
+		if (!lootChestContainer.chest().canOpen()) {
+			event.setCancelled(true);
+		}
 
 	}
 
@@ -106,6 +109,10 @@ public class DeleteListener implements Listener  {
 		}
 		LootChestContainer lootChestContainer = findLootChestContainer(event.getInventory());
 		if (lootChestContainer == null) {
+			return;
+		}
+		if (!lootChestContainer.chest().canOpen()) {
+			event.setCancelled(true);
 			return;
 		}
 
@@ -151,7 +158,20 @@ public class DeleteListener implements Listener  {
 		}
 		LootChestContainer lootChestContainer = findLootChestContainer(event.getInventory());
 		if (lootChestContainer != null) {
-			openInvs.put(player.getUniqueId(), lootChestContainer.location());
+			ChestLifecycle.OpenToken token =
+					lootChestContainer.chest().open(player.getUniqueId());
+			if (token == null) {
+				return;
+			}
+			OpenLootChest previous = openInvs.put(
+					player.getUniqueId(),
+					new OpenLootChest(
+							lootChestContainer.chest(),
+							lootChestContainer.location(),
+							token));
+			if (previous != null) {
+				previous.chest().close(previous.token());
+			}
 		}
 	}
    
@@ -168,17 +188,28 @@ public class DeleteListener implements Listener  {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		handleTrackedInventoryClose(player, player.getOpenInventory().getTopInventory());
+		OpenLootChest stale = openInvs.remove(player.getUniqueId());
+		if (stale != null) {
+			stale.chest().close(stale.token());
+		}
 	}
 
 	private void handleTrackedInventoryClose(Player p, Inventory inv) {
-		Location trackedLocation = openInvs.remove(p.getUniqueId());
-		if (trackedLocation == null || !isInventoryAt(inv, trackedLocation)) {
+		UUID playerId = p.getUniqueId();
+		OpenLootChest tracked = openInvs.get(playerId);
+		if (tracked == null || !isInventoryAt(inv, tracked.location())) {
+			return;
+		}
+		if (!openInvs.remove(playerId, tracked)) {
+			return;
+		}
+		Lootchest key = tracked.chest();
+		if (!key.close(tracked.token())) {
 			return;
 		}
 
-		Location loc = trackedLocation.clone();
-		Lootchest key = LootChestUtils.isLootChest(loc);
-		if(key == null) {
+		Location loc = tracked.location().clone();
+		if (LootChestUtils.isLootChest(loc) != key) {
 			return;
 		}
 		boolean inventoryEmpty = LootChestUtils.isEmpty(inv);
@@ -186,11 +217,16 @@ public class DeleteListener implements Listener  {
 				inventoryEmpty,
 				Main.configs.removeEmptyChests,
 				Main.configs.removeChestAfterFirstOpening)) {
-			// if we should break chest naturally, drop an item of key.getType() at the location of the chest
-			if(Main.configs.destroyNaturallyInsteadOfRemovingChest)
-				loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
-			key.despawnAtValidatedLocation(loc);
-			key.spawn(false);
+			ChestLifecycle.RemovalCause cause = inventoryEmpty
+					? ChestLifecycle.RemovalCause.EMPTY
+					: ChestLifecycle.RemovalCause.FIRST_OPEN;
+			ChestLifecycle.Transition transition = key.beginRemoval(cause);
+			if (transition != null) {
+				if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+					loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
+				}
+				key.completeRemovalNextTick(transition, loc);
+			}
 		}
 		if(inventoryEmpty) {
 			sendChestTakeMessageIfEnabled(key, p);
@@ -198,12 +234,14 @@ public class DeleteListener implements Listener  {
 	}
 
 	public void clearTrackedInventories() {
-		Map<UUID, Location> trackedInventories = new HashMap<>(openInvs);
+		Map<UUID, OpenLootChest> trackedInventories = new HashMap<>(openInvs);
 		openInvs.clear();
-		for (Map.Entry<UUID, Location> entry : trackedInventories.entrySet()) {
+		for (Map.Entry<UUID, OpenLootChest> entry : trackedInventories.entrySet()) {
+			OpenLootChest tracked = entry.getValue();
+			tracked.chest().close(tracked.token());
 			Player player = Bukkit.getPlayer(entry.getKey());
 			if (player != null
-					&& isInventoryAt(player.getOpenInventory().getTopInventory(), entry.getValue())) {
+					&& isInventoryAt(player.getOpenInventory().getTopInventory(), tracked.location())) {
 				player.closeInventory();
 			}
 		}
@@ -282,6 +320,12 @@ public class DeleteListener implements Listener  {
 	private record LootChestContainer(Lootchest chest, Location location) {
 	}
 
+	private record OpenLootChest(
+			Lootchest chest,
+			Location location,
+			ChestLifecycle.OpenToken token) {
+	}
+
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onChestBreak(BlockBreakEvent event) {
 		Block block = event.getBlock();
@@ -301,21 +345,25 @@ public class DeleteListener implements Listener  {
 		}
 
 		event.setCancelled(true);
-		ChestLifecycle.collectBreakContents(
-				container.getInventory(),
-				item -> block.getWorld().dropItemNaturally(block.getLocation(), item));
-		if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
-			lootChestLocation.getWorld().dropItemNaturally(
-					lootChestLocation,
-					new ItemStack(chest.getType()));
+		ChestLifecycle.Transition transition =
+				chest.beginRemoval(ChestLifecycle.RemovalCause.BREAK);
+		if (transition == null) {
+			return;
 		}
-		Main.getInstance().getProtection().remove(lootChestLocation);
 
-		// Paper restores cancelled block breaks after event handlers return.
-		Main.getInstance().getTaskRegistry().runLater(() -> {
-			chest.despawnAtValidatedLocation(lootChestLocation);
-			chest.spawn(false);
-		}, 1L);
+		try {
+			ChestLifecycle.collectBreakContents(
+					container.getInventory(),
+					item -> block.getWorld().dropItemNaturally(block.getLocation(), item));
+			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+				lootChestLocation.getWorld().dropItemNaturally(
+						lootChestLocation,
+						new ItemStack(chest.getType()));
+			}
+		} finally {
+			// Paper restores cancelled block breaks after event handlers return.
+			chest.completeRemovalNextTick(transition, lootChestLocation);
+		}
 
 		sendChestTakeMessageIfEnabled(chest, event.getPlayer());
 	}
@@ -362,12 +410,19 @@ public class DeleteListener implements Listener  {
 			}
 
 			Location location = container.location();
-			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
-				location.getWorld().dropItemNaturally(location, new ItemStack(container.chest().getType()));
+			ChestLifecycle.Transition transition = container.chest().beginRemoval(
+					ChestLifecycle.RemovalCause.EXPLOSION);
+			if (transition == null) {
+				continue;
 			}
-			Main.getInstance().getProtection().remove(location);
-			container.chest().despawnAtValidatedLocation(location);
-			container.chest().spawn(false);
+			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+				location.getWorld().dropItemNaturally(
+						location,
+						new ItemStack(container.chest().getType()));
+			}
+			if (container.chest().completeRemoval(transition, location)) {
+				container.chest().spawn(false);
+			}
 		}
 	}
 

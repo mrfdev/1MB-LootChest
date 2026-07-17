@@ -12,6 +12,10 @@ the newest ten backups are retained. If `data.yml` is invalid, the damaged file
 is preserved as `data.yml.invalid-<timestamp>` before the newest valid numbered
 backup is restored.
 
+Spawn/open/removal state is runtime-only and is reconstructed from the saved
+definition and physical container on startup. No lifecycle fields are added to
+`data.yml`, so existing live chest data remains compatible.
+
 ## General Settings
 
 | Key | Default | Meaning |

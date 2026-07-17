@@ -26,6 +26,9 @@ candidate testing happen on a `codex/<feature>` branch.
    holograms, and every supported container type. Automated coverage separately
    locks Paper 26.2's chest, trapped chest, barrel, 17 shulker boxes, and all
    eight copper oxidation/wax states.
+10. For lifecycle changes, also retry open/close and break actions rapidly,
+    confirm rewards and container drops occur once, and verify that reload or a
+    forced respawn cannot leave an old hologram, removal task, or empty block.
 
 Do not move the candidate commit to `master` when any check is incomplete.
 

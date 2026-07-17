@@ -1,7 +1,11 @@
 package fr.black_eyes.lootchest.lifecycle;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -14,9 +18,159 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-/** Shared, testable lifecycle operations used by collection, despawn, and reload. */
+/**
+ * Server-thread-owned state machine plus shared physical-container operations.
+ *
+ * <p>Generation tokens make delayed work harmless after a newer spawn has
+ * superseded it.
+ */
 public final class ChestLifecycle {
-    private ChestLifecycle() {
+    public enum State {
+        DESPAWNED,
+        SPAWNING,
+        ACTIVE,
+        OPEN,
+        REMOVING,
+        DELETED
+    }
+
+    public enum RemovalCause {
+        EMPTY,
+        FIRST_OPEN,
+        BREAK,
+        EXPLOSION,
+        COMMAND,
+        DELETE
+    }
+
+    public record OpenToken(long generation, UUID playerId) {
+    }
+
+    public record Transition(long generation, State state, RemovalCause cause) {
+    }
+
+    private final Set<UUID> viewers = new HashSet<>();
+    private long generation;
+    private State state;
+    private RemovalCause removalCause;
+
+    public ChestLifecycle(boolean physicalContainerPresent) {
+        state = physicalContainerPresent ? State.ACTIVE : State.DESPAWNED;
+        generation = physicalContainerPresent ? 1L : 0L;
+    }
+
+    public State state() {
+        return state;
+    }
+
+    public long generation() {
+        return generation;
+    }
+
+    public int viewerCount() {
+        return viewers.size();
+    }
+
+    public boolean isActive() {
+        return state == State.ACTIVE || state == State.OPEN;
+    }
+
+    public boolean canOpen() {
+        return isActive();
+    }
+
+    public OpenToken open(UUID playerId) {
+        Objects.requireNonNull(playerId, "playerId");
+        if (!canOpen() || !viewers.add(playerId)) {
+            return null;
+        }
+        state = State.OPEN;
+        return new OpenToken(generation, playerId);
+    }
+
+    public boolean close(OpenToken token) {
+        if (token == null
+                || token.generation() != generation
+                || !viewers.remove(token.playerId())) {
+            return false;
+        }
+        if (state == State.OPEN && viewers.isEmpty()) {
+            state = State.ACTIVE;
+        }
+        return true;
+    }
+
+    public Transition beginRemoval(RemovalCause cause) {
+        Objects.requireNonNull(cause, "cause");
+        if (!isActive()) {
+            return null;
+        }
+        viewers.clear();
+        state = State.REMOVING;
+        removalCause = cause;
+        return new Transition(generation, State.REMOVING, cause);
+    }
+
+    public boolean completeRemoval(Transition transition) {
+        if (!isCurrent(transition)
+                || transition.state() != State.REMOVING
+                || transition.cause() != removalCause) {
+            return false;
+        }
+        state = State.DESPAWNED;
+        removalCause = null;
+        return true;
+    }
+
+    public Transition beginSpawn() {
+        if (state == State.SPAWNING || state == State.DELETED) {
+            return null;
+        }
+        generation++;
+        viewers.clear();
+        removalCause = null;
+        state = State.SPAWNING;
+        return new Transition(generation, State.SPAWNING, null);
+    }
+
+    public boolean completeSpawn(Transition transition) {
+        if (!isCurrent(transition) || transition.state() != State.SPAWNING) {
+            return false;
+        }
+        state = State.ACTIVE;
+        return true;
+    }
+
+    public boolean failSpawn(Transition transition) {
+        if (!isCurrent(transition) || transition.state() != State.SPAWNING) {
+            return false;
+        }
+        state = State.DESPAWNED;
+        return true;
+    }
+
+    public boolean isCurrent(Transition transition) {
+        return transition != null
+                && transition.generation() == generation
+                && transition.state() == state;
+    }
+
+    public boolean isCurrentGeneration(long expectedGeneration) {
+        return generation == expectedGeneration;
+    }
+
+    public void reconcile(boolean physicalContainerPresent) {
+        generation++;
+        viewers.clear();
+        removalCause = null;
+        state = physicalContainerPresent ? State.ACTIVE : State.DESPAWNED;
+    }
+
+    public void delete() {
+        generation++;
+        viewers.clear();
+        removalCause = null;
+        state = State.DELETED;
     }
 
     public static boolean shouldCollectAfterClose(

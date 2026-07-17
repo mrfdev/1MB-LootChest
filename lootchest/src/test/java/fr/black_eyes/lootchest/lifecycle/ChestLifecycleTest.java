@@ -2,6 +2,8 @@ package fr.black_eyes.lootchest.lifecycle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationHandler;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,6 +27,128 @@ import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
 class ChestLifecycleTest {
+    @Test
+    void openAndCloseAreIdempotentWithinOneSpawnGeneration() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        UUID playerId = UUID.randomUUID();
+
+        ChestLifecycle.OpenToken token = lifecycle.open(playerId);
+
+        assertNotNull(token);
+        assertEquals(ChestLifecycle.State.OPEN, lifecycle.state());
+        assertEquals(1, lifecycle.viewerCount());
+        assertNull(lifecycle.open(playerId));
+        assertTrue(lifecycle.close(token));
+        assertEquals(ChestLifecycle.State.ACTIVE, lifecycle.state());
+        assertEquals(0, lifecycle.viewerCount());
+        assertFalse(lifecycle.close(token));
+    }
+
+    @Test
+    void chestRemainsOpenUntilItsLastViewerCloses() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.OpenToken first = lifecycle.open(UUID.randomUUID());
+        ChestLifecycle.OpenToken second = lifecycle.open(UUID.randomUUID());
+
+        assertTrue(lifecycle.close(first));
+        assertEquals(ChestLifecycle.State.OPEN, lifecycle.state());
+        assertEquals(1, lifecycle.viewerCount());
+        assertTrue(lifecycle.close(second));
+        assertEquals(ChestLifecycle.State.ACTIVE, lifecycle.state());
+    }
+
+    @Test
+    void removalCanStartAndFinishOnlyOnce() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+
+        ChestLifecycle.Transition removal =
+                lifecycle.beginRemoval(ChestLifecycle.RemovalCause.EMPTY);
+
+        assertNotNull(removal);
+        assertEquals(ChestLifecycle.State.REMOVING, lifecycle.state());
+        assertNull(lifecycle.beginRemoval(ChestLifecycle.RemovalCause.BREAK));
+        assertTrue(lifecycle.completeRemoval(removal));
+        assertEquals(ChestLifecycle.State.DESPAWNED, lifecycle.state());
+        assertFalse(lifecycle.completeRemoval(removal));
+    }
+
+    @Test
+    void removalInvalidatesEveryOpenViewer() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.OpenToken first = lifecycle.open(UUID.randomUUID());
+        ChestLifecycle.OpenToken second = lifecycle.open(UUID.randomUUID());
+
+        ChestLifecycle.Transition removal =
+                lifecycle.beginRemoval(ChestLifecycle.RemovalCause.BREAK);
+
+        assertNotNull(removal);
+        assertEquals(0, lifecycle.viewerCount());
+        assertFalse(lifecycle.close(first));
+        assertFalse(lifecycle.close(second));
+    }
+
+    @Test
+    void staleDelayedRemovalCannotDeleteANewerSpawn() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.Transition removal =
+                lifecycle.beginRemoval(ChestLifecycle.RemovalCause.BREAK);
+
+        ChestLifecycle.Transition spawn = lifecycle.beginSpawn();
+
+        assertNotNull(spawn);
+        assertTrue(lifecycle.completeSpawn(spawn));
+        assertEquals(ChestLifecycle.State.ACTIVE, lifecycle.state());
+        assertFalse(lifecycle.completeRemoval(removal));
+        assertEquals(ChestLifecycle.State.ACTIVE, lifecycle.state());
+    }
+
+    @Test
+    void closeFromAnOlderGenerationCannotAffectRespawnedChest() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.OpenToken open = lifecycle.open(UUID.randomUUID());
+        ChestLifecycle.Transition spawn = lifecycle.beginSpawn();
+
+        assertTrue(lifecycle.completeSpawn(spawn));
+        assertFalse(lifecycle.close(open));
+        assertEquals(ChestLifecycle.State.ACTIVE, lifecycle.state());
+        assertEquals(0, lifecycle.viewerCount());
+    }
+
+    @Test
+    void failedSpawnReturnsToDespawnedAndCannotFinishTwice() {
+        ChestLifecycle lifecycle = new ChestLifecycle(false);
+        ChestLifecycle.Transition spawn = lifecycle.beginSpawn();
+
+        assertTrue(lifecycle.failSpawn(spawn));
+        assertEquals(ChestLifecycle.State.DESPAWNED, lifecycle.state());
+        assertFalse(lifecycle.failSpawn(spawn));
+    }
+
+    @Test
+    void deletedChestRejectsEveryLaterTransition() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+
+        lifecycle.delete();
+
+        assertEquals(ChestLifecycle.State.DELETED, lifecycle.state());
+        assertNull(lifecycle.open(UUID.randomUUID()));
+        assertNull(lifecycle.beginRemoval(ChestLifecycle.RemovalCause.DELETE));
+        assertNull(lifecycle.beginSpawn());
+    }
+
+    @Test
+    void reconciliationInvalidatesTokensFromThePreviousRuntimeView() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.OpenToken open = lifecycle.open(UUID.randomUUID());
+        long previousGeneration = lifecycle.generation();
+
+        lifecycle.reconcile(false);
+
+        assertEquals(ChestLifecycle.State.DESPAWNED, lifecycle.state());
+        assertTrue(lifecycle.generation() > previousGeneration);
+        assertFalse(lifecycle.close(open));
+    }
+
     @Test
     void emptyingPolicyMatchesConfiguredCollectionBehavior() {
         assertFalse(ChestLifecycle.shouldCollectAfterClose(false, false, false));
