@@ -32,9 +32,9 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -120,9 +120,16 @@ public class DeleteListener implements Listener  {
 			}
 		}
 
-		if (event.getAction() == Action.RIGHT_CLICK_BLOCK
-				&& event.getHand() == EquipmentSlot.HAND) {
-			openInvs.put(event.getPlayer().getUniqueId(), lootChestContainer.location());
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onOpenInventory(InventoryOpenEvent event) {
+		if (!(event.getPlayer() instanceof Player player)) {
+			return;
+		}
+		LootChestContainer lootChestContainer = findLootChestContainer(event.getInventory());
+		if (lootChestContainer != null) {
+			openInvs.put(player.getUniqueId(), lootChestContainer.location());
 		}
 	}
    

@@ -30,7 +30,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Complete manual empty, break, hologram, reload, and respawn gameplay validation for build 199.
 - [ ] **3. Listener and lifecycle hardening**
   - [x] Correct inventory raw-slot, drag, close, and quit handling.
-  - [ ] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
+  - [x] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
   - [ ] Audit explosion, hopper, piston, and protection handling for every supported container.
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
