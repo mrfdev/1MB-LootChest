@@ -14,7 +14,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Component | Target |
 | --- | --- |
 | Server | Paper 26.2 |
-| Paper API | `26.2.build.29-alpha` |
+| Paper API | `26.2.build.60-beta` |
 | Java runtime and bytecode | Java 25 |
 | Plugin version | `2.5.9.1` |
 | Main command | `/lootchest`, alias `/lc` |
@@ -43,8 +43,32 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
-Lootbox does not currently expose PlaceholderAPI placeholders. The PlaceholderAPI
-compile dependency does not itself create any placeholders.
+Lootbox does not currently expose or require PlaceholderAPI placeholders.
+
+## Canonical Development Branch
+
+`master` is the only supported development and release branch. The supported
+hologram backend is CMI/CMILib; retired DecentHolograms work is kept only as an
+archive tag and must not be merged into release builds.
+
+The `origin` remote is the canonical 1MB repository
+(`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
+careful comparison only; do not build releases from an upstream branch.
+
+The known-good live baseline is preserved by the
+`1mb-lootchest-v2.5.9.1-build195-live` tag. Use that tag and its GitHub release
+artifact for an emergency rollback; do not revive one of the retired branches.
+
+Start future work from an up-to-date `master`:
+
+```bash
+git switch master
+git pull --ff-only origin master
+git switch -c codex/<short-feature-name>
+```
+
+Build and test the feature branch, then fast-forward `master` only after it passes.
+Release jars must be built from a clean `master` checkout.
 
 ## Administrative Quick Start
 
@@ -57,13 +81,38 @@ compile dependency does not itself create any placeholders.
 Back up the complete `plugins/LootChest/` directory before an update. Do not keep
 multiple LootChest or Lootbox jars in the server's top-level `plugins/` directory.
 
+## Installation and Updates
+
+1. Stop Paper cleanly.
+2. Back up the complete `plugins/LootChest/` data directory and the current working jar.
+3. Remove the previous LootChest/Lootbox jar from the top-level `plugins/` directory.
+4. Install the new `1MB-LootChest` jar, leaving exactly one LootChest/Lootbox jar there.
+5. Keep current CMI and CMILib jars installed when holograms are required.
+6. Start Paper and confirm `LootChest ... Plugin loaded` without an exception.
+7. Run `/lc info`, `/lc help`, `/lc list`, `/lc reload`, and `/lc respawnall`.
+8. Verify a chest, barrel, shulker box, and copper chest before treating the update as live.
+
+To roll back, stop Paper, restore the previous jar and backed-up `plugins/LootChest/`
+directory together, then start and verify the server again.
+
 ## Build
 
+Before shipping a new build, increment `buildNumber` in the root `pom.xml`. Change
+`revision` only when the plugin version itself changes. Then build from the repository
+root with JDK 25:
+
 ```bash
-mvn package
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+mvn -DskipTests clean package
 ```
 
-The release artifact is written to:
+Release artifacts use this format:
+
+```text
+target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
+```
+
+The current tested release is:
 
 ```text
 target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar
@@ -71,6 +120,15 @@ target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar
 
 The project contains a native `v_26_2` falling-package adapter and emits Java 25
 class files. The active Maven reactor packages only that adapter.
+
+Run the central smoke test before merging or publishing:
+
+```bash
+/Users/floris/Projects/Codex/servers/run-test-server \
+  --paper 26.2 \
+  --plugin target/1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar \
+  --foreground
+```
 
 ## Developer API
 

@@ -49,5 +49,4 @@ Lootbox is loaded only when its saved world is available. Use
 
 ## PlaceholderAPI
 
-Lootbox does not register PlaceholderAPI placeholders. Its PAPI dependency is not
-a public placeholder contract.
+Lootbox does not register or require PlaceholderAPI placeholders.

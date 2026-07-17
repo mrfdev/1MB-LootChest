@@ -7,6 +7,8 @@
 - The release jar `1MB-LootChest-v2.5.9.1-195-CMI-j25-26.2.jar`.
 - CMI and CMILib for holograms. Lootboxes continue without holograms when CMI is absent.
 
+DecentHolograms is not a supported backend for this build.
+
 Do not install this build on Spigot, legacy Minecraft versions, Paper 26.1, or an
 older Java runtime.
 
@@ -30,17 +32,24 @@ older Java runtime.
 5. Start Paper and inspect `logs/latest.log` for LootChest errors.
 6. Run `/lc reload` and `/lc respawnall`, then verify representative container types.
 
+The source and binary for the known-good live build are preserved by the
+`1mb-lootchest-v2.5.9.1-build195-live` GitHub tag and release.
+
 Saved particle names are validated against the running Paper API. Removed or typed
 particles use `Particles.fallback_particle` and produce a concise warning.
 
 ## Building from Source
 
-From the repository root with JDK 25 and Maven available:
+Build releases from the canonical `master` branch. Increment `buildNumber` in the
+root `pom.xml` for each shipped jar, then build with JDK 25 and Maven:
 
 ```bash
-mvn package
+git switch master
+git pull --ff-only origin master
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+mvn -DskipTests clean package
 ```
 
-The active reactor compiles against Paper API `26.2.build.29-alpha`, packages the
+The active reactor compiles against Paper API `26.2.build.60-beta`, packages the
 native `v_26_2` adapter, emits Java 25 bytecode, and writes the named release jar
 to the root `target/` directory.
