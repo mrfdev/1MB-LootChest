@@ -1,6 +1,7 @@
 package fr.black_eyes.lootchest.ui;
 
 import fr.black_eyes.lootchest.Lootchest;
+import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.ui.menu.ChancesMenu;
 import fr.black_eyes.lootchest.ui.menu.ContentsMenu;
 import fr.black_eyes.lootchest.ui.menu.CopyMenu;
@@ -10,8 +11,6 @@ import fr.black_eyes.lootchest.ui.menu.TimeMenu;
 import fr.black_eyes.lootchest.ui.menu.TypeMenu;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +22,7 @@ import java.util.UUID;
 public class UiHandler {
 	
 	private final Map<UUID, ChestUi> playerUis;
-	private final JavaPlugin plugin;
+	private final Main plugin;
 
 	/**
 	 * Enum for the different types of UIs that can be opened
@@ -32,7 +31,7 @@ public class UiHandler {
 		MAIN, COPY, TYPE, PARTICLE, EDIT, TIME, CHANCES
 	}
 
-	public UiHandler(JavaPlugin plugin) {
+	public UiHandler(Main plugin) {
 		this.playerUis = new HashMap<>();
 		this.plugin = plugin;
 	}
@@ -67,12 +66,10 @@ public class UiHandler {
 	 * @param delay ticks to wait before opening the UI
 	 */
 	public void openUi(Player player, UiType type, Lootchest chest, long delay) {
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				openUi(player, type, chest);
-			}
-		}.runTaskLater(plugin, delay);
+		plugin.getTaskRegistry().runLater(
+				"ui-open:" + player.getUniqueId(),
+				() -> openUi(player, type, chest),
+				delay);
 	}
 
 	/**

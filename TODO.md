@@ -5,6 +5,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
 
 - [ ] **Release baseline discipline**
   - [x] Preserve build 196 with the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag.
+  - [x] Preserve manually approved build 198 with the `1mb-lootchest-v2.5.9.1-build198-approved` tag.
   - [ ] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [ ] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [ ] Tag every live-approved artifact and retain the immediately previous rollback jar.
@@ -18,10 +19,12 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Replace straightforward deprecated Paper/Bukkit calls with their current equivalents.
   - [x] Remove obsolete Minecraft 1.x runtime branches while preserving config, chest data, commands, and behavior.
   - [x] Build and smoke-test the result on Paper 26.2.
-- [ ] **2. Scheduler and spawn-work cleanup**
-  - [ ] Replace deprecated async-to-sync scheduler chains with explicit Paper scheduler APIs.
-  - [ ] Keep Bukkit world/entity/inventory access on the server thread.
-  - [ ] Batch or stagger large chest reload/respawn work to avoid main-thread spikes.
+- [x] **2. Scheduler and spawn-work cleanup**
+  - [x] Replace deprecated async-to-sync scheduler chains with explicit Paper scheduler APIs.
+  - [x] Keep Bukkit world/entity/inventory access on the server thread.
+  - [x] Batch or stagger large chest reload/respawn work to avoid main-thread spikes.
+  - [x] Track all plugin tasks in one registry and cancel them on reload and shutdown.
+  - [x] Complete manual empty, break, hologram, reload, and respawn gameplay validation for build 199.
 - [ ] **3. Listener and lifecycle hardening**
   - [ ] Correct inventory raw-slot, drag, close, and quit handling.
   - [ ] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
@@ -40,7 +43,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Remove the command, editor toggle, runtime animation code, reflection, NMS packets, Spigot snapshot, and SpecialSource.
   - [x] Delete all inactive legacy adapter source modules after the active build no longer references them.
   - [x] Smoke-test copied live data on Paper 26.2, including reload, respawn, migration, and clean shutdown.
-  - [ ] Complete manual empty/break/respawn gameplay validation before promoting the candidate.
+  - [x] Complete manual empty/break/respawn gameplay validation before promoting the candidate.
 - [ ] **6. Replace the shaded configuration framework**
   - [ ] Replace `SimpleJavaPlugin` with a small local configuration/language manager on plain `JavaPlugin`.
   - [ ] Preserve existing YAML files, defaults, comments where possible, and migration behavior.

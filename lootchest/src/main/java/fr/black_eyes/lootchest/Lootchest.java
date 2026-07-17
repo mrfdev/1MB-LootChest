@@ -13,7 +13,6 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.api.events.LootChestSpawnEvent;
 import org.bukkit.Particle;
@@ -147,8 +146,6 @@ public class Lootchest {
 
 	@Getter @Setter private long protectionTime;
 
-	@Getter @Setter private BukkitRunnable respawnTask;
-	
 	@Getter @Setter private Integer maxFilledSlots;
 	
 	/**
@@ -562,7 +559,7 @@ public class Lootchest {
 
 	private void resendContainerBlock(Block block) {
 		Location location = block.getLocation();
-		Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+		Main.getInstance().getTaskRegistry().runLater(() -> {
 			Block current = location.getBlock();
 			if (!isGoodType(current)) {
 				return;
@@ -570,7 +567,7 @@ public class Lootchest {
 			for (Player player : current.getWorld().getPlayers()) {
 				player.sendBlockChange(location, current.getBlockData());
 			}
-		});
+		}, 1L);
 	}
 
 	public Location getParticleLocation() {
@@ -643,6 +640,7 @@ public class Lootchest {
 	 */
 	public void deleteChest() {
 		despawn();
+		LootChestUtils.cancelReSpawn(this);
 		Main.getInstance().getLootChest().remove(getName());
 		Main.getInstance().getConfigFiles().getData().set(DATA_CHEST_PATH+ getName(), null);
 		Main.getInstance().getConfigFiles().saveData();

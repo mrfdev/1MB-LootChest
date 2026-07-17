@@ -10,7 +10,6 @@ import com.Zrips.CMI.CMI;
 import com.Zrips.CMI.Modules.Holograms.CMIHologram;
 import com.Zrips.CMI.Modules.Holograms.HologramManager;
 import org.bukkit.Location;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import lombok.Getter;
 
@@ -37,7 +36,6 @@ public class LootChestHologram {
 	 */
 	@Getter private Location location;
 	private final Lootchest chest;
-	private BukkitRunnable runnable;
 	/**
 	 * @param chest the chest linked with this holo
 	 */
@@ -59,18 +57,7 @@ public class LootChestHologram {
 			remove();
 			this.setText(chest.getHolo());
 			if(!NULL_NAME.contains(text) && Main.configs.timerShowTimer && chest.getTime() != -1) {
-				if(runnable == null) {
-					startShowTime();
-				}
-				if(runnable.isCancelled()) {
-					try {
-						runnable.runTaskTimer(Main.getInstance(), 0, 20);
-					}catch(IllegalStateException e) {
-						runnable.cancel();
-						runnable = null; 
-						startShowTime();
-					}
-				}
+				startShowTime();
 			}
 		}
 	}
@@ -84,21 +71,15 @@ public class LootChestHologram {
 	 * Kills the hologram
 	 */
 	public void remove() {
-		if(Main.configs.usehologram) {
-			if(runnable != null) {
-				runnable.cancel();
-				runnable = null;
+		Main.getInstance().getTaskRegistry().cancel(timerTaskKey());
+		if(hologram!=null) {
+			try {
+				hologram.remove();
+			} catch (RuntimeException | LinkageError e) {
+				disableHolograms(e);
+			} finally {
+				hologram = null;
 			}
-			if(hologram!=null) {
-				try {
-					hologram.remove();
-				} catch (RuntimeException | LinkageError e) {
-					disableHolograms(e);
-				} finally {
-					hologram = null;
-				}
-			}
-
 		}
 	}
 	
@@ -163,8 +144,7 @@ public class LootChestHologram {
 	 * Shows a timer on the hologram if the config says it
 	 */
 	private void startShowTime() {
-		runnable = new BukkitRunnable() {
-    		public void run() {
+		Main.getInstance().getTaskRegistry().runRepeating(timerTaskKey(), () -> {
 				try {
 					CMIHologram holo = getHologram();
 					long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
@@ -184,32 +164,31 @@ public class LootChestHologram {
 								.replace("%Hologram", getText());
 
 						if(holo ==null) {
-							runnable.cancel();
+							Main.getInstance().getTaskRegistry().cancel(timerTaskKey());
 						}else {
 							//replace with paragraph character
 							setLine(Messages.legacy(text));
 						}
 					}
 					if(secondes<=0) {
-						runnable.cancel();
+						Main.getInstance().getTaskRegistry().cancel(timerTaskKey());
 					}
 				} catch (RuntimeException | LinkageError e) {
 					disableHolograms(e);
 				}
-	    	}
-	    };
-	    runnable.runTaskTimer(Main.getInstance(), 0, 20);
+			}, 0L, 20L);
 	}
 
 	private void disableHolograms(Throwable throwable) {
 		Main.configs.usehologram = false;
-		if(runnable != null) {
-			runnable.cancel();
-			runnable = null;
-		}
+		Main.getInstance().getTaskRegistry().cancel(timerTaskKey());
 		hologram = null;
 		Main.getInstance().getLogger().warning("LootChest holograms disabled after CMI error: "
 				+ throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
+	}
+
+	private String timerTaskKey() {
+		return "hologram-timer:" + chest.getName();
 	}
 	
 }

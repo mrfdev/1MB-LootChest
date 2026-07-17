@@ -23,6 +23,7 @@ messages and menu labels in `lang.yml`, and persistent Lootbox definitions in
 | `respawn_protection_time_in_second_by_default` | `0` | Default interaction protection after spawn. |
 | `Minimum_Number_Of_Players_For_Natural_Spawning` | `0` | Minimum online players for timed spawning. |
 | `Minimum_Number_Of_Players_For_Command_Spawning` | `0` | Minimum online players for bulk command spawning. |
+| `Scheduler.Chests_Per_Tick` | `1` | Maximum saved Lootboxes processed per tick during startup, reload, respawn-all, or despawn-all. |
 
 ## Rewards and Respawning
 
@@ -87,9 +88,9 @@ messages. Notification text supports MiniMessage plus `[Chest]`, `[World]`, `[x]
 ## Reload and Restart Behavior
 
 Use `/lc reload` for `config.yml`, `lang.yml`, and `data.yml`. It rebuilds the
-particle catalog and respawns loaded Lootboxes. Restart Paper after adding/removing
-CMI or other integration plugins, changing `Particles.enable`, or changing the
-particle scheduler interval so startup-only hooks and tasks are recreated cleanly.
+particle catalog, recreates its scheduler tasks, and respawns loaded Lootboxes in
+batches. The completion message is sent only after every batch has finished.
+Restart Paper after adding or removing CMI or another integration plugin.
 
 MiniMessage formatting is accepted throughout locale, menus, notifications, and
 hologram text. Existing legacy color codes remain readable for migration.

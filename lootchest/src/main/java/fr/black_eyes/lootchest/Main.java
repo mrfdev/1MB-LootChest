@@ -1,21 +1,22 @@
 package fr.black_eyes.lootchest;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.Zrips.CMI.CMI;
 import fr.black_eyes.lootchest.commands.SubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
+import fr.black_eyes.lootchest.scheduler.TaskRegistry;
 import fr.black_eyes.lootchest.ui.UiHandler;
 import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
 import lombok.Getter;
@@ -27,6 +28,11 @@ import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 public class Main extends SimpleJavaPlugin {
 	public static final String MENU_MAIN_TYPE = "Menu.main.type";
 	public static final String MENU_CHANCES_LORE = "Menu.chances.lore";
+	private static final String PARTICLE_TASK = "particles";
+	private static final String STARTUP_TASK = "startup";
+	private static final String CHEST_LOAD_TASK = "chest-load";
+	private static final String CHEST_SPAWN_TASK = "chest-spawn";
+	private static final String CHEST_BULK_TASK = "chest-bulk";
 	@Getter private final HashMap<Location, Long> protection = new HashMap<>();
 	@Getter private final LinkedHashMap<String, Particle> particles = new LinkedHashMap<>();
 	@Getter private final HashMap<Location, Particle> part = new HashMap<>();
@@ -38,12 +44,17 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private LootChestUtils utils;
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
+	@Getter private TaskRegistry taskRegistry;
+	@Getter private boolean chestWorkInProgress;
 	private boolean simplePluginStarted;
 
 
 	@Override
 	public void onDisable() {
-		if (lootChest != null && cmiHologramsAvailable) {
+		if (taskRegistry != null) {
+			taskRegistry.cancelAll();
+		}
+		if (lootChest != null) {
 			lootChest.values().forEach(chest -> chest.getHologram().remove());
 		}
 		if (simplePluginStarted) {
@@ -69,6 +80,7 @@ public class Main extends SimpleJavaPlugin {
 		setInstance(this);
 
 		lootChest = new HashMap<>();
+		taskRegistry = new TaskRegistry(this);
 				//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
 			super.onEnable();
 			simplePluginStarted = true;
@@ -115,6 +127,7 @@ public class Main extends SimpleJavaPlugin {
 	}
 
 	private void startCmiHolograms() {
+			cmiHologramsAvailable = false;
 			if (!configs.usehologram) {
 			return;
 		}
@@ -167,9 +180,7 @@ public class Main extends SimpleJavaPlugin {
 	 * Servers with bad performances (or with 400 chests) should disable particles.
 	 */
 	private void startParticles() {
-		new BukkitRunnable() {
-			@Override
-			public void run() {
+		taskRegistry.runRepeating(PARTICLE_TASK, () -> {
 				if (!configs.partEnable) {
 					return;
 				}
@@ -192,50 +203,124 @@ public class Main extends SimpleJavaPlugin {
 						entry.setValue(particleCatalog.getFallback());
 					}
 				}
-			}
-		}.runTaskTimer(this, 0, configs.partRespawnTicks);
+			}, 0L, configs.partRespawnTicks);
 	}
     		
 	/**
-	 * Loads all chests asynchronously
+	 * Loads all chests after the configured startup delay.
 	 */
-	@SuppressWarnings("deprecation") // Scheduler modernization is tracked in TODO item 2.
 	private void loadChests() {
 		long countdown = configs.cooldownBeforePluginStart;
     	if(countdown>0) 
 			Messages.log("Chests will load in "+ countdown + " seconds.");
-    	
-        this.getServer().getScheduler().runTaskLater(this, () -> {
-            Messages.log("Loading chests...");
-            long current = (new Timestamp(System.currentTimeMillis())).getTime();
-            for(String keys : Objects.requireNonNull(configFiles.getData().getConfigurationSection("chests")).getKeys(false)) {
-                String name = configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world");
-                String randomName = name;
-                if( configFiles.getData().getInt(DATA_CHEST_PATH + keys + ".randomradius")>0) {
-                    randomName = configFiles.getData().getString(DATA_CHEST_PATH + keys + ".randomPosition.world");
-                }
-                if(name != null && LootChestUtils.isWorldLoaded(randomName) && LootChestUtils.isWorldLoaded(name)) {
-                    getLootChest().put(keys, new Lootchest(keys));
-                }
-                else {
-					Messages.log("<#f38ba8>Could not load LootChest " + keys + ": world " + configFiles.getData().getString(DATA_CHEST_PATH + keys + ".position.world") + " is not loaded.");
-                }
-            }
-            
-            Messages.log("Loaded "+lootChest.size() + " Lootchests in "+((new Timestamp(System.currentTimeMillis())).getTime()-current) + " miliseconds");
-            Messages.log("Starting LootChest timers asynchronously...");
-            for (final Lootchest lc : lootChest.values()) {
-                Bukkit.getScheduler().scheduleAsyncDelayedTask(instance, () ->
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(instance, () -> {
-                            if (!lc.spawn(false)) {
-                                LootChestUtils.scheduleReSpawn(lc);
-                                lc.reactivateEffects();
-                            }
-                        }, 0L)
-                        , 5L);
-            }
-            Messages.log("Plugin loaded");
-                }, countdown+20);
+
+		// Preserve the established startup timing while moving task ownership into the registry.
+		taskRegistry.runLater(STARTUP_TASK, () -> {
+			Messages.log("Loading chests...");
+			loadChestDefinitions(false, () -> Messages.log("Plugin loaded"));
+		}, countdown + 20L);
+	}
+
+	public void reloadLootChests(Runnable completion) {
+		taskRegistry.cancelAll();
+		chestWorkInProgress = false;
+
+		if (configs.saveDataFileDuringReload) {
+			LootChestUtils.saveAllChests();
+		} else {
+			configFiles.reloadData();
+		}
+		lootChest.values().forEach(chest -> chest.getHologram().remove());
+		lootChest.clear();
+		part.clear();
+		protection.clear();
+
+		configFiles.reloadConfig();
+		setConfigs(Config.getInstance(configFiles.getConfig()));
+		startCmiHolograms();
+		reloadParticleCatalog();
+		if (configs.partEnable) {
+			startParticles();
+		}
+
+		Messages.log("Loading chests...");
+		loadChestDefinitions(true, completion);
+	}
+
+	public boolean runBatchedChestOperation(
+			Collection<Lootchest> chests,
+			Consumer<Lootchest> operation,
+			Runnable completion
+	) {
+		if (chestWorkInProgress || taskRegistry.hasTask(CHEST_BULK_TASK)) {
+			return false;
+		}
+		chestWorkInProgress = true;
+		taskRegistry.runBatched(
+				CHEST_BULK_TASK,
+				new ArrayList<>(chests),
+				configs.chestsPerTick,
+				operation,
+				() -> {
+					chestWorkInProgress = false;
+					completion.run();
+				});
+		return true;
+	}
+
+	private void loadChestDefinitions(boolean forceSpawn, Runnable completion) {
+		chestWorkInProgress = true;
+		long startedAt = System.currentTimeMillis();
+		ConfigurationSection chestSection = configFiles.getData().getConfigurationSection("chests");
+		List<String> chestNames = chestSection == null
+				? Collections.emptyList()
+				: new ArrayList<>(chestSection.getKeys(false));
+
+		taskRegistry.runBatched(
+				CHEST_LOAD_TASK,
+				chestNames,
+				configs.chestsPerTick,
+				this::loadChestDefinition,
+				() -> {
+					Messages.log("Loaded " + lootChest.size() + " Lootchests in "
+							+ (System.currentTimeMillis() - startedAt) + " milliseconds.");
+					Messages.log("Starting LootChest timers in batches...");
+					taskRegistry.runBatched(
+							CHEST_SPAWN_TASK,
+							new ArrayList<>(lootChest.values()),
+							configs.chestsPerTick,
+							chest -> spawnLoadedChest(chest, forceSpawn),
+							() -> {
+								chestWorkInProgress = false;
+								completion.run();
+							});
+				});
+	}
+
+	private void loadChestDefinition(String chestName) {
+		String worldName = configFiles.getData().getString(DATA_CHEST_PATH + chestName + ".position.world");
+		String randomWorldName = worldName;
+		if (configFiles.getData().getInt(DATA_CHEST_PATH + chestName + ".randomradius") > 0) {
+			randomWorldName = configFiles.getData().getString(DATA_CHEST_PATH + chestName + ".randomPosition.world");
+		}
+		if (worldName != null
+				&& LootChestUtils.isWorldLoaded(randomWorldName)
+				&& LootChestUtils.isWorldLoaded(worldName)) {
+			lootChest.put(chestName, new Lootchest(chestName));
+			return;
+		}
+		Messages.log("<#f38ba8>Could not load LootChest " + chestName + ": world " + worldName + " is not loaded.");
+	}
+
+	private void spawnLoadedChest(Lootchest chest, boolean forceSpawn) {
+		if (forceSpawn) {
+			chest.spawn(true);
+			return;
+		}
+		if (!chest.spawn(false)) {
+			LootChestUtils.scheduleReSpawn(chest);
+			chest.reactivateEffects();
+		}
 	}
 	
 	
@@ -271,6 +356,7 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
 		configFiles.setConfig("EnableLootin", false);
 		configFiles.setConfig("Particles.fallback_particle", "FLAME");
+		configFiles.setConfig("Scheduler.Chests_Per_Tick", 1);
 		// Keep legacy files rollback-readable while permanently disabling the removed effect.
 		configFiles.getConfig().set("Fall_Effect.Enabled", false);
 		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
@@ -291,6 +377,7 @@ public class Main extends SimpleJavaPlugin {
 			configFiles.setConfig("Fall_Effect.Optionnal_Color_If_Block_Is_Wool", null);
 		configFiles.setLang("AllChestsDespawned", "<#a6e3a1>All LootChests were despawned.");
 		configFiles.setLang("AllChestsDespawnedInWorld", "<#a6e3a1>All LootChests were despawned in <#89dceb>[World]<#a6e3a1>.");
+		configFiles.setLang("ChestOperationInProgress", "<#f9e2af>LootChest is still loading or processing another bulk chest command. Please try again in a moment.");
 		configFiles.setLang("worldDoesntExist", "<#f38ba8>World <#89dceb>[World] <#f38ba8>does not exist.");
 		configFiles.setLang("AllChestsReloadedInWorld", "<#a6e3a1>All LootChests were respawned in <#89dceb>[World]<#a6e3a1>.");
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawnall")){

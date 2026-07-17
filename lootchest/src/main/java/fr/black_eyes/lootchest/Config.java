@@ -19,6 +19,7 @@ public final int defaultResetTime,
 		partNumber,
 		radiusWithoutMonstersForOpeningChest,
 		partRespawnTicks,
+		chestsPerTick,
 		defaultRespawnProtection,
 		defaultMaxFilledSlots,
 		minimumNumberOfPlayersForCommandSpawning,
@@ -99,6 +100,7 @@ public Config(FileConfiguration config) {
 	minimumNumberOfPlayersForNaturalSpawning = config.getInt("Minimum_Number_Of_Players_For_Natural_Spawning");
 	partNumber = config.getInt("Particles.number");
 	partRespawnTicks = config.getInt("Particles.respawn_ticks");
+	chestsPerTick = Math.max(1, config.getInt("Scheduler.Chests_Per_Tick", 1));
 	radiusWithoutMonstersForOpeningChest = config.getInt("Radius_Without_Monsters_For_Opening_Chest");
 	defaultMaxFilledSlots = config.getInt("Max_Filled_Slots_By_Default");
 	minimumNumberOfPlayersForCommandSpawning = config.getInt("Minimum_Number_Of_Players_For_Command_Spawning");

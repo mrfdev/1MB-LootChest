@@ -13,6 +13,7 @@ AllChestsReloadedInWorld: '<#a6e3a1>All LootChests were respawned in <#89dceb>[W
 editedParticle: '<#a6e3a1>Particle updated for <#89dceb>[Chest]<#a6e3a1>.'
 hologram_edited: '<#a6e3a1>Hologram updated for <#89dceb>[Chest]<#a6e3a1>.'
 PluginReloaded: '<#a6e3a1>Configuration, locale, chest data, and LootChests were reloaded.'
+ChestOperationInProgress: '<#f9e2af>LootChest is still loading or processing another bulk chest command. Please try again in a moment.'
 ListCommand: '<#cba6f7>LootChests: <#89dceb>[List]'
 copiedChest: '<#f6c177>Copied <#89dceb>[Chest1] <#f6c177>into <#89dceb>[Chest2]<#f6c177>.'
 changedPosition: '<#f6c177>Moved <#89dceb>[Chest] <#f6c177>to your location.'

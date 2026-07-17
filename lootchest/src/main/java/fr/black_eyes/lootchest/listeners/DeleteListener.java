@@ -161,10 +161,10 @@ public class DeleteListener implements Listener  {
 				block.getLocation().getWorld().dropItemNaturally(block.getLocation(), new ItemStack(key.getType()));
 			}
 			// Paper restores cancelled block breaks after event handlers return.
-			Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+			Main.getInstance().getTaskRegistry().runLater(() -> {
 				key.despawnAtValidatedLocation(block.getLocation());
 				key.spawn(false);
-			});
+			}, 1L);
 
 			Player p = e.getPlayer();
 			sendChestTakeMessageIfEnabled(key, p);

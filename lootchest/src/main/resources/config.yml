@@ -7,6 +7,9 @@ EnableLootin: false
     #Some people have troubles about worlds loading before my plugin: in fact, chests located in unloaded worlds aren't loaded.
     #Let's fix this with this option. Cooldown is in second.
 Cooldown_Before_Plugin_Start: 0
+    #Maximum number of saved LootChests loaded, respawned, or despawned per server tick
+Scheduler:
+  Chests_Per_Tick: 1
     #Here are some options about particles
 Particles:
       #if you disable this, no matter what you but below^^

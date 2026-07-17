@@ -16,7 +16,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.simpleJavaPlugin.Files;
 
@@ -101,12 +100,6 @@ public class LootChestUtils  {
 		) {
 			spawnLoc = getRandomLocation(startingLoc, radius, counter );
 			counter++;
-			//wait 10ms to avoid lag
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				Messages.log("<#f38ba8>Interrupted while finding a valid spawn location: " + e.getMessage());
-			}
 		}
 		if(spawnLoc == null) {
 			return null;
@@ -124,13 +117,15 @@ public class LootChestUtils  {
 	 * @param lc the Lootchest
 	 */
 	public static void scheduleReSpawn(Lootchest lc) {
+		String taskKey = respawnTaskKey(lc);
 		long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime();
 		long minutes = lc.getTime();
 		if(minutes == 0) {
-			lc.spawn(false);
+			Main.getInstance().getTaskRegistry().runLater(taskKey, () -> lc.spawn(false), 1L);
 			return;
 		}
 		if( minutes<0) {
+			Main.getInstance().getTaskRegistry().cancel(taskKey);
 			return;
 		}
 		long tempsEnregistre = lc.getLastReset();
@@ -143,17 +138,16 @@ public class LootChestUtils  {
 		// plus, this isn't logical at all. but... let's try
 		timeToWait +=5;
 
-		//we have to noe duplicate respawn tasks
-		if(lc.getRespawnTask()!=null)
-			lc.getRespawnTask().cancel();
-		lc.setRespawnTask( new BukkitRunnable() { 	
-            @Override
-            public void run() {
-            	lc.spawn(false);
-            }                
-        });
-		lc.getRespawnTask().runTaskLater(Main.getInstance(), timeToWait*20);
+		Main.getInstance().getTaskRegistry().runLater(taskKey, () -> lc.spawn(false), timeToWait * 20L);
     }
+
+	public static void cancelReSpawn(Lootchest lc) {
+		Main.getInstance().getTaskRegistry().cancel(respawnTaskKey(lc));
+	}
+
+	private static String respawnTaskKey(Lootchest lc) {
+		return "respawn:" + lc.getName();
+	}
 	
 	/**
 	 * Fill an inventory with items from a lootchest or to give a lootchest to a player

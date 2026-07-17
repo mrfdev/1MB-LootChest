@@ -2,9 +2,10 @@ package fr.black_eyes.lootchest.commands.commands;
 
 import fr.black_eyes.lootchest.Messages;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 import fr.black_eyes.lootchest.Lootchest;
@@ -12,7 +13,6 @@ import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
 import fr.black_eyes.lootchest.commands.SubCommand;
 
-@SuppressWarnings("deprecation")
 public class DespawnAllCommand extends SubCommand {
 	
 	public DespawnAllCommand() {
@@ -21,26 +21,26 @@ public class DespawnAllCommand extends SubCommand {
 	
 	@Override
 	protected void onCommand(CommandSender sender, String[] args) {
-		if(args.length == 2) {
-			String worldName = args[1];
-			for (final Lootchest l : Main.getInstance().getLootChest().values()) {
-				if (!l.getWorld().equals(worldName)) {
-					continue;
-				}
-				Bukkit.getScheduler().scheduleAsyncDelayedTask(Main.getInstance(), () ->
-						Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () ->
-								l.spawn(false, true), 0L), 5L);
+		String worldName = args.length == 2 ? args[1] : null;
+		List<Lootchest> chests = new ArrayList<>();
+		for (Lootchest chest : Main.getInstance().getLootChest().values()) {
+			if (worldName == null || chest.getWorld().equals(worldName)) {
+				chests.add(chest);
 			}
-			Messages.msg(sender, "AllChestsDespawnedInWorld", "[World]", worldName);
-		}else if(args.length == 1) {
-			for (final Lootchest l : Main.getInstance().getLootChest().values()) {
-				Bukkit.getScheduler().scheduleAsyncDelayedTask(Main.getInstance(), () ->
-						Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () ->
-								l.spawn(false, true), 0L), 5L);
-			}
-			Messages.msg(sender, "AllChestsDespawned", " ", " ");
 		}
-		
-		
+
+		boolean started = Main.getInstance().runBatchedChestOperation(
+				chests,
+				chest -> chest.spawn(false, true),
+				() -> {
+					if (worldName == null) {
+						Messages.msg(sender, "AllChestsDespawned", " ", " ");
+					} else {
+						Messages.msg(sender, "AllChestsDespawnedInWorld", "[World]", worldName);
+					}
+				});
+		if (!started) {
+			Messages.msg(sender, "ChestOperationInProgress");
+		}
 	}
 }
