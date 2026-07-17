@@ -1,6 +1,4 @@
-    #Checks for updates at plugin start
-CheckForUpdates: false
-    #Shows verbose compatibility details such as the falling-package adapter used per chest
+    #Shows verbose LootChest compatibility and diagnostic details
 Debug: false
     #Info messages at plugin startup
 ConsoleMessages: true
@@ -68,19 +66,14 @@ Destroy_Naturally_Instead_Of_Removing_Chest: true
 Radius_Without_Monsters_For_Opening_Chest: 0
     #How many slots can be filled in a chest before it stops filling with items
 Max_Filled_Slots_By_Default: 0
-    #Here comes the funny part :)
+# Legacy rollback settings. Build 198 and newer ignore every value in this section.
 Fall_Effect:
-      #the block is on an armorstand's head, so it would be 1 or 2 blocks above the chest, and not really on it
   Let_Block_Above_Chest_After_Fall: false
-      #The block that falls. This block is on an armorstand's head
   Block: CHEST
-      #The block will spawn 50 blocks above the chest then will fall to it
   Height: 50
-      #You can still disable fall effect by default, and enable it for some chests only
-  Enabled: true
-      #Or you can let fall effect and remove fireworks
+      #Permanently disabled; the other values remain only for an emergency rollback
+  Enabled: false
   Enable_Fireworks: true
-      #0.8 is a good speed I think^^ But that's your config file x)
   Speed: 0.8
     # keep this to false if you want to edit data file by hand (not recommended) then do a /lc reload
 SaveDataFileDuringReload: false

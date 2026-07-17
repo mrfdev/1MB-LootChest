@@ -21,7 +21,7 @@ older Java runtime.
 5. Start Paper and wait for `LootChest ... Plugin loaded`.
 6. Run `/lc info`, `/lc help`, and `/lc list`.
 7. Create a disposable test Lootbox and verify open, empty, break, respawn,
-   particle, falling-package, and hologram behavior before using production data.
+   particle, and hologram behavior before using production data.
 
 ## Updating
 
@@ -51,6 +51,6 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 mvn -DskipTests clean package
 ```
 
-The active reactor compiles against Paper API `26.2.build.60-beta`, packages the
-native `v_26_2` adapter, emits Java 25 bytecode, and writes the named release jar
-to the root `target/` directory.
+The active reactor compiles against Paper API `26.2.build.60-beta`, emits Java 25
+bytecode, and writes the named release jar to the root `target/` directory. It
+does not compile or package version-specific Minecraft internals.

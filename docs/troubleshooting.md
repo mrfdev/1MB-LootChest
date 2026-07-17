@@ -65,6 +65,6 @@ player is online. Otherwise use global or per-world announcements.
 
 ## Privacy
 
-The custom build defaults its update checker off and does not start bStats metrics.
+The custom build contains neither the upstream update checker nor bStats metrics.
 If another plugin reports metrics or update notices, identify the plugin name in
-the message before changing Lootbox configuration.
+the message; Lootbox cannot originate either request.

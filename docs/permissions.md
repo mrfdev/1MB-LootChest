@@ -28,7 +28,6 @@ commands to selected groups.
 | `lootchest.setpos` | Operator | Move a Lootbox. |
 | `lootchest.setprotection` | Operator | Change spawn protection. |
 | `lootchest.settime` | Operator | Change respawn time. |
-| `lootchest.togglefall` | Operator | Toggle a falling-package effect. |
 | `lootchest.tp` | Operator | Teleport to a Lootbox. |
 
 Regular interaction with a spawned Lootbox does not require one of these command

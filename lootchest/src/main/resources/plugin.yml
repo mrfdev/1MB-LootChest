@@ -1,6 +1,6 @@
 name: ${project.parent.name}
 main: ${project.groupId}.Main
-version: ${project.version}
+version: ${project.version}-${buildNumber}
 author: Black_Eyes
 api-version: '26.2'
 softdepend: [CMI, CMILib, MultiWorld, Multiverse-Core, FabledSkyBlock, MultiverseCore, GriefPrevention, Residence, WorldGuard, Factions, FactionsX, Towny, Lootin]
@@ -43,5 +43,4 @@ permissions:
       lootchest.setpos: true
       lootchest.setprotection: true
       lootchest.settime: true
-      lootchest.togglefall: true
       lootchest.tp: true

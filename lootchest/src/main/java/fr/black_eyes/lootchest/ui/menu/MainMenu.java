@@ -28,16 +28,9 @@ public class MainMenu extends ChestUi {
 		setItem(15, nameItem(Mat.CLOCK, Messages.get("Menu.main.respawnTime")), p -> uiHandler.openUi(p, UiHandler.UiType.TIME, chest));
 		setItem(22, nameItem(Mat.DIAMOND, Messages.get("Menu.main.chances")), p -> uiHandler.openUi(p, UiHandler.UiType.CHANCES, chest));
 		
-		setItem(28, getToggleItem("fall", chest.isFallEnabled()), p -> toggleFall(chest));
 		setItem(30, getToggleItem("respawn_cmd", chest.isRespawnCmdMsgEnabled()), p -> toggleRespawnCmd(chest));
 		setItem(32, getToggleItem("respawn_natural", chest.isRespawnNaturalMsgEnabled()), p -> toggleRespawnNatural(chest));
 		setItem(34, getToggleItem("take_message", chest.isTakeMsgEnabled()), p -> toggleTakeMsg(chest));
-	}
-	
-	private void toggleFall(Lootchest lc) {
-		lc.setFallEnabled(!lc.isFallEnabled());
-		changeItem(28, getToggleItem("fall", lc.isFallEnabled()));
-		lc.updateData();
 	}
 	
 	private void toggleRespawnCmd(Lootchest lc) {

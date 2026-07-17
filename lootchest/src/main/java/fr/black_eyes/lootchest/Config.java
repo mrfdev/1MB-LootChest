@@ -16,7 +16,6 @@ public final int defaultResetTime,
 		defaultItemChance,
 		cooldownBeforePluginStart,
 		minimumNumberOfPlayersForNaturalSpawning,
-		fallHeight,
 		partNumber,
 		radiusWithoutMonstersForOpeningChest,
 		partRespawnTicks,
@@ -30,15 +29,12 @@ public final boolean saveDataFileDuringReload,
 		usePlayersLocationsForRandomSpawn,
 		saveChestLocationsAtEverySpawn,
 		removeEmptyChests,
-		checkForUpdates,
 		debug,
 		consoleMessages,
 		preventChestSpawnInProtectedPlaces,
 		removeChestAfterFirstOpening,
 		preventHopperPlacingUnderLootChest,
 		protectFromExplosions,
-		fallEnabled,
-		fallEnableFireworks,
 		partEnable,
 		noteBungeeBroadcast,
 		notePerWorldMessage,
@@ -65,10 +61,7 @@ public final String partDefaultParticle,
 		timerMSep,
 		timerSSep,
 		timerFormat;
-public String fallBlock;
-
-public final double FALL_Speed,
-PART_radius,
+public final double PART_radius,
 Hologram_distance_to_chest,
 PART_speed;
 
@@ -104,7 +97,6 @@ public Config(FileConfiguration config) {
 	defaultItemChance = config.getInt("default_item_chance");
 	cooldownBeforePluginStart = config.getInt("Cooldown_Before_Plugin_Start");
 	minimumNumberOfPlayersForNaturalSpawning = config.getInt("Minimum_Number_Of_Players_For_Natural_Spawning");
-	fallHeight = config.getInt("Fall_Effect.Height");
 	partNumber = config.getInt("Particles.number");
 	partRespawnTicks = config.getInt("Particles.respawn_ticks");
 	radiusWithoutMonstersForOpeningChest = config.getInt("Radius_Without_Monsters_For_Opening_Chest");
@@ -119,14 +111,11 @@ public Config(FileConfiguration config) {
 	saveChestLocationsAtEverySpawn = config.getBoolean("save_Chest_Locations_At_Every_Spawn");
 		usehologram = config.getBoolean("UseHologram");
 	removeEmptyChests = config.getBoolean("RemoveEmptyChests");
-	checkForUpdates = config.getBoolean("CheckForUpdates");
 	debug = config.getBoolean("Debug");
 	consoleMessages = config.getBoolean("ConsoleMessages");
 	preventChestSpawnInProtectedPlaces = config.getBoolean("Prevent_Chest_Spawn_In_Protected_Places");
 	removeChestAfterFirstOpening = config.getBoolean("RemoveChestAfterFirstOpening");
 	preventHopperPlacingUnderLootChest = config.getBoolean("PreventHopperPlacingUnderLootChest");
-	fallEnabled = config.getBoolean("Fall_Effect.Enabled");
-	fallEnableFireworks = config.getBoolean("Fall_Effect.Enable_Fireworks");
 	partEnable = config.getBoolean("Particles.enable");
 	noteBungeeBroadcast = config.getBoolean("respawn_notify.bungee_broadcast");
 	notePerWorldMessage = config.getBoolean("respawn_notify.per_world_message");
@@ -144,7 +133,6 @@ public Config(FileConfiguration config) {
 	
 	partDefaultParticle = config.getString("Particles.default_particle");
 	partFallbackParticle = config.getString("Particles.fallback_particle", "FLAME");
-	fallBlock = config.getString("Fall_Effect.Block");
 	noteNaturalMsg = config.getString("respawn_notify.natural_respawn.message");
 	noteCommandMsg = config.getString("respawn_notify.respawn_with_command.message");
 	noteAllcmdMsg = config.getString("respawn_notify.respawn_all_with_command.message");
@@ -154,7 +142,6 @@ public Config(FileConfiguration config) {
 	timerSSep = config.getString("Timer_on_hologram.Seconds_Separator");
 	timerFormat = config.getString("Timer_on_hologram.Format");
 
-	FALL_Speed = config.getDouble("Fall_Effect.Speed");
 	PART_radius= config.getDouble("Particles.radius");
 	PART_speed= config.getDouble("Particles.speed");
 	Hologram_distance_to_chest = config.getDouble("Hologram_distance_to_chest");

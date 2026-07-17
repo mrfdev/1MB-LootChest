@@ -29,7 +29,7 @@ shown on one visit is not guaranteed on the next visit.
 - Repeatable reward containers with staff-configured respawn times.
 - Different container styles, including chests, barrels, shulker boxes, and copper chests.
 - Randomized reward chances and reward limits for individual Lootboxes.
-- Visual particles, names, timers, and falling-package arrival effects.
+- Visual particles, names, and timers.
 - World-wide, local-world, or network announcements depending on server configuration.
 
 ## Commands

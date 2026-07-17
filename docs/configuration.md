@@ -8,8 +8,7 @@ messages and menu labels in `lang.yml`, and persistent Lootbox definitions in
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `CheckForUpdates` | `false` | Run the upstream update check during startup. The 1MoreBlock build keeps it off. |
-| `Debug` | `false` | Log verbose adapter details such as the selected falling-package implementation. |
+| `Debug` | `false` | Log verbose Lootbox diagnostic details. |
 | `ConsoleMessages` | `true` | Enable normal plugin startup/status messages. |
 | `EnableLootin` | `false` | Integrate compatible spawned containers with Lootin. |
 | `Cooldown_Before_Plugin_Start` | `0` | Delay chest loading, in seconds, to allow worlds to load. |
@@ -68,17 +67,12 @@ whose data type is `Void`. This prevents options that require color, block, item
 trail, or vibration payloads from silently failing. Legacy saved names are mapped
 when a safe equivalent exists.
 
-## Falling Package
+## Legacy Falling-Package Settings
 
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `Fall_Effect.Block` | `CHEST` | Material rendered by the falling package. |
-| `Fall_Effect.Height` | `50` | Starting height above the destination. |
-| `Fall_Effect.Enabled` | `true` | Default effect state for newly created Lootboxes. |
-| `Fall_Effect.Enable_Fireworks` | `true` | Add fireworks during the descent. |
-| `Fall_Effect.Speed` | `0.8` | Downward animation speed. |
-
-Paper 26.2 uses the bundled native `v_26_2` adapter.
+The falling-package animation was removed in build 198 because the 1MoreBlock
+server does not use it and it required version-specific Minecraft internals.
+Existing `Fall_Effect` configuration remains inert for rollback safety, and saved
+per-chest `fall` values are migrated to `false` when data is saved.
 
 ## Timer and Notifications
 

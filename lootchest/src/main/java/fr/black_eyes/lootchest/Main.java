@@ -18,7 +18,6 @@ import fr.black_eyes.lootchest.listeners.UiListener;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.ui.UiHandler;
 import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
-import fr.black_eyes.simpleJavaPlugin.Updater;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,7 +36,6 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private HashMap<String, Lootchest> lootChest;
 	@Getter @Setter private static Main instance;
 	@Getter private LootChestUtils utils;
-	@Getter private boolean useArmorStands;
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
 	private boolean simplePluginStarted;
@@ -71,7 +69,6 @@ public class Main extends SimpleJavaPlugin {
 		setInstance(this);
 
 		lootChest = new HashMap<>();
-		useArmorStands = true;
 				//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
 			super.onEnable();
 			simplePluginStarted = true;
@@ -103,17 +100,6 @@ public class Main extends SimpleJavaPlugin {
 				Messages.log("<#f38ba8>Chest spawn messages cannot be delivered across the proxy until it is enabled.");
         	}
  
-        if( !useArmorStands && Main.configs.fallBlock.equals("CHEST")) {
-        	configFiles.getConfig().set("Fall_Effect.Block", "NOTE_BLOCK");
-        	configs.fallBlock = "NOTE_BLOCK";
-        }
-        
-
-		if(configs.checkForUpdates) {
-			Messages.log("Checking for update...");
-			new Updater(this, "lootchest.61564");
-		}
-
 	        Messages.log("Starting particles...");
         
 		reloadParticleCatalog();
@@ -285,12 +271,13 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
 		configFiles.setConfig("EnableLootin", false);
 		configFiles.setConfig("Particles.fallback_particle", "FLAME");
+		// Keep legacy files rollback-readable while permanently disabling the removed effect.
+		configFiles.getConfig().set("Fall_Effect.Enabled", false);
 		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
 		configFiles.setLang("info.title", "<#cba6f7><bold>Lootbox</bold> <#6c7086>v[Version]");
 		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");
-		//deletion of now unsuported feature
 		configFiles.getConfig().set("Fall_Effect.Let_Block_Above_Chest_After_Fall", null);
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
 		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
@@ -331,12 +318,17 @@ public class Main extends SimpleJavaPlugin {
 			configFiles.saveLang();
 		}
 		List<String> commandHelp = configFiles.getLang().getStringList("help");
+		commandHelp.removeIf(line -> line.toLowerCase(Locale.ROOT).contains("togglefall"));
 		for (int i = 0; i < commandHelp.size(); i++) {
 			if (commandHelp.get(i).contains("/lc settime")) {
 				commandHelp.set(i, "<#a6e3a1>/lc settime <#bac2de>\\<name> \\<minutes> <#6c7086>- Set respawn time");
 			}
 		}
 		configFiles.getLang().set("help", commandHelp);
+		configFiles.getLang().set("enabledFallEffect", null);
+		configFiles.getLang().set("disabledFallEffect", null);
+		configFiles.getLang().set("Menu.main.disable_fall", null);
+		configFiles.getLang().set("Menu.main.enable_fall", null);
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawn ")){
 			  List<String> help = configFiles.getLang().getStringList("help");
 			  help.add("<#a6e3a1>/lc despawn <#bac2de>\\<name> <#6c7086>- Despawn a LootChest");

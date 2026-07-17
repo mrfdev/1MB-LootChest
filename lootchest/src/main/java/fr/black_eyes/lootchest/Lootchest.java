@@ -16,7 +16,6 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.black_eyes.api.events.LootChestSpawnEvent;
-import fr.black_eyes.lootchest.falleffect.FallingPackageEntity;
 import org.bukkit.Particle;
 import fr.black_eyes.simpleJavaPlugin.Files;
 import lombok.Getter;
@@ -52,13 +51,6 @@ public class Lootchest {
 	 * @return The inventory of the lootchest, used to give it to someone, or fill the lootchest
 	 */
 	@Getter	private final Inventory inv;
-
-	/**
-	 * @return the value of the fall boolean, which says if the LootChest should display a fall effect or not
-	 * @param fall says if the LootChest should display a fall effect or not
-	 */
-	 @Getter
-	@Setter private boolean fallEnabled;
 
 	/**
 	 * @return An array of integers, representing chances of each item in the chest
@@ -223,7 +215,6 @@ public class Lootchest {
 					.resolveOrFallback(part, "LootChest " + naming);
 		}
 		time = configFiles.getData().getInt(DATA_CHEST_PATH + naming + ".time");
-		fallEnabled =  configFiles.getData().getBoolean(DATA_CHEST_PATH + naming + ".fall");
 		try {
 		for(String keys : Objects.requireNonNull(configFiles.getData().getConfigurationSection(DATA_CHEST_PATH + naming + ".inventory")).getKeys(false)) {
 			inv.setItem(Integer.parseInt(keys), configFiles.getData().getItemStack(DATA_CHEST_PATH + naming + ".inventory." + keys));
@@ -266,7 +257,6 @@ public class Lootchest {
 			Messages.log("<#f38ba8>Do not use double chests to create LootChests. Only half of the inventory was registered.");
 		}
 		maxFilledSlots = Main.configs.defaultMaxFilledSlots;
-		fallEnabled =  Main.configs.fallEnabled;
 		respawnCmdMsgEnabled =  Main.configs.noteCommandE;
 		respawnNaturalMsgEnabled =  Main.configs.noteNaturalE;
 		takeMsgEnabled =  Main.configs.noteMessageOnChestTake;
@@ -297,7 +287,6 @@ public class Lootchest {
 		}
 		chances = lc.getChances().clone();
 		maxFilledSlots = lc.getMaxFilledSlots();
-		fallEnabled = lc.isFallEnabled();
 		respawnCmdMsgEnabled = lc.isRespawnCmdMsgEnabled();
 		respawnNaturalMsgEnabled = lc.isRespawnNaturalMsgEnabled();
 		takeMsgEnabled = lc.isTakeMsgEnabled();
@@ -328,7 +317,8 @@ public class Lootchest {
 				configFiles.getData().set(DATA_CHEST_PATH + name + ".chance." + i, chances[i]);
 			}
 		}
-		configFiles.getData().set(DATA_CHEST_PATH + name + ".fall", fallEnabled);
+		// Keep old data files rollback-readable while permanently disabling the removed effect.
+		configFiles.getData().set(DATA_CHEST_PATH + name + ".fall", false);
 		configFiles.getData().set(DATA_CHEST_PATH + name + TYPE, type.name());
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".respawn_cmd", respawnCmdMsgEnabled);
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".respawn_natural", respawnNaturalMsgEnabled);
@@ -482,7 +472,6 @@ public class Lootchest {
 
 	public void activateExistingContainer(Block block) {
 		Location location = block.getLocation();
-		spawnFallEffect(location, block.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4));
 		createchest(block, location);
 		resendContainerBlock(block);
 	}
@@ -523,9 +512,6 @@ public class Lootchest {
 			LootChestUtils.scheduleReSpawn(this);
 			return false;
 		}
-		Location actualLocation = getActualLocation();
-		boolean chunkWasLoaded = actualLocation.getWorld().isChunkLoaded(actualLocation.getBlockX() >> 4, actualLocation.getBlockZ() >> 4);
-		
 		Location globalLocation = getPosition();
 		Location spawnLoc = globalLocation.clone();
 		//if randomSpawn is enabled, we get a random location in the radius
@@ -567,22 +553,11 @@ public class Lootchest {
 			}
 		}
 
-		// make the fall effect
 		final Block newBlock = spawnLoc.getBlock();
-		spawnFallEffect(spawnLoc, chunkWasLoaded);
 		createchest(newBlock, spawnLoc);
 		resendContainerBlock(newBlock);
 		
 		return true;
-	}
-
-	private void spawnFallEffect(Location target, boolean chunkWasLoaded) {
-		if (!isFallEnabled()) {
-			return;
-		}
-		int height = Main.configs.fallHeight;
-		Location startLocation = new Location(target.getWorld(), target.getX()+0.5, target.getY()+height, target.getZ()+0.5);
-		new FallingPackageEntity(startLocation, chunkWasLoaded, target);
 	}
 
 	private void resendContainerBlock(Block block) {
@@ -686,7 +661,7 @@ public class Lootchest {
 	 * gives the main information about the chest
 	 */
 	public String toString() {
-		return (name +" "+ fallEnabled +" " +direction+" "+ radius+" "+particle);             
+		return (name +" " +direction+" "+ radius+" "+particle);
 	}
 	
 	/**

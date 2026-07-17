@@ -2,7 +2,7 @@
 
 Lootbox is the custom 1MoreBlock edition of LootChest. It creates repeatable,
 staff-configured loot containers with randomized contents, respawn timers,
-announcements, particles, optional falling-package effects, and CMI holograms.
+announcements, particles, and CMI holograms.
 
 This fork is intentionally focused on **Paper 26.2** and **Java 25**. It is not a
 general-purpose legacy Bukkit or Spigot build.
@@ -25,7 +25,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - Chest, trapped chest, barrel, shulker box, and copper chest containers.
 - Per-item reward chances and a configurable maximum number of filled slots.
 - Per-container respawn time, position, random spawn radius, announcements,
-  hologram text, particle, protection time, and falling-package toggle.
+  hologram text, particle, and protection time.
 - Runtime particle choices sourced directly from Paper. Only particles that can
   be spawned safely without an additional payload are shown in the editor.
 - Automatic fallback when a saved particle is unavailable after an upgrade.
@@ -119,8 +119,9 @@ The current tested release is:
 target/1MB-LootChest-v2.5.9.1-196-CMI-j25-26.2.jar
 ```
 
-The project contains a native `v_26_2` falling-package adapter and emits Java 25
-class files. The active Maven reactor packages only that adapter.
+The project emits Java 25 class files and uses only the Paper API for Minecraft
+integration. The unused falling-package feature and its version-specific NMS
+adapters were removed after build 197.
 
 Run the central smoke test before merging or publishing:
 
@@ -138,10 +139,10 @@ operations. `fr.black_eyes.api.events.LootChestSpawnEvent` is fired after a
 container is populated and activated. These APIs follow the plugin's runtime
 types and are not promised as a stable cross-version binary API.
 
-## Privacy and Updates
+## Privacy
 
-The 1MoreBlock build defaults `CheckForUpdates` to `false` and does not instantiate
-the bundled bStats metrics class. It therefore does not start LootChest telemetry.
+The 1MoreBlock build contains neither the upstream update checker nor bStats
+metrics classes. Lootbox performs no update or telemetry requests.
 
 ## License
 

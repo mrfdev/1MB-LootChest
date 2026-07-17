@@ -50,6 +50,14 @@
                                     <shadedPattern>fr.black_eyes.lootchest.simpleJavaPlugin</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>com.github.Guarmanda:SimpleJavaPlugin</artifact>
+                                    <excludes>
+                                        <exclude>fr/black_eyes/simpleJavaPlugin/Updater.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -200,13 +208,6 @@
             <artifactId>CMILib</artifactId>
             <version>1.5.9.6</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency><groupId>fr.black_eyes.lootchest</groupId><artifactId>v_26_2</artifactId><version>${revision}</version></dependency>
-
-        <dependency>
-            <groupId>fr.black_eyes.lootchest</groupId>
-            <artifactId>fall_effect_interface</artifactId>
-            <version>${revision}</version>
         </dependency>
     </dependencies>
 </project>

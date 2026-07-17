@@ -50,7 +50,6 @@ public class LootChestUtils  {
 		chest2.setHolo(chest1.getHolo());
 		chest2.chances = chest1.chances.clone();
 		//chest2.direction = chest1.direction; let's not change original direction
-		chest2.setFallEnabled(chest1.isFallEnabled());
 		chest2.getInv().setContents(chest1.getInv().getContents());
 		chest2.setTime(chest1.getTime());
 		chest2.setParticle(chest1.getParticle());
