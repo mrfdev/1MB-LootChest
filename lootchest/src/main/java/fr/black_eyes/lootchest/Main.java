@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import fr.black_eyes.lootchest.commands.CommandHandler;
@@ -17,6 +18,7 @@ import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
+import fr.black_eyes.lootchest.ui.ChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
 import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
 import lombok.Getter;
@@ -45,13 +47,22 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
 	@Getter private TaskRegistry taskRegistry;
+	private DeleteListener deleteListener;
 	@Getter private BuildInfo buildInfo = BuildInfo.unknown();
+	@Getter private String hologramIntegrationStatus = "disabled during startup";
 	@Getter private boolean chestWorkInProgress;
 	private boolean simplePluginStarted;
+	private boolean cmiVersionWarningLogged;
 
 
 	@Override
 	public void onDisable() {
+		if (uiHandler != null) {
+			uiHandler.closeAll(ChestUi.CloseReason.SHUTDOWN);
+		}
+		if (deleteListener != null) {
+			deleteListener.clearTrackedInventories();
+		}
 		if (taskRegistry != null) {
 			taskRegistry.cancelAll();
 		}
@@ -140,28 +151,52 @@ public class Main extends SimpleJavaPlugin {
 	}
 
 	private void startCmiHolograms() {
-			cmiHologramsAvailable = false;
-			if (!configs.usehologram) {
+		cmiHologramsAvailable = false;
+		if (!configs.usehologram) {
+			hologramIntegrationStatus = "disabled by configuration";
 			return;
 		}
-		if (Bukkit.getPluginManager().getPlugin("CMI") == null
-				|| !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
+
+		PluginManager pluginManager = Bukkit.getPluginManager();
+		Plugin cmiPlugin = pluginManager.getPlugin("CMI");
+		Plugin cmiLibPlugin = pluginManager.getPlugin("CMILib");
+		if (cmiPlugin == null || cmiLibPlugin == null
+				|| !cmiPlugin.isEnabled() || !cmiLibPlugin.isEnabled()) {
 			configs.usehologram = false;
-			getLogger().warning("CMI is not enabled; LootChest holograms are disabled.");
+			hologramIntegrationStatus = "disabled (optional CMI/CMILib unavailable)";
+			getLogger().warning("CMI and CMILib are not both enabled; LootChest will continue without holograms.");
 			return;
 		}
+
 		try {
 			CMI cmi = CMI.getInstance();
 			if (cmi == null || cmi.getHologramManager() == null) {
 				configs.usehologram = false;
+				hologramIntegrationStatus = "disabled (CMI hologram manager unavailable)";
 				getLogger().warning("CMI's hologram manager is unavailable; LootChest holograms are disabled.");
 				return;
 			}
+			String cmiVersion = cmiPlugin.getPluginMeta().getVersion();
+			String cmiLibVersion = cmiLibPlugin.getPluginMeta().getVersion();
 			cmiHologramsAvailable = true;
-				Messages.log("<#a6e3a1>Using CMI holograms: " + cmi.getPluginMeta().getVersion());
+			hologramIntegrationStatus = "CMI " + cmiVersion + " / CMILib " + cmiLibVersion;
+			Messages.log(
+					"<#a6e3a1>Using CMI holograms: <#89dceb>CMI [Cmi] <#6c7086>/ <#89dceb>CMILib [CmiLib]",
+					"[Cmi]", cmiVersion,
+					"[CmiLib]", cmiLibVersion);
+			if (!cmiVersionWarningLogged
+					&& !"unknown".equals(buildInfo.cmiTestedVersion())
+					&& (!buildInfo.cmiTestedVersion().equals(cmiVersion)
+					|| !buildInfo.cmiLibTestedVersion().equals(cmiLibVersion))) {
+				cmiVersionWarningLogged = true;
+				getLogger().warning("CMI holograms are running with an unvalidated version pair. "
+						+ "This build is supported with CMI " + buildInfo.cmiTestedVersion()
+						+ " and CMILib " + buildInfo.cmiLibTestedVersion() + ".");
+			}
 		} catch (RuntimeException | LinkageError e) {
 			configs.usehologram = false;
 			cmiHologramsAvailable = false;
+			hologramIntegrationStatus = "disabled (CMI integration error)";
 			getLogger().warning("CMI holograms failed to start; LootChest holograms are disabled. "
 					+ e.getClass().getSimpleName() + ": " + e.getMessage());
 		}
@@ -169,7 +204,8 @@ public class Main extends SimpleJavaPlugin {
 
 	private void registerEvents(UiHandler uiHandler) {
 		PluginManager pluginManager = Bukkit.getPluginManager();
-		pluginManager.registerEvents(new DeleteListener(), this);
+		deleteListener = new DeleteListener();
+		pluginManager.registerEvents(deleteListener, this);
 		pluginManager.registerEvents(new UiListener(uiHandler), this);
 	}
 
@@ -235,6 +271,8 @@ public class Main extends SimpleJavaPlugin {
 	}
 
 	public void reloadLootChests(Runnable completion) {
+		uiHandler.closeAll(ChestUi.CloseReason.RELOAD);
+		deleteListener.clearTrackedInventories();
 		taskRegistry.cancelAll();
 		chestWorkInProgress = false;
 
@@ -377,6 +415,7 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setLang("info.release", "<#a6e3a1>Build <#89dceb>[Build] <#6c7086>| <#bac2de>[Artifact]");
 		configFiles.setLang("info.source", "<#a6e3a1>Source <#89dceb>[Source]");
 		configFiles.setLang("info.target", "<#a6e3a1>Targets <#89dceb>Paper [Paper] <#6c7086>(API [PaperApi]) <#a6e3a1>and <#89dceb>Java [Java]");
+		configFiles.setLang("info.holograms", "<#a6e3a1>Holograms <#89dceb>[Holograms]");
 		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");

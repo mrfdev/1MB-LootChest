@@ -14,6 +14,10 @@ public record BuildInfo(
 		String paperTarget,
 		String paperApi,
 		String javaTarget,
+		String cmiApiVersion,
+		String cmiLibApiVersion,
+		String cmiTestedVersion,
+		String cmiLibTestedVersion,
 		String artifactName
 ) {
 	private static final String RESOURCE = "lootchest-build.properties";
@@ -35,6 +39,10 @@ public record BuildInfo(
 					value(properties, "paper.target"),
 					value(properties, "paper.api"),
 					value(properties, "java.target"),
+					value(properties, "cmi.api"),
+					value(properties, "cmilib.api"),
+					value(properties, "cmi.tested"),
+					value(properties, "cmilib.tested"),
 					value(properties, "artifact.name"));
 		} catch (IOException | IllegalArgumentException exception) {
 			logger.warning("Build metadata could not be read: " + exception.getMessage());
@@ -43,7 +51,9 @@ public record BuildInfo(
 	}
 
 	public static BuildInfo unknown() {
-		return new BuildInfo(UNKNOWN, UNKNOWN, UNKNOWN, false, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN);
+		return new BuildInfo(
+				UNKNOWN, UNKNOWN, UNKNOWN, false, UNKNOWN, UNKNOWN, UNKNOWN,
+				UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN);
 	}
 
 	public String sourceDisplay() {

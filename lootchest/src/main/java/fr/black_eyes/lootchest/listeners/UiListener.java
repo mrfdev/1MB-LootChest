@@ -6,6 +6,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class UiListener implements Listener {
 
@@ -21,10 +23,28 @@ public class UiListener implements Listener {
 	 */
 	@EventHandler
 	public void onUiClick(InventoryClickEvent event) {
-		Player player = (Player) event.getWhoClicked();
-		if (uiHandler.hasPlayerOpenUi(player)) {
-			boolean doCancel = uiHandler.handleClick(player, event.getSlot(), event.getClick());
-			event.setCancelled(doCancel);
+		if (!(event.getWhoClicked() instanceof Player player)) {
+			return;
+		}
+		if (uiHandler.handleClick(
+				player,
+				event.getView().getTopInventory(),
+				event.getRawSlot(),
+				event.getClick())) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler
+	public void onUiDrag(InventoryDragEvent event) {
+		if (!(event.getWhoClicked() instanceof Player player)) {
+			return;
+		}
+		if (uiHandler.handleDrag(
+				player,
+				event.getView().getTopInventory(),
+				event.getRawSlots())) {
+			event.setCancelled(true);
 		}
 	}
 
@@ -33,9 +53,13 @@ public class UiListener implements Listener {
 	 */
 	@EventHandler
 	public void onUiClose(InventoryCloseEvent event) {
-		Player player = (Player) event.getPlayer();
-		if (uiHandler.hasPlayerOpenUi(player)) {
-			uiHandler.handleClose(player);
+		if (event.getPlayer() instanceof Player player) {
+			uiHandler.handleClose(player, event.getInventory());
 		}
+	}
+
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		uiHandler.handleQuit(event.getPlayer());
 	}
 }

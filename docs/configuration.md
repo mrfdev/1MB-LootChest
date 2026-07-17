@@ -18,9 +18,9 @@ messages and menu labels in `lang.yml`, and persistent Lootbox definitions in
 | `RemoveChestAfterFirstOpening` | `false` | Remove the physical container after its first completed opening. |
 | `Destroy_Naturally_Instead_Of_Removing_Chest` | `true` | Drop the container item when a Lootbox is collected or broken. |
 | `Protect_From_Explosions` | `false` | Keep Lootboxes out of explosion block removal. |
-| `PreventHopperPlacingUnderLootChest` | `true` | Block nearby hopper placement and movement. |
+| `PreventHopperPlacingUnderLootChest` | `true` | Block automated item transfers to or from Lootboxes and direct hopper placement underneath them. The legacy key name is retained for config compatibility. |
 | `Radius_Without_Monsters_For_Opening_Chest` | `0` | Require no hostile mobs within this radius; `0` disables the check. |
-| `respawn_protection_time_in_second_by_default` | `0` | Default interaction protection after spawn. |
+| `respawn_protection_time_in_second_by_default` | `0` | Default post-spawn protection from player access, automated transfer, and explosion removal. |
 | `Minimum_Number_Of_Players_For_Natural_Spawning` | `0` | Minimum online players for timed spawning. |
 | `Minimum_Number_Of_Players_For_Command_Spawning` | `0` | Minimum online players for bulk command spawning. |
 | `Scheduler.Chests_Per_Tick` | `1` | Maximum saved Lootboxes processed per tick during startup, reload, respawn-all, or despawn-all. |
@@ -80,6 +80,10 @@ per-chest `fall` values are migrated to `false` when data is saved.
 `Timer_on_hologram` controls the optional CMI countdown and its MiniMessage format.
 Available timer substitutions are `%Hours`, `%Minutes`, `%Seconds`, `%Hsep`, `%Msep`,
 `%Ssep`, and `%Hologram`.
+
+The supported hologram runtime is CMI `9.8.8.5` with CMILib `1.5.9.9`. When
+either optional dependency is unavailable, Lootbox keeps all non-hologram
+features active and reports the integration state through `/lc info`.
 
 `respawn_notify` controls natural, command, bulk, world-only, and collection
 messages. Notification text supports MiniMessage plus `[Chest]`, `[World]`, `[x]`,

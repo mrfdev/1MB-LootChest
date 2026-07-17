@@ -41,12 +41,19 @@ public class ContentsMenu extends ChestUi {
 		return false;
 	}
 
-		@Override
-		public void onClose(Player player) {
-			Inventory inv = Bukkit.createInventory(null, 27, Component.empty());
+	@Override
+	public boolean allowsInventoryEditing() {
+		return true;
+	}
+
+	@Override
+	public void onClose(Player player, CloseReason reason) {
+		Inventory inv = Bukkit.createInventory(null, 27, Component.empty());
 		inv.setContents(getContents());
 		chest.setInventory(inv);
 		chest.updateData();
-		uiHandler.openUi(player, UiHandler.UiType.MAIN, chest, 2);
+		if (reason.returnsToParent()) {
+			uiHandler.openUi(player, UiHandler.UiType.MAIN, chest, 2);
+		}
 	}
 }

@@ -82,11 +82,17 @@ public final class Mat {
 
     public static boolean isALootChestBlock(Block block) {
         Material type = block.getType();
-        return type.name().contains("SHULKER_BOX")
+        return isShulkerBox(type)
                 || isCopperChest(type)
                 || type == CHEST
                 || type == TRAPPED_CHEST
                 || type == BARREL;
+    }
+
+    public static boolean isShulkerBox(Material material) {
+        return material.isBlock()
+                && material.name().endsWith("SHULKER_BOX")
+                && !material.name().startsWith("LEGACY_");
     }
 
     public static boolean isCopperChest(Material material) {

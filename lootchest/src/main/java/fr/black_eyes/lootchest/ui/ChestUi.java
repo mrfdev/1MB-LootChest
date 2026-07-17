@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -23,7 +24,19 @@ import net.kyori.adventure.text.format.TextDecoration;
 /**
  * A custom inventory UI that allows for actions to be assigned to each slot.
  */
-public class ChestUi {
+public class ChestUi implements InventoryHolder {
+
+	public enum CloseReason {
+		PLAYER,
+		TRANSITION,
+		QUIT,
+		RELOAD,
+		SHUTDOWN;
+
+		public boolean returnsToParent() {
+			return this == PLAYER;
+		}
+	}
 
 	@Getter
 	private final int rows;
@@ -33,7 +46,7 @@ public class ChestUi {
 
 	public ChestUi(int rows, String title) {
 		this.rows = rows;
-		inventory = Bukkit.createInventory(null, rows * 9, Messages.component(title));
+		inventory = Bukkit.createInventory(this, rows * 9, Messages.component(title));
 		clickActions = new HashMap<>();
 		rightClickActions = new HashMap<>();
 	}
@@ -87,24 +100,36 @@ public class ChestUi {
 	 * @return true if the click event should be cancelled
 	 */
 	public boolean onClickSlot(Player player, int slot, ClickType type) {
-		//execute right click action if explicitly listed
-		if (rightClickActions.containsKey(slot) && rightClickActions.get(slot) != null) {
-			if (type == ClickType.RIGHT) {
-				rightClickActions.get(slot).accept(player);
-			} else if (type == ClickType.LEFT) {
-				clickActions.get(slot).accept(player);
-			}
-			//otherwise do action with any mouse click
-		} else if (clickActions.containsKey(slot) && clickActions.get(slot) != null) {
-			clickActions.get(slot).accept(player);
+		Consumer<Player> action = null;
+		if (type == ClickType.RIGHT && rightClickActions.get(slot) != null) {
+			action = rightClickActions.get(slot);
+		} else if ((type == ClickType.LEFT || type == ClickType.RIGHT)
+				&& clickActions.get(slot) != null) {
+			action = clickActions.get(slot);
+		}
+		if (action != null) {
+			action.accept(player);
 		}
 		return true;
+	}
+
+	public boolean allowsInventoryEditing() {
+		return false;
+	}
+
+	public boolean ownsInventory(Inventory candidate) {
+		return inventory == candidate || candidate.getHolder(false) == this;
+	}
+
+	@Override
+	public Inventory getInventory() {
+		return inventory;
 	}
 
 	/**
 	 * Called when the player closes the inventory.
 	 */
-	public void onClose(Player player) {}
+	public void onClose(Player player, CloseReason reason) {}
 
 	public ChestUi open(Player player) {
 		player.openInventory(inventory);
@@ -114,6 +139,7 @@ public class ChestUi {
 	public void clear() {
 		inventory.clear();
 		clickActions.clear();
+		rightClickActions.clear();
 	}
 
 	protected ItemStack nameItem(Material mat, String name) {

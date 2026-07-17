@@ -7,6 +7,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve build 196 with the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag.
   - [x] Preserve manually approved build 198 with the `1mb-lootchest-v2.5.9.1-build198-approved` tag.
   - [x] Preserve manually approved build 199 with the `1mb-lootchest-v2.5.9.1-build199-approved` tag.
+  - [x] Preserve manually approved build 200 with the `1mb-lootchest-v2.5.9.1-build200-approved` tag.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
@@ -27,7 +28,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Track all plugin tasks in one registry and cancel them on reload and shutdown.
   - [x] Complete manual empty, break, hologram, reload, and respawn gameplay validation for build 199.
 - [ ] **3. Listener and lifecycle hardening**
-  - [ ] Correct inventory raw-slot, drag, close, and quit handling.
+  - [x] Correct inventory raw-slot, drag, close, and quit handling.
   - [ ] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
   - [ ] Audit explosion, hopper, piston, and protection handling for every supported container.
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
@@ -37,7 +38,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
   - [ ] Update WorldGuard to its current Paper-compatible API and remove the WorldGuard 6 path.
   - [ ] Inventory the actual 1MoreBlock protection plugins and remove every unused compatibility integration and Maven dependency.
-  - [ ] Keep CMI/CMILib integration runtime-optional and document the supported versions.
+  - [x] Keep CMI/CMILib integration runtime-optional and document the supported versions.
 - [ ] **5. Remove version-specific NMS falling packages**
   - [x] Remove the unused falling-package feature rather than replacing it with another animation.
   - [x] Force legacy config and saved chest flags to `false` without breaking existing YAML data.

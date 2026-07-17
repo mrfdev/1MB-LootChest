@@ -102,7 +102,9 @@ public class TimeMenu extends ChestUi {
 	}
 
 	@Override
-	public void onClose(Player player) {
-		uiHandler.openUi(player, UiHandler.UiType.MAIN, chest, 2);
+	public void onClose(Player player, CloseReason reason) {
+		if (reason.returnsToParent()) {
+			uiHandler.openUi(player, UiHandler.UiType.MAIN, chest, 2);
+		}
 	}   
 }

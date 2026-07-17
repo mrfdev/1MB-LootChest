@@ -18,7 +18,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Java runtime and bytecode | Java 25 |
 | Plugin version | `2.5.9.1` |
 | Main command | `/lootchest`, alias `/lc` |
-| Holograms | CMI and CMILib when installed |
+| Holograms | Optional: CMI `9.8.8.5` and CMILib `1.5.9.9` |
 
 ## Features
 
@@ -57,8 +57,8 @@ The `origin` remote is the canonical 1MB repository
 (`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
 careful comparison only; do not build releases from an upstream branch.
 
-The current live-approved Paper 26.2 baseline is build 199, preserved by the
-`1mb-lootchest-v2.5.9.1-build199-approved` tag. Build 198 is the immediately
+The current live-approved Paper 26.2 baseline is build 200, preserved by the
+`1mb-lootchest-v2.5.9.1-build200-approved` tag. Build 199 is the immediately
 previous rollback release. Older snapshots remain tagged for history but are not
 development baselines.
 
@@ -120,7 +120,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 The current live-approved release is:
 
 ```text
-target/1MB-LootChest-v2.5.9.1-199-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.1-200-CMI-j25-26.2.jar
 ```
 
 The project emits Java 25 class files and uses only the Paper API for Minecraft
@@ -134,7 +134,7 @@ Run the central smoke test before merging or publishing:
 ```bash
 /Users/floris/Projects/Codex/servers/run-test-server \
   --paper 26.2 \
-  --plugin target/1MB-LootChest-v2.5.9.1-199-CMI-j25-26.2.jar \
+  --plugin target/1MB-LootChest-v2.5.9.1-200-CMI-j25-26.2.jar \
   --foreground
 ```
 

@@ -25,7 +25,8 @@ Particles:
   radius: 0.3
       #The speed of particles. A low speed is more smooth and good-looking. A speed of 1 is just insane.
   speed: 0.05
-    # protects chests and prevent looting for some seconds after spawn. This is a default value, editable for each chest.
+    #Protects spawned chests from player access, automation, and explosion removal for this many seconds.
+    #This default remains editable per chest.
 respawn_protection_time_in_second_by_default: 0
     #Prevent or not spawning on water
 allow_spawning_on_water: false
@@ -55,7 +56,8 @@ RemoveChestAfterFirstOpening: false
     #Holograms doesn't act the same depending on server version, so here you can configure their height compared to the chest's height. 
     #YOU CAN PUT A NEGATIVE NUMBER if the hologram is too high!
 Hologram_distance_to_chest: 1
-    #It was reported that placing hoppers under loot chests allows to do infinite farming, because they can respawn at same place if u want^^ 
+    #Blocks automated transfers to or from LootChests and direct hopper placement underneath them.
+    #The legacy key name is retained so existing config files remain compatible.
 PreventHopperPlacingUnderLootChest: true
     #Someone asked for this^^
 Minimum_Number_Of_Players_For_Natural_Spawning: 0
