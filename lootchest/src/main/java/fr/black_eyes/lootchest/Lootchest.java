@@ -539,10 +539,7 @@ public class Lootchest {
 		// handle natural spawning messages - command respawn messages are handled in command class
 		if(!forceSpawn && isRespawnNaturalMsgEnabled() ) {
 			String naturalMsg = (((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world);
-			if(Main.configs.noteBungeeBroadcast) {
-				BungeeChannel.bungeeBroadcast(naturalMsg);
-			}
-			else if(!Main.configs.notePerWorldMessage) {
+			if(!Main.configs.notePerWorldMessage) {
 				for(World w : Bukkit.getWorlds()) {
 					for(Player p : w.getPlayers()) {
 						Messages.sendMultilineMessage(naturalMsg, p);

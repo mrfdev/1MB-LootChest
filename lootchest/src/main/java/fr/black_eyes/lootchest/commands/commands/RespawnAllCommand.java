@@ -10,7 +10,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import fr.black_eyes.lootchest.BungeeChannel;
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.commands.ArgType;
@@ -40,12 +39,8 @@ public class RespawnAllCommand extends SubCommand {
 		boolean started = Main.getInstance().runBatchedChestOperation(chests, chest -> chest.spawn(true), () -> {
 			if(Main.configs.noteAllcmdE && worldName == null) {
 				String message = Main.configs.noteAllcmdMsg;
-				if (Main.configs.noteBungeeBroadcast) {
-					BungeeChannel.bungeeBroadcast(message);
-				} else {
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						Messages.sendMultilineMessage(message, player);
-					}
+				for (Player player : Bukkit.getOnlinePlayers()) {
+					Messages.sendMultilineMessage(message, player);
 				}
 			}
 			if(worldName != null) {

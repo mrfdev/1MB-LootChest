@@ -87,7 +87,9 @@ features active and reports the integration state through `/lc info`.
 
 `respawn_notify` controls natural, command, bulk, world-only, and collection
 messages. Notification text supports MiniMessage plus `[Chest]`, `[World]`, `[x]`,
-`[y]`, and `[z]` where the corresponding message path supplies them.
+`[y]`, and `[z]` where the corresponding message path supplies them. Notifications
+are delivered only to players on the current Paper server; this edition has no
+proxy or cross-server broadcast mode.
 
 ## Reload and Restart Behavior
 

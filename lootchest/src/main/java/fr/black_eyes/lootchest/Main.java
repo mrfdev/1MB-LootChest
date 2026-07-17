@@ -77,17 +77,6 @@ public class Main extends SimpleJavaPlugin {
 			LootChestUtils.saveAllChests();
 		}
 	}
-    
-    /**
-     * Check if bungee is enabled in spigot config
-     * @return true if bungee is enabed, else false
-     */
-    private boolean hasBungee(){
-        boolean bungee = org.spigotmc.SpigotConfig.bungee;
-        boolean onlineMode = Bukkit.getServer().getOnlineMode();
-        return (bungee && !onlineMode);
-    }
-	
 		@Override
 		public void onEnable() {
 		setInstance(this);
@@ -122,20 +111,10 @@ public class Main extends SimpleJavaPlugin {
 		uiHandler = new UiHandler(this);
 		registerEvents(uiHandler);
 		registerCommands();
-        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new BungeeChannel());
-
-        
 		
 		//load config
 		setConfigs(Config.getInstance(configFiles.getConfig()));
 		startCmiHolograms();
-
-		//If we enabled bungee broadcast, but we aren't on a bungee server, not any message will show
-        if(configs.noteBungeeBroadcast && !hasBungee()){
-				Messages.log("<#f38ba8>Bungee broadcasting is enabled in LootChest, but proxy support is disabled in the server configuration.");
-				Messages.log("<#f38ba8>Chest spawn messages cannot be delivered across the proxy until it is enabled.");
-        	}
  
 	        Messages.log("Starting particles...");
         

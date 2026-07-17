@@ -39,7 +39,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import fr.black_eyes.lootchest.BungeeChannel;
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
@@ -325,10 +324,7 @@ public class DeleteListener implements Listener  {
 		if(keys.isTakeMsgEnabled() && !keys.isTaken()){
 			keys.setTaken(true);
 			String msg = Objects.requireNonNull(Main.getInstance().getConfigFiles().getLang().getString("playerTookChest")).replace("[Player]", p.getName()).replace("[Chest]", keys.getHolo());
-			if(Main.configs.noteBungeeBroadcast) {
-				BungeeChannel.bungeeBroadcast(msg);
-			}
-			else if(!Main.configs.notePerWorldMessage) {
+			if(!Main.configs.notePerWorldMessage) {
 				LootChestUtils.broadcast(msg);
 			}else {
 				for(Player pl : p.getWorld().getPlayers()){

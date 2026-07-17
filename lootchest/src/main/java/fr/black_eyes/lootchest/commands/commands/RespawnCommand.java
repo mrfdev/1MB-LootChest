@@ -9,7 +9,6 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import fr.black_eyes.lootchest.BungeeChannel;
 import fr.black_eyes.lootchest.Constants;
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
@@ -39,9 +38,7 @@ public class  RespawnCommand extends SubCommand {
 			Block block = lc.getActualLocation().getBlock();
 			String holo = lc.getHolo();
 			String message = (((Main.configs.noteCommandMsg.replace("[World]", block.getWorld().getName()).replace(Constants.CHEST_PLACEHOLDER, holo)).replace("[x]", block.getX() + "")).replace("[y]", block.getY() + "")).replace("[z]", block.getZ() + "");
-			if (Main.configs.noteBungeeBroadcast) {
-				BungeeChannel.bungeeBroadcast(message);
-			} else if (Main.configs.notePerWorldMessage) {
+			if (Main.configs.notePerWorldMessage) {
 				for (Player p : block.getWorld().getPlayers()) {
 					Messages.sendMultilineMessage(message, p);
 				}

@@ -31,6 +31,7 @@ public final class CompatibilityMigrations {
         changed |= set(config, "Fall_Effect.Enabled", false);
         changed |= remove(config, "Fall_Effect.Let_Block_Above_Chest_After_Fall");
         changed |= remove(config, "Fall_Effect.Optionnal_Color_If_Block_Is_Wool");
+        changed |= remove(config, "respawn_notify.bungee_broadcast");
         return changed;
     }
 

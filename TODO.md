@@ -35,12 +35,12 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
 - [ ] **4. Remove unsupported platforms and integrations**
-  - [ ] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
+  - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
   - [x] Remove the unused direct WorldGuard random-spawn integration and its compile dependency; retain only soft load ordering for protection interoperability.
   - [ ] Inventory the actual 1MoreBlock protection plugins and remove every unused compatibility integration and Maven dependency.
   - [x] Keep CMI/CMILib integration runtime-optional and document the supported versions.
-- [ ] **5. Remove version-specific NMS falling packages**
+- [x] **5. Remove version-specific NMS falling packages**
   - [x] Remove the unused falling-package feature rather than replacing it with another animation.
   - [x] Force legacy config and saved chest flags to `false` without breaking existing YAML data.
   - [x] Remove the command, editor toggle, runtime animation code, reflection, NMS packets, Spigot snapshot, and SpecialSource.

@@ -37,7 +37,6 @@ public final boolean saveDataFileDuringReload,
 		preventHopperPlacingUnderLootChest,
 		protectFromExplosions,
 		partEnable,
-		noteBungeeBroadcast,
 		notePerWorldMessage,
 		noteMessageOnChestTake,
 		noteNaturalE,
@@ -119,7 +118,6 @@ public Config(FileConfiguration config) {
 	removeChestAfterFirstOpening = config.getBoolean("RemoveChestAfterFirstOpening");
 	preventHopperPlacingUnderLootChest = config.getBoolean("PreventHopperPlacingUnderLootChest");
 	partEnable = config.getBoolean("Particles.enable");
-	noteBungeeBroadcast = config.getBoolean("respawn_notify.bungee_broadcast");
 	notePerWorldMessage = config.getBoolean("respawn_notify.per_world_message");
 	noteMessageOnChestTake = config.getBoolean("respawn_notify.message_on_chest_take");
 	noteNaturalE = config.getBoolean("respawn_notify.natural_respawn.enabled");
