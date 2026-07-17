@@ -2,8 +2,6 @@
 Debug: false
     #Info messages at plugin startup
 ConsoleMessages: true
-    # Looting is a plugin that allows all players to loot the same chest
-EnableLootin: false
     #Some people have troubles about worlds loading before my plugin: in fact, chests located in unloaded worlds aren't loaded.
     #Let's fix this with this option. Cooldown is in second.
 Cooldown_Before_Plugin_Start: 0
@@ -49,9 +47,6 @@ UseHologram: true
 RemoveEmptyChests: true
     #protect Loot Chests from tnt/creepers?
 Protect_From_Explosions: false
-    #Checks supported claim plugins before choosing a randomized respawn location.
-    #WorldGuard regions are intentionally not excluded by the 1MoreBlock edition.
-Prevent_Chest_Spawn_In_Protected_Places: false
     #removes the chest when a player closes it, even if there's still items in it
 RemoveChestAfterFirstOpening: false
     #Holograms doesn't act the same depending on server version, so here you can configure their height compared to the chest's height. 

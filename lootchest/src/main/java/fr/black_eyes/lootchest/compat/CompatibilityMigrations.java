@@ -32,6 +32,8 @@ public final class CompatibilityMigrations {
         changed |= remove(config, "Fall_Effect.Let_Block_Above_Chest_After_Fall");
         changed |= remove(config, "Fall_Effect.Optionnal_Color_If_Block_Is_Wool");
         changed |= remove(config, "respawn_notify.bungee_broadcast");
+        changed |= remove(config, "EnableLootin");
+        changed |= remove(config, "Prevent_Chest_Spawn_In_Protected_Places");
         return changed;
     }
 

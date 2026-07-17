@@ -8,10 +8,6 @@
           <artifactId>LootChest</artifactId>
           <version>${revision}</version>
     </parent>
-    <properties>
-        <local.repo.path>file://${project.parent.basedir}/requirements/local-repo</local.repo.path>
-    </properties>
-
     <artifactId>lootchest</artifactId>
     <version>${revision}</version>
 
@@ -39,29 +35,23 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.2</version>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.4</version>
                 <executions>
                     <execution>
+                        <id>verify-release-jar</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>fr.black_eyes.simpleJavaPlugin</pattern>
-                                    <shadedPattern>fr.black_eyes.lootchest.simpleJavaPlugin</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <filters>
-                                <filter>
-                                    <artifact>com.github.Guarmanda:SimpleJavaPlugin</artifact>
-                                    <excludes>
-                                        <exclude>fr/black_eyes/simpleJavaPlugin/Updater.class</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
+                            <includes>
+                                <include>**/ReleaseJarContentsIT.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <lootchest.release.jar>${project.build.directory}/lootchest.jar</lootchest.release.jar>
+                            </systemPropertyVariables>
                         </configuration>
                     </execution>
                 </executions>
@@ -156,10 +146,6 @@
     </build>
    <repositories>
         <repository>
-            <id>enginehub-maven</id>
-            <url>https://maven.enginehub.org/repo/</url>
-        </repository>
-        <repository>
             <id>maven central</id>
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
@@ -171,14 +157,6 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
-        <repository>
-            <id>local-repo</id>
-            <url>${local.repo.path}</url>
-        </repository>
-        <repository>
-            <id>dmulloy2-repo</id>
-            <url>https://repo.dmulloy2.net/repository/public/</url>
-        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -188,52 +166,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.TownyAdvanced</groupId>
-            <artifactId>Towny</artifactId>
-            <version>0.97.0.5</version>
-            <scope>provided</scope>
-        </dependency>
-  
-        <dependency>
-            <groupId>com.massivecraft</groupId>
-            <artifactId>factions</artifactId>
-            <version>2.14.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.local.sachin.lootin</groupId>
-            <artifactId>lootin</artifactId>
-            <version>11.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.massivecraft</groupId>
-            <artifactId>massivecore</artifactId>
-            <version>2.14.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.prosavage</groupId>
-            <artifactId>factionsx</artifactId>
-            <version>1.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.bekvon.bukkit</groupId>
-            <artifactId>residence</artifactId>
-            <version>5.1.6.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombokVersion}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Guarmanda</groupId>
-            <artifactId>SimpleJavaPlugin</artifactId>
-            <version>0.7</version>
         </dependency>
         <dependency>
             <groupId>com.github.Zrips</groupId>

@@ -17,7 +17,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 
-import fr.black_eyes.simpleJavaPlugin.Files;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -30,7 +29,7 @@ public class LootChestUtils  {
 	public static final String POSITION_WORLD = ".position.world";
 	public static final String RANDOM_POSITION_X = ".randomPosition.x";
 	public static final String RANDOM_POSITION_WORLD = ".randomPosition.world";
-	private final Files configFiles;
+	private final LootChestFiles configFiles;
 
 	public LootChestUtils() {
 		configFiles = Main.getInstance().getConfigFiles();
@@ -86,18 +85,16 @@ public class LootChestUtils  {
 	 */
 	public static Location chooseRandomLocation(Location startingLoc, int radius){
 		int counter = 0;
-		boolean checkProtectedBlock = Main.configs.preventChestSpawnInProtectedPlaces;
 		boolean checkWorldBorder = Main.configs.worldborderCheckForSpawn;
 		boolean checkWater = !Main.configs.allowSpawningOnWater;
 		boolean checkNonSolidBlocks = !Main.configs.spawnOnNonSolidBlocks;
 		Location spawnLoc = getRandomLocation(startingLoc, radius, 0 );
-		while(counter<100 && (spawnLoc == null || (
-			(checkProtectedBlock && ProtectedRegions.isProtected(spawnLoc))
-			|| (checkWater &&  (spawnLoc.getBlock().getRelative(0, -1, 0).isLiquid() || spawnLoc.getBlock().getRelative(0, -2, 0).isLiquid()))
-			|| checkWorldBorder && (isOutsideOfBorder(spawnLoc) ))
-			|| checkNonSolidBlocks && spawnLoc.getBlock().getType() != Material.AIR
-			|| spawnLoc.getY() > Main.configs.maxHeightForRandomSpawn)
-		) {
+		while(counter<100 && (spawnLoc == null
+			|| (checkWater && (spawnLoc.getBlock().getRelative(0, -1, 0).isLiquid()
+				|| spawnLoc.getBlock().getRelative(0, -2, 0).isLiquid()))
+			|| (checkWorldBorder && isOutsideOfBorder(spawnLoc))
+			|| (checkNonSolidBlocks && spawnLoc.getBlock().getType() != Material.AIR)
+			|| spawnLoc.getY() > Main.configs.maxHeightForRandomSpawn)) {
 			spawnLoc = getRandomLocation(startingLoc, radius, counter );
 			counter++;
 		}

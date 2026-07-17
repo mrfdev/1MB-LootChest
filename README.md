@@ -29,7 +29,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - Runtime particle choices sourced directly from Paper. Only particles that can
   be spawned safely without an additional payload are shown in the editor.
 - Automatic fallback when a saved particle is unavailable after an upgrade.
-- Optional region-aware spawn checks and Lootin support.
+- Bolt-compatible protected-container handling through Paper event cancellation.
 - MiniMessage formatting for locale, console, menu, notification, and hologram text.
 - Persistent chest definitions in `plugins/LootChest/data.yml`.
 
@@ -134,9 +134,9 @@ Tag:           1mb-lootchest-v2.5.9.1-build203-last-worldguard-support
 SHA-256:       9027167883a01ad7f904234f32b3f77ffde9adb36bb904f84946462edaa8b0c1
 ```
 
-Later builds intentionally allow randomized Lootboxes inside WorldGuard regions.
-WorldGuard itself may remain installed and continues to enforce its own access,
-breaking, and region flags independently.
+Later builds intentionally contain no direct WorldGuard integration. WorldGuard
+may remain installed for the server's regions; the 1MoreBlock deployment places
+randomized Lootboxes only in staff-selected regions.
 
 The project emits Java 25 class files and uses only the Paper API for Minecraft
 integration. The unused falling-package feature and its version-specific NMS

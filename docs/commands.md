@@ -13,7 +13,7 @@ permissions default to server operators unless explicitly granted.
 | `/lc copy <source> <destination>` | Console/player | Copy settings and rewards into an existing Lootbox. |
 | `/lc give <name> <player>` | Console/player | Roll that Lootbox's configured contents into an online player's inventory. |
 | `/lc getname` | Player | Identify the targeted Lootbox. |
-| `/lc list` | Console/player | List loaded internal Lootbox names. |
+| `/lc list` | Console/player | List loaded internal Lootbox names. In-game names are clickable and open their editor. |
 | `/lc locate` | Console/player | List available boxes with natural location announcements enabled. |
 | `/lc respawn <name>` | Console/player | Force one Lootbox to respawn. |
 | `/lc respawnall [world]` | Console/player | Force every Lootbox, optionally in one world, to respawn. |

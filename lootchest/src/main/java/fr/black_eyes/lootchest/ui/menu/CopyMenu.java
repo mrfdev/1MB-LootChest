@@ -18,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import fr.black_eyes.simpleJavaPlugin.Files;
+import fr.black_eyes.lootchest.LootChestFiles;
 
 import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
@@ -35,7 +35,7 @@ public class CopyMenu extends PagedChestUi {
 		this.chest = chest;
 		this.uiHandler = uiHandler;
 
-		Files configFiles = Main.getInstance().getConfigFiles();
+		LootChestFiles configFiles = Main.getInstance().getConfigFiles();
 		List<Lootchest> chests = new ArrayList<>(Main.getInstance().getLootChest().values());
 		chests.sort(Comparator.comparing(Lootchest::getName));
 		

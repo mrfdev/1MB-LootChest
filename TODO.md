@@ -37,8 +37,9 @@ Each stage should leave a buildable, testable plugin and should be committed sep
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
-  - [x] Remove the unused direct WorldGuard random-spawn integration and its compile dependency; retain only soft load ordering for protection interoperability.
-  - [ ] Inventory the actual 1MoreBlock protection plugins and remove every unused compatibility integration and Maven dependency.
+  - [x] Remove the unused direct WorldGuard random-spawn integration, compile dependency, and obsolete soft dependency.
+  - [x] Inventory the actual 1MoreBlock protection plugins; retain Bolt, leave PlotSquared inactive, and remove unused Towny, Factions, MassiveCore, FactionsX, Residence, GriefPrevention, and Lootin compatibility code and dependencies.
+  - [ ] Manually verify that an unauthorized player cannot open or break a Bolt-locked Lootbox after a Bolt or Paper update.
   - [x] Keep CMI/CMILib integration runtime-optional and document the supported versions.
 - [x] **5. Remove version-specific NMS falling packages**
   - [x] Remove the unused falling-package feature rather than replacing it with another animation.
@@ -47,14 +48,14 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Delete all inactive legacy adapter source modules after the active build no longer references them.
   - [x] Smoke-test copied live data on Paper 26.2, including reload, respawn, migration, and clean shutdown.
   - [x] Complete manual empty/break/respawn gameplay validation before promoting the candidate.
-- [ ] **6. Replace the shaded configuration framework**
-  - [ ] Replace `SimpleJavaPlugin` with a small local configuration/language manager on plain `JavaPlugin`.
-  - [ ] Preserve existing YAML files, defaults, comments where possible, and migration behavior.
-  - [ ] Remove the shaded framework dependency after reload and failure-path testing.
-- [ ] **7. Automated compatibility coverage**
+- [x] **6. Replace the shaded configuration framework**
+  - [x] Replace `SimpleJavaPlugin` with a small local configuration/language manager on plain `JavaPlugin`.
+  - [x] Preserve existing YAML files, defaults, comments where possible, and migration behavior.
+  - [x] Remove the shaded framework dependency after reload and failure-path testing.
+- [x] **7. Automated compatibility coverage**
   - [x] Add tests for config and saved chest-data migration.
   - [x] Add tests for particle fallback and supported container classification.
   - [x] Add regression coverage for emptying, breaking, despawning, reloading, and hologram cleanup.
   - [x] Add a repeatable Paper 26.2 smoke test for enable, commands, reload, respawn, and clean shutdown.
-  - [ ] Assert release jars contain no updater, metrics, DecentHolograms, proxy, NMS, or legacy adapter classes.
-  - [ ] Validate chest, trapped chest, barrel, shulker, and every copper chest state.
+  - [x] Assert release jars contain no updater, metrics, DecentHolograms, proxy, NMS, or legacy adapter classes.
+  - [x] Validate chest, trapped chest, barrel, shulker, and every copper chest state.

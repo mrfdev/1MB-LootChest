@@ -1,8 +1,10 @@
 package fr.black_eyes.lootchest;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import com.Zrips.CMI.CMI;
 import fr.black_eyes.lootchest.commands.SubCommand;
@@ -10,9 +12,11 @@ import fr.black_eyes.lootchest.compat.CompatibilityMigrations;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
@@ -22,14 +26,13 @@ import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
 import fr.black_eyes.lootchest.ui.ChestUi;
 import fr.black_eyes.lootchest.ui.UiHandler;
-import fr.black_eyes.simpleJavaPlugin.SimpleJavaPlugin;
 import lombok.Getter;
 import lombok.Setter;
 
 import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
 
-public class Main extends SimpleJavaPlugin {
+public class Main extends JavaPlugin {
 	public static final String MENU_MAIN_TYPE = "Menu.main.type";
 	private static final String PARTICLE_TASK = "particles";
 	private static final String STARTUP_TASK = "startup";
@@ -48,11 +51,11 @@ public class Main extends SimpleJavaPlugin {
 	@Getter private boolean cmiHologramsAvailable;
 	@Getter private UiHandler uiHandler;
 	@Getter private TaskRegistry taskRegistry;
+	@Getter private LootChestFiles configFiles;
 	private DeleteListener deleteListener;
 	@Getter private BuildInfo buildInfo = BuildInfo.unknown();
 	@Getter private String hologramIntegrationStatus = "disabled during startup";
 	@Getter private boolean chestWorkInProgress;
-	private boolean simplePluginStarted;
 	private boolean cmiVersionWarningLogged;
 
 
@@ -70,29 +73,44 @@ public class Main extends SimpleJavaPlugin {
 		if (lootChest != null) {
 			lootChest.values().forEach(chest -> chest.getHologram().remove());
 		}
-		if (simplePluginStarted) {
-			super.onDisable();
+		if (lootChest != null && configFiles != null && configFiles.isInitialized()) {
+			try {
+				LootChestUtils.saveAllChests();
+				configFiles.flush();
+				configFiles.backupData();
+				Messages.log("<#a6e3a1>Backed up data file for rollback.");
+			} catch (IOException | RuntimeException e) {
+				getLogger().log(Level.SEVERE, "Could not finish saving LootChest data", e);
+			}
 		}
-		if (lootChest != null) {
-			LootChestUtils.saveAllChests();
+		if (configFiles != null) {
+			configFiles.close();
 		}
 	}
-		@Override
-		public void onEnable() {
+
+	@Override
+	public void onEnable() {
 		setInstance(this);
 		buildInfo = BuildInfo.load(getLogger());
 
-		lootChest = new HashMap<>();
-		taskRegistry = new TaskRegistry(this);
-				//In many versions, I add some text a config option. These lines are done to update config and language files without erasing options that are already set
-			super.onEnable();
-			simplePluginStarted = true;
-			if(configFiles.getLang() == null) {
-			Messages.log("<#f38ba8>Configuration or data files could not be initialized. LootChest will stop.");
+		getLogger().info("Loading config files...");
+		configFiles = new LootChestFiles(this);
+		try {
+			configFiles.initialize();
+		} catch (IOException | InvalidConfigurationException | RuntimeException e) {
+			getLogger().log(
+					Level.SEVERE,
+					"Configuration or data files could not be initialized. LootChest will stop.",
+					e);
+			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
+
+		lootChest = new HashMap<>();
+		taskRegistry = new TaskRegistry(this);
+
 		Messages.log("config files loaded");
-			Messages.log("Server version: " + Bukkit.getMinecraftVersion());
+		Messages.log("Server version: " + Bukkit.getMinecraftVersion());
 		Messages.log(
 				"<#a6e3a1>Release: <#89dceb>[Artifact] <#6c7086>| <#a6e3a1>build <#89dceb>[Build] "
 						+ "<#6c7086>| <#a6e3a1>source <#89dceb>[Source] <#6c7086>| "
@@ -104,6 +122,7 @@ public class Main extends SimpleJavaPlugin {
 				"[Paper]", buildInfo.paperTarget(),
 				"[PaperApi]", buildInfo.paperApi(),
 				"[Java]", buildInfo.javaTarget());
+		// Add newly introduced defaults without removing local settings.
 		updateOldConfig();
 		configFiles.reloadConfig();
 		utils = new LootChestUtils();
@@ -373,7 +392,6 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.enabled", true);
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.message", "<#a6e3a1>All LootChests were force-respawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
-		configFiles.setConfig("EnableLootin", false);
 		configFiles.setConfig("Particles.fallback_particle", "FLAME");
 		configFiles.setConfig("Scheduler.Chests_Per_Tick", 1);
 		configFiles.setLang("Menu.particles.selected", "<#a6e3a1>Currently selected");
@@ -396,6 +414,7 @@ public class Main extends SimpleJavaPlugin {
 		configFiles.setLang("AllChestsDespawned", "<#a6e3a1>All LootChests were despawned.");
 		configFiles.setLang("AllChestsDespawnedInWorld", "<#a6e3a1>All LootChests were despawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setLang("ChestOperationInProgress", "<#f9e2af>LootChest is still loading or processing another bulk chest command. Please try again in a moment.");
+		configFiles.setLang("ListCommandHover", "<#a6e3a1>Click to edit <#89dceb>[Chest]");
 		configFiles.setLang("worldDoesntExist", "<#f38ba8>World <#89dceb>[World] <#f38ba8>does not exist.");
 		configFiles.setLang("AllChestsReloadedInWorld", "<#a6e3a1>All LootChests were respawned in <#89dceb>[World]<#a6e3a1>.");
 		if(!configFiles.getLang().getStringList("help").toString().contains("despawnall")){

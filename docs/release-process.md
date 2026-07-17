@@ -9,7 +9,10 @@ candidate testing happen on a `codex/<feature>` branch.
 2. Increment `buildNumber` in the root `pom.xml`.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
-5. Build from that clean commit with JDK 25.
+5. Build from that clean commit with JDK 25. The package phase runs the
+   release-jar policy and fails before copying the named artifact if updater,
+   metrics, DecentHolograms, proxy, NMS, falling-effect, version-adapter, or
+   retired shaded configuration-framework classes are present.
 6. Confirm `/lc info` reports the expected build, source commit, Paper target,
    Paper API, Java target, and artifact filename without a `-dirty` suffix.
 7. Run the repeatable central Paper smoke test against the exact candidate:
@@ -20,7 +23,9 @@ candidate testing happen on a `codex/<feature>` branch.
 8. Move the current approved jar into the test server's `archive/` directory and
    install the candidate as the only top-level LootChest jar.
 9. Manually test create, edit, open, empty, break, respawn, reload, particles,
-   holograms, and every supported container type.
+   holograms, and every supported container type. Automated coverage separately
+   locks Paper 26.2's chest, trapped chest, barrel, 17 shulker boxes, and all
+   eight copper oxidation/wax states.
 
 Do not move the candidate commit to `master` when any check is incomplete.
 

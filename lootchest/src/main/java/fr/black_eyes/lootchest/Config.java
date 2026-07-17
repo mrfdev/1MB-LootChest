@@ -32,7 +32,6 @@ public final boolean saveDataFileDuringReload,
 		removeEmptyChests,
 		debug,
 		consoleMessages,
-		preventChestSpawnInProtectedPlaces,
 		removeChestAfterFirstOpening,
 		preventHopperPlacingUnderLootChest,
 		protectFromExplosions,
@@ -46,7 +45,6 @@ public final boolean saveDataFileDuringReload,
 		timerShowTimer,
 		allowSpawningOnWater,
 		noteAllcmdWorldE,
-		lootin,
 		spawnOnNonSolidBlocks;
 public boolean worldborderCheckForSpawn, usehologram;
 
@@ -114,7 +112,6 @@ public Config(FileConfiguration config) {
 	removeEmptyChests = config.getBoolean("RemoveEmptyChests");
 	debug = config.getBoolean("Debug");
 	consoleMessages = config.getBoolean("ConsoleMessages");
-	preventChestSpawnInProtectedPlaces = config.getBoolean("Prevent_Chest_Spawn_In_Protected_Places");
 	removeChestAfterFirstOpening = config.getBoolean("RemoveChestAfterFirstOpening");
 	preventHopperPlacingUnderLootChest = config.getBoolean("PreventHopperPlacingUnderLootChest");
 	partEnable = config.getBoolean("Particles.enable");
@@ -125,10 +122,9 @@ public Config(FileConfiguration config) {
 	noteAllcmdE = config.getBoolean("respawn_notify.respawn_all_with_command.enabled");
 	noteAllcmdWorldE = config.getBoolean("respawn_notify.respawn_all_with_command_in_world.enabled");
 	protectFromExplosions = config.getBoolean("Protect_From_Explosions");
-		worldborderCheckForSpawn = config.getBoolean("WorldBorder_Check_For_Spawn");
+	worldborderCheckForSpawn = config.getBoolean("WorldBorder_Check_For_Spawn");
 	destroyNaturallyInsteadOfRemovingChest = config.getBoolean("Destroy_Naturally_Instead_Of_Removing_Chest");
 	timerShowTimer = config.getBoolean("Timer_on_hologram.Show_Timer_On_Hologram");
-	lootin = config.getBoolean("EnableLootin");
 	spawnOnNonSolidBlocks = config.getBoolean("spawn_on_non_solid_blocks");
 	
 	partDefaultParticle = config.getString("Particles.default_particle");

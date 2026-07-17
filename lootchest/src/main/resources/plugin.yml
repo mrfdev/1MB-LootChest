@@ -3,7 +3,7 @@ main: ${project.groupId}.Main
 version: ${project.version}-${buildNumber}
 author: Black_Eyes
 api-version: '26.2'
-softdepend: [CMI, CMILib, MultiWorld, Multiverse-Core, FabledSkyBlock, MultiverseCore, GriefPrevention, Residence, WorldGuard, Factions, FactionsX, Towny, Lootin]
+softdepend: [CMI, CMILib, Multiverse-Core, Bolt]
 description: >
              ${project.description}
 commands:

@@ -16,7 +16,6 @@ import org.bukkit.inventory.InventoryHolder;
 
 import fr.black_eyes.api.events.LootChestSpawnEvent;
 import org.bukkit.Particle;
-import fr.black_eyes.simpleJavaPlugin.Files;
 import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 import lombok.Getter;
 import lombok.Setter;
@@ -156,7 +155,7 @@ public class Lootchest {
 	public Lootchest(String naming) {
 		Main main = Main.getInstance();
 		LootChestUtils utils = main.getUtils();
-		Files configFiles = Main.getInstance().getConfigFiles();
+		LootChestFiles configFiles = Main.getInstance().getConfigFiles();
 		taken = false;
 		if(!configFiles.getData().isSet(DATA_CHEST_PATH+naming+ TYPE)){
 			type = Mat.CHEST;
@@ -307,7 +306,7 @@ public class Lootchest {
 	public void saveInConfig(){
 		Main main = Main.getInstance();
 		LootChestUtils utils = main.getUtils();
-		Files configFiles = Main.getInstance().getConfigFiles();
+		LootChestFiles configFiles = Main.getInstance().getConfigFiles();
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".inventory", null);
 		for(int i = 0 ; i < inv.getSize() ; i++) {
 			if(inv.getItem(i) != null && Objects.requireNonNull(inv.getItem(i)).getType() != Material.AIR) {
@@ -441,14 +440,6 @@ public class Lootchest {
 			} catch (IllegalArgumentException e) {
 				Messages.log("<#f6c177>Could not restore the direction of LootChest " + getName() + ". The chest will otherwise continue to work.");
 			}
-		}
-
-		// check if lootin is installed
-		if(Config.getInstance().lootin && Bukkit.getPluginManager().isPluginEnabled("Lootin")) {
-			if(block.getType().equals(Material.CHEST) || block.getType().equals(Material.TRAPPED_CHEST) || Mat.isCopperChest(block.getType()))
-				com.github.sachin.lootin.utils.ChestUtils.setLootinContainer(null,block.getState(),com.github.sachin.lootin.utils.ContainerType.CHEST);
-			else if(block.getType().equals(Material.valueOf("BARREL")))
-				com.github.sachin.lootin.utils.ChestUtils.setLootinContainer(null,block.getState(),com.github.sachin.lootin.utils.ContainerType.BARREL);
 		}
 
 		// spawn particles and hologram if needed

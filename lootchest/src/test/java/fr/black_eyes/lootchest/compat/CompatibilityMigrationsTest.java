@@ -31,6 +31,8 @@ class CompatibilityMigrationsTest {
                   natural_respawn:
                     enabled: true
                     message: keep-this-message
+                EnableLootin: true
+                Prevent_Chest_Spawn_In_Protected_Places: true
                 custom-setting: keep-me
                 """);
 
@@ -43,6 +45,8 @@ class CompatibilityMigrationsTest {
         assertFalse(config.isSet("Fall_Effect.Let_Block_Above_Chest_After_Fall"));
         assertFalse(config.isSet("Fall_Effect.Optionnal_Color_If_Block_Is_Wool"));
         assertFalse(config.isSet("respawn_notify.bungee_broadcast"));
+        assertFalse(config.isSet("EnableLootin"));
+        assertFalse(config.isSet("Prevent_Chest_Spawn_In_Protected_Places"));
         assertTrue(config.getBoolean("respawn_notify.per_world_message"));
         assertTrue(config.getBoolean("respawn_notify.natural_respawn.enabled"));
         assertEquals(
@@ -75,6 +79,8 @@ class CompatibilityMigrationsTest {
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
 
             assertFalse(config.isSet("respawn_notify.bungee_broadcast"));
+            assertFalse(config.isSet("EnableLootin"));
+            assertFalse(config.isSet("Prevent_Chest_Spawn_In_Protected_Places"));
             assertTrue(config.isSet("respawn_notify.per_world_message"));
             assertTrue(config.isSet("respawn_notify.message_on_chest_take"));
             assertTrue(config.getBoolean("respawn_notify.natural_respawn.enabled"));

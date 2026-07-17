@@ -20,7 +20,7 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <revision>2.5.9.1</revision>
-        <buildNumber>208</buildNumber>
+        <buildNumber>212</buildNumber>
         <paperVersion>26.2</paperVersion>
         <paperApiVersion>26.2.build.60-beta</paperApiVersion>
         <cmiApiVersion>9.8.6.4</cmiApiVersion>
@@ -57,29 +57,6 @@
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>replace-local-path</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${script.launcher}</executable>
-                            <arguments>
-                                <argument>${script.argument}</argument>
-                                <argument>${basedir}/scripts/replace_local_path.${script.extension}</argument>
-                                <argument>${basedir}</argument> <!-- si ton script attend un argument -->
-                            </arguments>
-                        </configuration>
-                        <inherited>false</inherited>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
@@ -105,33 +82,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>windows</id>
-            <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
-            </activation>
-            <properties>
-                <script.launcher>cmd</script.launcher>
-                <script.argument>/c</script.argument>
-                <script.extension>bat</script.extension>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>unix</id>
-            <activation>
-                <os>
-                    <family>unix</family>
-                </os>
-            </activation>
-            <properties>
-                <script.launcher>bash</script.launcher>
-                <script.argument>--debug</script.argument>
-                <script.extension>sh</script.extension>
-            </properties>
-        </profile>
-    </profiles>
 </project>

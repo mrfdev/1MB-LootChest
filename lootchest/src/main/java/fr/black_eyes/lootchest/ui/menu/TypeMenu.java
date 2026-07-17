@@ -38,7 +38,7 @@ public class TypeMenu extends ChestUi {
 			}
 		}
 		for (Material mat : Material.values()) {
-			if (mat.toString().contains("SHULKER_BOX")) {
+			if (Mat.isShulkerBox(mat)) {
 				setItem(cpt, new ItemStack(mat, 1), p -> changeChestType(p, mat));
 				cpt++;
 			}
