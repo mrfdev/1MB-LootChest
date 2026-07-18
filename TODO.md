@@ -11,6 +11,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve build 203 as the final direct WorldGuard integration rollback with the `1mb-lootchest-v2.5.9.1-build203-last-worldguard-support` tag.
   - [x] Preserve manually approved build 212 with the `1mb-lootchest-v2.5.9.1-build212-approved` tag.
   - [x] Preserve manually approved build 220 with the `1mb-lootchest-v2.5.9.1-build220-approved` tag and retain build 212 for rollback.
+  - [x] Preserve manually approved build 221 with the `1mb-lootchest-v2.5.9.1-build221-approved` tag and retain build 220 for rollback.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
