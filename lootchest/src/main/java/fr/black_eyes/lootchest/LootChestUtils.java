@@ -275,21 +275,12 @@ public class LootChestUtils  {
 	}
 
 	/**
-	 * Check if a location is a lootchest by checking if it's in the lootchest location list
+	 * Check if a location is a LootChest using the guarded location index.
 	 * @param loc the location to check
 	 * @return the Lootchest object if it's a lootchest, null otherwise
 	 */
 	public static Lootchest isLootChest(Location loc) {
-		Lootchest scannedChest = null;
-		for(Lootchest keys : Main.getInstance().getLootChest().values()) {
-			Location loc2 = keys.getActualLocation();
-			if(loc2.equals(loc)) {
-				scannedChest = keys;
-				break;
-			}
-		}
-		Main.getInstance().observeLootChestLookup(loc, scannedChest);
-		return scannedChest;
+		return Main.getInstance().findLootChest(loc);
 	}
 
 	/**

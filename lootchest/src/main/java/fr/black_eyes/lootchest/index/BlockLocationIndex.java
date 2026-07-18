@@ -5,6 +5,8 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Tracks object identity by world UUID and block coordinates.
@@ -37,6 +39,37 @@ public final class BlockLocationIndex<T> {
         return byLocation.get(new BlockKey(worldId, x, y, z));
     }
 
+    /**
+     * Resolves a location through the index and falls back to the proven lookup
+     * when the cached value is absent, invalid, or explicitly being verified.
+     */
+    public Resolution<T> resolve(
+            UUID worldId,
+            int x,
+            int y,
+            int z,
+            Predicate<T> indexedValidator,
+            Supplier<T> fallbackLookup,
+            boolean verifyIndexedHit) {
+        Objects.requireNonNull(worldId, "worldId");
+        Objects.requireNonNull(indexedValidator, "indexedValidator");
+        Objects.requireNonNull(fallbackLookup, "fallbackLookup");
+
+        T indexed = get(worldId, x, y, z);
+        boolean indexedIsValid = indexed != null && indexedValidator.test(indexed);
+        if (indexedIsValid && !verifyIndexedHit) {
+            return new Resolution<>(indexed, indexed, false, false);
+        }
+
+        T fallback = fallbackLookup.get();
+        if (fallback == null) {
+            remove(indexed);
+        } else {
+            put(fallback, worldId, x, y, z);
+        }
+        return new Resolution<>(fallback, indexed, true, indexed != fallback);
+    }
+
     public void remove(T value) {
         if (value == null) {
             return;
@@ -54,6 +87,9 @@ public final class BlockLocationIndex<T> {
 
     public int size() {
         return byLocation.size();
+    }
+
+    public record Resolution<T>(T value, T indexedValue, boolean usedFallback, boolean mismatch) {
     }
 
     private record BlockKey(UUID worldId, int x, int y, int z) {

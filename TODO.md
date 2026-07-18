@@ -38,6 +38,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
     - [x] Add a non-authoritative shadow index and debug-only scan comparison in build 221.
+    - [x] Add a guarded index-first lookup with exact-location validation, scan fallback, and self-repair in build 222.
     - [ ] Promote the index to the primary lookup only after shadow and manual gameplay validation.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.

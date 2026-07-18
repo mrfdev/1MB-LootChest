@@ -380,10 +380,10 @@ public class Main extends JavaPlugin {
 		lootChestLocationIndex.clear();
 		locationIndexMismatchWarnings.clear();
 		lootChest.values().forEach(this::trackLootChestLocation);
-		if (configs.debug) {
+		if (configs != null && configs.debug) {
 			Messages.log(
-					"<#89b4fa>Shadow location index tracks [Indexed] of [Loaded] loaded LootChests; "
-							+ "the full scan remains authoritative.",
+					"<#89b4fa>Guarded location index tracks [Indexed] of [Loaded] loaded LootChests; "
+							+ "the exact-location scan remains the fallback and debug verifier.",
 					"[Indexed]", Integer.toString(lootChestLocationIndex.size()),
 					"[Loaded]", Integer.toString(lootChest.size()));
 		}
@@ -412,29 +412,57 @@ public class Main extends JavaPlugin {
 		}
 	}
 
-	public void observeLootChestLookup(Location location, Lootchest scannedChest) {
-		if (lootChestLocationIndex == null || location == null || location.getWorld() == null) {
-			return;
+	public Lootchest findLootChest(Location location) {
+		if (location == null || lootChest == null) {
+			return null;
 		}
-		Lootchest indexedChest = lootChestLocationIndex.get(
+
+		if (lootChestLocationIndex == null || location.getWorld() == null) {
+			return scanLootChest(location);
+		}
+
+		boolean verifyIndexedHit = configs != null && configs.debug;
+		BlockLocationIndex.Resolution<Lootchest> resolution = lootChestLocationIndex.resolve(
 				location.getWorld().getUID(),
 				location.getBlockX(),
 				location.getBlockY(),
-				location.getBlockZ());
-		if (indexedChest == scannedChest || configs == null || !configs.debug) {
-			return;
+				location.getBlockZ(),
+				chest -> isRegisteredAt(chest, location),
+				() -> scanLootChest(location),
+				verifyIndexedHit);
+		if (verifyIndexedHit && resolution.mismatch()) {
+			warnLocationIndexMismatch(location, resolution.indexedValue(), resolution.value());
 		}
+		return resolution.value();
+	}
 
+	private Lootchest scanLootChest(Location location) {
+		for (Lootchest chest : lootChest.values()) {
+			Location chestLocation = chest.getActualLocation();
+			if (chestLocation != null && chestLocation.equals(location)) {
+				return chest;
+			}
+		}
+		return null;
+	}
+
+	private boolean isRegisteredAt(Lootchest chest, Location location) {
+		return chest != null
+				&& lootChest.get(chest.getName()) == chest
+				&& location.equals(chest.getActualLocation());
+	}
+
+	private void warnLocationIndexMismatch(Location location, Lootchest indexedChest, Lootchest scannedChest) {
 		String warningKey = location.getWorld().getUID()
 				+ ":" + location.getBlockX()
 				+ ":" + location.getBlockY()
 				+ ":" + location.getBlockZ();
 		if (locationIndexMismatchWarnings.add(warningKey)) {
 			getLogger().warning(
-					"Shadow location index mismatch at " + warningKey
+					"Guarded location index mismatch at " + warningKey
 							+ ": scan=" + chestName(scannedChest)
 							+ ", index=" + chestName(indexedChest)
-							+ ". The proven scan result remains authoritative.");
+							+ ". The scan result was used and the index was repaired.");
 		}
 	}
 
