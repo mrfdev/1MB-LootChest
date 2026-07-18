@@ -214,7 +214,7 @@ class ChestLifecycleTest {
                 hologramRemovals::incrementAndGet);
 
         assertTrue(removed);
-        assertEquals(0, clears.get());
+        assertEquals(1, clears.get());
         assertEquals(Material.AIR, blockType.get());
         assertTrue(blockPhysics.get());
         assertTrue(particles.isEmpty());

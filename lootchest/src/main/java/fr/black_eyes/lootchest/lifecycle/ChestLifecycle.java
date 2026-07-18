@@ -210,10 +210,7 @@ public final class ChestLifecycle {
             Runnable hologramCleanup) {
         BlockState state = block.getState();
         if (state instanceof InventoryHolder inventoryHolder) {
-            Inventory inventory = inventoryHolder.getInventory();
-            if (!inventory.isEmpty()) {
-                inventory.clear();
-            }
+            inventoryHolder.getInventory().clear();
         }
         block.setType(Material.AIR);
         if (block.getType() != Material.AIR) {
