@@ -517,6 +517,12 @@ public class Main extends JavaPlugin {
 		configFiles.setLang("audit.finding", "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]");
 		configFiles.setLang("audit.truncated", "<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.");
 		configFiles.setLang("audit.read_only", "<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.");
+		configFiles.setLang("audit.click_to_tp", "<#a6e3a1>Click to teleport to <#89dceb>[Chest]");
+		configFiles.setLang("audit.target_title", "<#cba6f7><bold>Lootbox audit:</bold> <#89dceb>[Chest]");
+		configFiles.setLang("audit.target_container", "<#a6e3a1>Container <#bac2de>saved <#89dceb>[Expected]<#bac2de>, live <#89dceb>[Actual]<#bac2de>, state <#89dceb>[State]");
+		configFiles.setLang("audit.target_location", "<#a6e3a1>Location <#89dceb>[Location] <#bac2de>| <#a6e3a1>index <#89dceb>[Index]");
+		configFiles.setLang("audit.target_effects", "<#a6e3a1>Hologram <#bac2de>expected <#89dceb>[HologramExpected]<#bac2de>, active <#89dceb>[HologramActive] <#bac2de>| <#a6e3a1>particle <#bac2de>expected <#89dceb>[ParticleExpected]<#bac2de>, active <#89dceb>[ParticleActive]");
+		configFiles.setLang("audit.target_task", "<#a6e3a1>Respawn task <#bac2de>expected <#89dceb>[TaskExpected]<#bac2de>, active <#89dceb>[TaskActive]");
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
 		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
 		configFiles.setLang("blockIsAlreadyLootchest", "<#f38ba8>This block is already registered as a LootChest.");
@@ -557,7 +563,7 @@ public class Main extends JavaPlugin {
 		}
 		if(!configFiles.getLang().getStringList("help").toString().contains("/lc audit")){
 			List<String> help = configFiles.getLang().getStringList("help");
-			help.add(Math.min(2, help.size()), "<#a6e3a1>/lc audit <#6c7086>- Inspect lifecycle consistency without making changes");
+			help.add(Math.min(2, help.size()), "<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox");
 			configFiles.getLang().set("help", help);
 			configFiles.saveLang();
 		}

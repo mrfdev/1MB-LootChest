@@ -55,6 +55,12 @@ audit:
   finding: '<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]'
   truncated: '<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.'
   read_only: '<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.'
+  click_to_tp: '<#a6e3a1>Click to teleport to <#89dceb>[Chest]'
+  target_title: '<#cba6f7><bold>Lootbox audit:</bold> <#89dceb>[Chest]'
+  target_container: '<#a6e3a1>Container <#bac2de>saved <#89dceb>[Expected]<#bac2de>, live <#89dceb>[Actual]<#bac2de>, state <#89dceb>[State]'
+  target_location: '<#a6e3a1>Location <#89dceb>[Location] <#bac2de>| <#a6e3a1>index <#89dceb>[Index]'
+  target_effects: '<#a6e3a1>Hologram <#bac2de>expected <#89dceb>[HologramExpected]<#bac2de>, active <#89dceb>[HologramActive] <#bac2de>| <#a6e3a1>particle <#bac2de>expected <#89dceb>[ParticleExpected]<#bac2de>, active <#89dceb>[ParticleActive]'
+  target_task: '<#a6e3a1>Respawn task <#bac2de>expected <#89dceb>[TaskExpected]<#bac2de>, active <#89dceb>[TaskActive]'
 locate_command:
   main_message: '<#cba6f7>LootChest locations'
   chest_list: '<#6c7086>- <#89dceb>[Chest]<#bac2de>: [x], [y], [z] in [world]'
@@ -98,7 +104,7 @@ Menu:
 help:
   - '<#cba6f7><bold>Lootbox commands</bold>'
   - '<#6c7086>Paper 26.2 / Java 25 edition'
-  - '<#a6e3a1>/lc audit <#6c7086>- Inspect lifecycle consistency without making changes'
+  - '<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox'
   - '<#a6e3a1>/lc info <#6c7086>- About Lootbox and its documentation'
   - '<#a6e3a1>/lc copy <#bac2de>\<source> \<destination> <#6c7086>- Copy one Lootbox into another'
   - '<#a6e3a1>/lc create <#bac2de>\<name> <#6c7086>- Create a Lootbox'

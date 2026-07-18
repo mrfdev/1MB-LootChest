@@ -52,9 +52,7 @@ public final class LifecycleAudit {
             inspectSnapshot(snapshot, findings);
         }
 
-        findings.sort(Comparator
-                .comparing((Finding finding) -> finding.code().name())
-                .thenComparing(Finding::chest));
+        sortFindings(findings);
 
         int present = count(sortedSnapshots, ContainerState.PRESENT);
         int absent = count(sortedSnapshots, ContainerState.ABSENT);
@@ -68,6 +66,13 @@ public final class LifecycleAudit {
                 wrongType,
                 unavailable,
                 List.copyOf(findings));
+    }
+
+    public static ChestReport inspect(ChestSnapshot snapshot) {
+        List<Finding> findings = new ArrayList<>();
+        inspectSnapshot(snapshot, findings);
+        sortFindings(findings);
+        return new ChestReport(snapshot, List.copyOf(findings));
     }
 
     private static void inspectSnapshot(ChestSnapshot snapshot, List<Finding> findings) {
@@ -153,6 +158,12 @@ public final class LifecycleAudit {
         return (int) snapshots.stream().filter(snapshot -> snapshot.containerState() == state).count();
     }
 
+    private static void sortFindings(List<Finding> findings) {
+        findings.sort(Comparator
+                .comparing((Finding finding) -> finding.code().name())
+                .thenComparing(Finding::chest));
+    }
+
     public enum ContainerState {
         PRESENT,
         ABSENT,
@@ -201,6 +212,17 @@ public final class LifecycleAudit {
             Objects.requireNonNull(code, "code");
             Objects.requireNonNull(chest, "chest");
             Objects.requireNonNull(detail, "detail");
+        }
+    }
+
+    public record ChestReport(ChestSnapshot snapshot, List<Finding> findings) {
+        public ChestReport {
+            Objects.requireNonNull(snapshot, "snapshot");
+            findings = List.copyOf(findings);
+        }
+
+        public boolean clean() {
+            return findings.isEmpty();
         }
     }
 

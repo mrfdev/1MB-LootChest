@@ -108,12 +108,18 @@ class CompatibilityMigrationsTest {
                   - "/lc togglefall test"
                   - "/lc removeAllHolo"
                   - "/lc list"
+                  - "<#a6e3a1>/lc audit <#6c7086>- Inspect lifecycle consistency without making changes"
                 """);
 
         assertTrue(CompatibilityMigrations.migrateLanguage(language));
 
         assertEquals("Chance: 25", language.getString("Menu.chances.lore"));
-        assertEquals(List.of("/lc info", "/lc list"), language.getStringList("help"));
+        assertEquals(
+                List.of(
+                        "/lc info",
+                        "/lc list",
+                        "<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox"),
+                language.getStringList("help"));
         assertNull(language.get("enabledFallEffect"));
         assertNull(language.get("disabledFallEffect"));
         assertNull(language.get("Menu.main.enable_fall"));

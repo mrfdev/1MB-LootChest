@@ -14,6 +14,7 @@ import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
 import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ChestSnapshot;
+import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ChestReport;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ContainerState;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.Report;
 
@@ -32,6 +33,13 @@ public final class LifecycleAuditor {
             snapshots.add(snapshot(plugin, chest));
         }
         return LifecycleAudit.inspect(snapshots, plugin.getLootChestLocationIndex().size());
+    }
+
+    public static ChestReport inspect(Main plugin, Lootchest chest) {
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException("LootChest lifecycle audits must run on the server thread.");
+        }
+        return LifecycleAudit.inspect(snapshot(plugin, chest));
     }
 
     private static ChestSnapshot snapshot(Main plugin, Lootchest chest) {

@@ -12,6 +12,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 public final class CompatibilityMigrations {
     private static final String CHANCES_LORE = "Menu.chances.lore";
     private static final String HELP = "help";
+    private static final String OLD_AUDIT_HELP =
+            "<#a6e3a1>/lc audit <#6c7086>- Inspect lifecycle consistency without making changes";
+    private static final String TARGETED_AUDIT_HELP =
+            "<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox";
     private static final String OLD_AUDIT_SUMMARY =
             "<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] "
                     + "<#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong "
@@ -69,6 +73,13 @@ public final class CompatibilityMigrations {
         });
         if (helpChanged) {
             changed |= set(language, HELP, help);
+        }
+        for (int index = 0; index < help.size(); index++) {
+            if (Objects.equals(help.get(index), OLD_AUDIT_HELP)) {
+                help.set(index, TARGETED_AUDIT_HELP);
+                changed |= set(language, HELP, help);
+                break;
+            }
         }
 
         changed |= remove(language, "enabledFallEffect");

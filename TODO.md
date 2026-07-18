@@ -33,17 +33,18 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Batch or stagger large chest reload/respawn work to avoid main-thread spikes.
   - [x] Track all plugin tasks in one registry and cancel them on reload and shutdown.
   - [x] Complete manual empty, break, hologram, reload, and respawn gameplay validation for build 199.
-- [ ] **3. Listener and lifecycle hardening**
+- [x] **3. Listener and lifecycle hardening**
   - [x] Correct inventory raw-slot, drag, close, and quit handling.
   - [x] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
   - [x] Audit explosion, hopper, piston, and protection handling for every supported container.
-  - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
+  - [x] Keep the proven event-driven lifecycle; the broad idempotent rewrite is intentionally not planned after rejected builds 213-216 regressed empty-container cleanup.
   - [x] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
     - [x] Add a non-authoritative shadow index and debug-only scan comparison in build 221.
     - [x] Add a guarded index-first lookup with exact-location validation, scan fallback, and self-repair in build 222.
     - [x] Promote the guarded index to the primary lookup after shadow and manual gameplay validation.
   - [x] Add a read-only lifecycle audit for containers, duplicate locations, index entries, holograms, particles, and respawn tasks in build 223.
   - [x] Treat natural copper chest oxidation/wax states as one valid physical container in lifecycle audits and improve audit readability in build 224.
+  - [x] Add targeted `/lc audit <chest>` details and clickable teleport actions in build 225.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ChestSnapshot;
+import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ChestReport;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ContainerState;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.IssueCode;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.Report;
@@ -134,6 +135,26 @@ class LifecycleAuditTest {
 
         assertTrue(report.clean());
         assertEquals(1, report.unavailable());
+    }
+
+    @Test
+    void targetedAuditChecksOneChestWithoutGlobalIndexSizeNoise() {
+        ChestSnapshot snapshot = snapshot(
+                "target",
+                "world:1:2:3",
+                ContainerState.PRESENT,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true);
+
+        ChestReport report = LifecycleAudit.inspect(snapshot);
+
+        assertTrue(report.clean());
+        assertEquals(snapshot, report.snapshot());
     }
 
     private static ChestSnapshot snapshot(
