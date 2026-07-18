@@ -222,10 +222,11 @@ public class DeleteListener implements Listener  {
 					: ChestLifecycle.RemovalCause.FIRST_OPEN;
 			ChestLifecycle.Transition transition = key.beginRemoval(cause);
 			if (transition != null) {
-				if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
-					loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
-				}
-				key.completeRemovalAfterInventoryClose(transition, loc);
+				key.completeRemovalAfterInventoryClose(transition, loc, () -> {
+					if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+						loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
+					}
+				});
 			}
 		}
 		if(inventoryEmpty) {
@@ -355,14 +356,15 @@ public class DeleteListener implements Listener  {
 			ChestLifecycle.collectBreakContents(
 					container.getInventory(),
 					item -> block.getWorld().dropItemNaturally(block.getLocation(), item));
-			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
-				lootChestLocation.getWorld().dropItemNaturally(
-						lootChestLocation,
-						new ItemStack(chest.getType()));
-			}
 		} finally {
 			// Paper restores cancelled block breaks after event handlers return.
-			chest.completeRemovalNextTick(transition, lootChestLocation);
+			chest.completeRemovalNextTick(transition, lootChestLocation, () -> {
+				if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+					lootChestLocation.getWorld().dropItemNaturally(
+							lootChestLocation,
+							new ItemStack(chest.getType()));
+				}
+			});
 		}
 
 		sendChestTakeMessageIfEnabled(chest, event.getPlayer());
@@ -416,14 +418,13 @@ public class DeleteListener implements Listener  {
 			if (transition == null) {
 				continue;
 			}
-			if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
-				location.getWorld().dropItemNaturally(
-						location,
-						new ItemStack(container.chest().getType()));
-			}
-			if (container.chest().completeRemoval(transition, location)) {
-				container.chest().spawn(false);
-			}
+			container.chest().completeRemovalNextTick(transition, location, () -> {
+				if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
+					location.getWorld().dropItemNaturally(
+							location,
+							new ItemStack(container.chest().getType()));
+				}
+			});
 		}
 	}
 

@@ -203,17 +203,24 @@ public final class ChestLifecycle {
         clearInventory.run();
     }
 
-    public static void removePhysicalContainer(
+    public static boolean removePhysicalContainer(
             Block block,
             Location particleLocation,
             Map<Location, Particle> activeParticles,
             Runnable hologramCleanup) {
         BlockState state = block.getState();
         if (state instanceof InventoryHolder inventoryHolder) {
-            inventoryHolder.getInventory().clear();
+            Inventory inventory = inventoryHolder.getInventory();
+            if (!inventory.isEmpty()) {
+                inventory.clear();
+            }
         }
-        block.setType(Material.AIR, false);
+        block.setType(Material.AIR);
+        if (block.getType() != Material.AIR) {
+            return false;
+        }
         removeEffects(particleLocation, activeParticles, hologramCleanup);
+        return true;
     }
 
     public static void removeEffects(

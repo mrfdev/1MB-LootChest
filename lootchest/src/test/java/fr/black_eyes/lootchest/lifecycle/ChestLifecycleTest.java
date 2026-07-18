@@ -194,11 +194,11 @@ class ChestLifecycleTest {
     }
 
     @Test
-    void despawnClearsInventoryBlockParticleAndHologram() {
+    void despawnConfirmsBlockRemovalBeforeCleaningEffects() {
         AtomicInteger clears = new AtomicInteger();
         AtomicReference<Material> blockType = new AtomicReference<>(Material.CHEST);
         AtomicReference<Boolean> blockPhysics = new AtomicReference<>(true);
-        Inventory inventory = inventory(new ItemStack[0], clears);
+        Inventory inventory = inventory(true, clears);
         Container container = container(inventory);
         Block block = block(container, blockType, blockPhysics);
         Location particleLocation = location();
@@ -207,17 +207,62 @@ class ChestLifecycleTest {
         AtomicInteger hologramRemovals = new AtomicInteger();
         particles.put(particleLocation, particle);
 
-        ChestLifecycle.removePhysicalContainer(
+        boolean removed = ChestLifecycle.removePhysicalContainer(
                 block,
                 particleLocation,
                 particles,
                 hologramRemovals::incrementAndGet);
 
-        assertEquals(1, clears.get());
+        assertTrue(removed);
+        assertEquals(0, clears.get());
         assertEquals(Material.AIR, blockType.get());
-        assertFalse(blockPhysics.get());
+        assertTrue(blockPhysics.get());
         assertTrue(particles.isEmpty());
         assertEquals(1, hologramRemovals.get());
+    }
+
+    @Test
+    void despawnClearsNonEmptyInventoryBeforeRemovingContainer() {
+        AtomicInteger clears = new AtomicInteger();
+        AtomicReference<Material> blockType = new AtomicReference<>(Material.COPPER_CHEST);
+        AtomicReference<Boolean> blockPhysics = new AtomicReference<>(true);
+        Inventory inventory = inventory(false, clears);
+        Block block = block(container(inventory), blockType, blockPhysics);
+
+        boolean removed = ChestLifecycle.removePhysicalContainer(
+                block,
+                location(),
+                new HashMap<>(),
+                () -> {
+                });
+
+        assertTrue(removed);
+        assertEquals(1, clears.get());
+        assertEquals(Material.AIR, blockType.get());
+        assertTrue(blockPhysics.get());
+    }
+
+    @Test
+    void failedPhysicalRemovalKeepsEffectsForLifecycleRecovery() {
+        Block block = proxy(Block.class, (ignored, method, arguments) -> switch (method.getName()) {
+            case "getType" -> Material.COPPER_CHEST;
+            case "setType" -> null;
+            default -> defaultValue(method.getReturnType());
+        });
+        Location particleLocation = location();
+        Map<Location, Particle> particles = new HashMap<>();
+        AtomicInteger hologramRemovals = new AtomicInteger();
+        particles.put(particleLocation, Particle.FLAME);
+
+        boolean removed = ChestLifecycle.removePhysicalContainer(
+                block,
+                particleLocation,
+                particles,
+                hologramRemovals::incrementAndGet);
+
+        assertFalse(removed);
+        assertEquals(Map.of(particleLocation, Particle.FLAME), particles);
+        assertEquals(0, hologramRemovals.get());
     }
 
     @Test
@@ -260,9 +305,9 @@ class ChestLifecycleTest {
         assertTrue(protections.isEmpty());
     }
 
-    private Inventory inventory(ItemStack[] contents, AtomicInteger clears) {
+    private Inventory inventory(boolean empty, AtomicInteger clears) {
         return proxy(Inventory.class, (ignored, method, arguments) -> switch (method.getName()) {
-            case "getContents" -> contents;
+            case "isEmpty" -> empty;
             case "clear" -> {
                 clears.incrementAndGet();
                 yield null;
@@ -286,6 +331,7 @@ class ChestLifecycleTest {
             AtomicReference<Boolean> physics) {
         return proxy(Block.class, (ignored, method, arguments) -> switch (method.getName()) {
             case "getState" -> state;
+            case "getType" -> type.get();
             case "setType" -> {
                 type.set((Material) arguments[0]);
                 if (arguments.length > 1) {

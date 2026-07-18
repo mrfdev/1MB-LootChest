@@ -26,7 +26,9 @@ import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
 public class Lootchest {
 
-	private static final int REMOVAL_VERIFICATION_PASSES = 2;
+	private static final int REMOVAL_RETRY_ATTEMPTS = 20;
+	private static final Runnable NO_OP = () -> {
+	};
 
 	public static final String MAX_FILLED_SLOTS = ".maxFilledSlots";
 	public static final String RANDOMRADIUS = ".randomradius";
@@ -407,32 +409,35 @@ public class Lootchest {
 			return false;
 		}
 
-		try {
-			removePhysicalContainer(location);
-		} finally {
-			lifecycle.completeRemoval(transition);
+		if (!removePhysicalContainer(location)) {
+			return false;
 		}
-		return true;
+		return lifecycle.completeRemoval(transition);
 	}
 
 	public void completeRemovalNextTick(
 			ChestLifecycle.Transition transition,
-			Location location) {
+			Location location,
+			Runnable afterSuccessfulRemoval) {
 		Location expectedLocation = location.clone();
 		Main.getInstance().getTaskRegistry().runLater(removalTaskKey(), () -> {
 			try {
 				if (completeRemoval(transition, expectedLocation)) {
-					schedulePhysicalRemovalVerification(
-							transition.generation(),
-							expectedLocation,
-							REMOVAL_VERIFICATION_PASSES);
+					afterSuccessfulRemoval.run();
 					spawn(false);
+				} else {
+					scheduleRemovalRetry(
+							transition,
+							expectedLocation,
+							REMOVAL_RETRY_ATTEMPTS,
+							afterSuccessfulRemoval);
 				}
 			} catch (RuntimeException | LinkageError exception) {
-				schedulePhysicalRemovalVerification(
-						transition.generation(),
+				scheduleRemovalRetry(
+						transition,
 						expectedLocation,
-						REMOVAL_VERIFICATION_PASSES);
+						REMOVAL_RETRY_ATTEMPTS,
+						afterSuccessfulRemoval);
 				Main.getInstance().getLogger().log(
 						Level.SEVERE,
 						"Could not finish removing LootChest " + name,
@@ -444,21 +449,26 @@ public class Lootchest {
 
 	public void completeRemovalAfterInventoryClose(
 			ChestLifecycle.Transition transition,
-			Location location) {
+			Location location,
+			Runnable afterSuccessfulRemoval) {
 		Location expectedLocation = location.clone();
 		try {
 			if (completeRemoval(transition, expectedLocation)) {
-				schedulePhysicalRemovalVerification(
-						transition.generation(),
-						expectedLocation,
-						REMOVAL_VERIFICATION_PASSES);
+				afterSuccessfulRemoval.run();
 				spawn(false);
+			} else {
+				scheduleRemovalRetry(
+						transition,
+						expectedLocation,
+						REMOVAL_RETRY_ATTEMPTS,
+						afterSuccessfulRemoval);
 			}
 		} catch (RuntimeException | LinkageError exception) {
-			schedulePhysicalRemovalVerification(
-					transition.generation(),
+			scheduleRemovalRetry(
+					transition,
 					expectedLocation,
-					REMOVAL_VERIFICATION_PASSES);
+					REMOVAL_RETRY_ATTEMPTS,
+					afterSuccessfulRemoval);
 			Main.getInstance().getLogger().log(
 					Level.SEVERE,
 					"Could not finish removing LootChest " + name + " after its inventory closed",
@@ -467,55 +477,68 @@ public class Lootchest {
 		}
 	}
 
-	private void schedulePhysicalRemovalVerification(
-			long expectedGeneration,
+	private void scheduleRemovalRetry(
+			ChestLifecycle.Transition transition,
 			Location expectedLocation,
-			int remainingPasses) {
-		if (remainingPasses <= 0) {
+			int remainingAttempts,
+			Runnable afterSuccessfulRemoval) {
+		if (remainingAttempts <= 0) {
+			recoverFromFailedRemoval(transition, expectedLocation);
 			return;
 		}
-		Main.getInstance().getTaskRegistry().runLater(removalVerificationTaskKey(), () -> {
-			if (!lifecycle.isCurrentGeneration(expectedGeneration)
-					|| lifecycle.state() != ChestLifecycle.State.DESPAWNED
+		Main.getInstance().getTaskRegistry().runLater(removalRetryTaskKey(), () -> {
+			if (!lifecycle.isCurrent(transition)
 					|| !isSameBlock(getActualLocation(), expectedLocation)) {
 				return;
 			}
 
-			Block block = expectedLocation.getBlock();
-			if (isGoodType(block)) {
-				removePhysicalContainer(expectedLocation);
-			}
-			Block currentBlock = expectedLocation.getBlock();
-			if (currentBlock.getType() == Material.AIR) {
-				for (Player player : currentBlock.getWorld().getPlayers()) {
-					player.sendBlockChange(expectedLocation, currentBlock.getBlockData());
+			try {
+				if (completeRemoval(transition, expectedLocation)) {
+					afterSuccessfulRemoval.run();
+					spawn(false);
+					return;
 				}
+			} catch (RuntimeException | LinkageError exception) {
+				Main.getInstance().getLogger().log(
+						Level.WARNING,
+						"Retrying physical removal of LootChest " + name,
+						exception);
 			}
-			if (remainingPasses > 1) {
-				schedulePhysicalRemovalVerification(
-						expectedGeneration,
-						expectedLocation,
-						remainingPasses - 1);
-			} else if (isGoodType(currentBlock)) {
-				Main.getInstance().getLogger().warning(
-						"Physical container for LootChest " + name
-								+ " survived repeated removal attempts at "
-								+ expectedLocation.getBlockX() + ","
-								+ expectedLocation.getBlockY() + ","
-								+ expectedLocation.getBlockZ() + ".");
-			}
+			scheduleRemovalRetry(
+					transition,
+					expectedLocation,
+					remainingAttempts - 1,
+					afterSuccessfulRemoval);
 		}, 1L);
+	}
+
+	private void recoverFromFailedRemoval(
+			ChestLifecycle.Transition transition,
+			Location expectedLocation) {
+		if (!lifecycle.isCurrent(transition)
+				|| !isSameBlock(getActualLocation(), expectedLocation)) {
+			return;
+		}
+		boolean physicalContainerPresent = isGoodType(expectedLocation.getBlock());
+		lifecycle.reconcile(physicalContainerPresent);
+		if (physicalContainerPresent) {
+			reactivateEffects();
+		}
+		Main.getInstance().getLogger().warning(
+				"Could not remove physical container for LootChest " + name
+						+ " after " + REMOVAL_RETRY_ATTEMPTS + " retry attempts at "
+						+ expectedLocation.getBlockX() + ","
+						+ expectedLocation.getBlockY() + ","
+						+ expectedLocation.getBlockZ()
+						+ "; restored its active lifecycle state.");
 	}
 
 	public void finishPendingRemoval() {
 		if (lifecycle.state() != ChestLifecycle.State.REMOVING) {
 			return;
 		}
-		try {
-			removePhysicalContainer(getActualLocation());
-		} finally {
-			lifecycle.reconcile(false);
-		}
+		boolean removed = removePhysicalContainer(getActualLocation());
+		lifecycle.reconcile(!removed);
 	}
 
 	private boolean despawn(ChestLifecycle.RemovalCause cause) {
@@ -524,16 +547,25 @@ public class Lootchest {
 		if (transition == null) {
 			return false;
 		}
-		return completeRemoval(transition, location);
+		boolean removed = completeRemoval(transition, location);
+		if (!removed) {
+			scheduleRemovalRetry(
+					transition,
+					location.clone(),
+					REMOVAL_RETRY_ATTEMPTS,
+					NO_OP);
+		}
+		return removed;
 	}
 
-	private void removePhysicalContainer(Location location) {
+	private boolean removePhysicalContainer(Location location) {
 		World locationWorld = location.getWorld();
 		int chunkX = location.getBlockX() >> 4;
 		int chunkZ = location.getBlockZ() >> 4;
 		boolean loaded = locationWorld != null && locationWorld.isChunkLoaded(chunkX, chunkZ);
+		boolean removed;
 		if(LootChestUtils.isWorldLoaded(getWorld()) && isGoodType(location.getBlock())) {
-			ChestLifecycle.removePhysicalContainer(
+			removed = ChestLifecycle.removePhysicalContainer(
 					location.getBlock(),
 					particleLocation(location),
 					Main.getInstance().getPart(),
@@ -543,12 +575,16 @@ public class Lootchest {
 					particleLocation(location),
 					Main.getInstance().getPart(),
 					hologram::remove);
+			removed = true;
 		}
-		Main.getInstance().getProtection().remove(location.getBlock().getLocation());
+		if (removed) {
+			Main.getInstance().getProtection().remove(location.getBlock().getLocation());
+		}
 		boolean loadedAfter = locationWorld != null && locationWorld.isChunkLoaded(chunkX, chunkZ);
 		if(locationWorld != null && !loaded && loadedAfter) {
 			locationWorld.unloadChunk(chunkX, chunkZ);
 		}
+		return removed;
 	}
 
 	private boolean isSameBlock(Location first, Location second) {
@@ -566,8 +602,8 @@ public class Lootchest {
 		return "remove:" + name;
 	}
 
-	private String removalVerificationTaskKey() {
-		return "verify-remove:" + name;
+	private String removalRetryTaskKey() {
+		return "retry-remove:" + name;
 	}
 
 	/**
@@ -724,7 +760,7 @@ public class Lootchest {
 			return false;
 		}
 		Main.getInstance().getTaskRegistry().cancel(removalTaskKey());
-		Main.getInstance().getTaskRegistry().cancel(removalVerificationTaskKey());
+		Main.getInstance().getTaskRegistry().cancel(removalRetryTaskKey());
 		Location previousLocation = getActualLocation();
 		try {
 			removePhysicalContainer(previousLocation);
@@ -856,7 +892,7 @@ public class Lootchest {
 	 */
 	public void deleteChest() {
 		Main.getInstance().getTaskRegistry().cancel(removalTaskKey());
-		Main.getInstance().getTaskRegistry().cancel(removalVerificationTaskKey());
+		Main.getInstance().getTaskRegistry().cancel(removalRetryTaskKey());
 		LootChestUtils.cancelReSpawn(this);
 		Location location = getActualLocation();
 		ChestLifecycle.Transition transition =
