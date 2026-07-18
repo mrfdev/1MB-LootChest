@@ -122,6 +122,39 @@ class CompatibilityMigrationsTest {
     }
 
     @Test
+    void brightensOnlyUnmodifiedBuild223AuditMessages() throws Exception {
+        YamlConfiguration language = yaml("""
+                audit:
+                  summary: "<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] <#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong <#89dceb>[Wrong] <#6c7086>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#6c7086>| <#a6e3a1>issues <#89dceb>[Issues]"
+                  finding: "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#6c7086>: [Detail]"
+                  read_only: "<#6c7086>Read-only audit complete; no chest, display, task, configuration, or saved data was changed."
+                  clean: "<#123456>Custom clean message"
+                """);
+
+        assertTrue(CompatibilityMigrations.migrateLanguage(language));
+        assertTrue(language.getString("audit.summary").contains("<#bac2de>|"));
+        assertTrue(language.getString("audit.finding").contains("<#cdd6f4>: [Detail]"));
+        assertTrue(language.getString("audit.read_only").startsWith("<#bac2de>"));
+        assertEquals("<#123456>Custom clean message", language.getString("audit.clean"));
+        assertFalse(CompatibilityMigrations.migrateLanguage(language));
+    }
+
+    @Test
+    void preservesCustomizedAuditMessages() throws Exception {
+        YamlConfiguration language = yaml("""
+                audit:
+                  summary: "<white>My summary"
+                  finding: "<yellow>My finding"
+                  read_only: "<gray>My footer"
+                """);
+
+        assertFalse(CompatibilityMigrations.migrateLanguage(language));
+        assertEquals("<white>My summary", language.getString("audit.summary"));
+        assertEquals("<yellow>My finding", language.getString("audit.finding"));
+        assertEquals("<gray>My footer", language.getString("audit.read_only"));
+    }
+
+    @Test
     void disablesRemovedFallEffectForEverySavedChestAndPreservesData() throws Exception {
         YamlConfiguration data = yaml("""
                 chests:

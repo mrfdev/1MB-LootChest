@@ -100,4 +100,19 @@ public final class Mat {
     public static boolean isCopperChest(Material material) {
         return material.name().endsWith("COPPER_CHEST");
     }
+
+    /**
+     * Matches the saved container type to the block currently occupying its
+     * location. Copper chests remain the same physical container while their
+     * oxidation or wax state changes naturally.
+     */
+    public static boolean matchesContainerType(Material expected, Material actual) {
+        if (expected == actual) {
+            return true;
+        }
+        return expected != null
+                && actual != null
+                && isCopperChest(expected)
+                && isCopperChest(actual);
+    }
 }

@@ -12,6 +12,24 @@ import org.bukkit.configuration.file.FileConfiguration;
 public final class CompatibilityMigrations {
     private static final String CHANCES_LORE = "Menu.chances.lore";
     private static final String HELP = "help";
+    private static final String OLD_AUDIT_SUMMARY =
+            "<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] "
+                    + "<#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong "
+                    + "<#89dceb>[Wrong] <#6c7086>| <#a6e3a1>unavailable <#89dceb>[Unavailable] "
+                    + "<#6c7086>| <#a6e3a1>issues <#89dceb>[Issues]";
+    private static final String BRIGHT_AUDIT_SUMMARY =
+            "<#a6e3a1>Loaded <#89dceb>[Total] <#bac2de>| <#a6e3a1>present <#89dceb>[Present] "
+                    + "<#bac2de>| <#a6e3a1>absent <#89dceb>[Absent] <#bac2de>| <#a6e3a1>wrong "
+                    + "<#89dceb>[Wrong] <#bac2de>| <#a6e3a1>unavailable <#89dceb>[Unavailable] "
+                    + "<#bac2de>| <#a6e3a1>issues <#89dceb>[Issues]";
+    private static final String OLD_AUDIT_FINDING =
+            "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#6c7086>: [Detail]";
+    private static final String BRIGHT_AUDIT_FINDING =
+            "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]";
+    private static final String OLD_AUDIT_READ_ONLY =
+            "<#6c7086>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.";
+    private static final String BRIGHT_AUDIT_READ_ONLY =
+            "<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.";
 
     private CompatibilityMigrations() {
     }
@@ -57,6 +75,9 @@ public final class CompatibilityMigrations {
         changed |= remove(language, "disabledFallEffect");
         changed |= remove(language, "Menu.main.disable_fall");
         changed |= remove(language, "Menu.main.enable_fall");
+        changed |= replaceExact(language, "audit.summary", OLD_AUDIT_SUMMARY, BRIGHT_AUDIT_SUMMARY);
+        changed |= replaceExact(language, "audit.finding", OLD_AUDIT_FINDING, BRIGHT_AUDIT_FINDING);
+        changed |= replaceExact(language, "audit.read_only", OLD_AUDIT_READ_ONLY, BRIGHT_AUDIT_READ_ONLY);
         return changed;
     }
 
@@ -87,5 +108,16 @@ public final class CompatibilityMigrations {
         }
         section.set(path, null);
         return true;
+    }
+
+    private static boolean replaceExact(
+            ConfigurationSection section,
+            String path,
+            String oldValue,
+            String newValue) {
+        if (!Objects.equals(section.getString(path), oldValue)) {
+            return false;
+        }
+        return set(section, path, newValue);
     }
 }

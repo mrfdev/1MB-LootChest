@@ -49,12 +49,12 @@ info:
   documentation: "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>"
 audit:
   title: '<#cba6f7><bold>Lootbox lifecycle audit</bold>'
-  summary: '<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] <#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong <#89dceb>[Wrong] <#6c7086>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#6c7086>| <#a6e3a1>issues <#89dceb>[Issues]'
+  summary: '<#a6e3a1>Loaded <#89dceb>[Total] <#bac2de>| <#a6e3a1>present <#89dceb>[Present] <#bac2de>| <#a6e3a1>absent <#89dceb>[Absent] <#bac2de>| <#a6e3a1>wrong <#89dceb>[Wrong] <#bac2de>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#bac2de>| <#a6e3a1>issues <#89dceb>[Issues]'
   index: '<#a6e3a1>Location index <#89dceb>[Indexed]/[Total]'
   clean: '<#a6e3a1>No lifecycle inconsistencies were found.'
-  finding: '<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#6c7086>: [Detail]'
+  finding: '<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]'
   truncated: '<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.'
-  read_only: '<#6c7086>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.'
+  read_only: '<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.'
 locate_command:
   main_message: '<#cba6f7>LootChest locations'
   chest_list: '<#6c7086>- <#89dceb>[Chest]<#bac2de>: [x], [y], [z] in [world]'

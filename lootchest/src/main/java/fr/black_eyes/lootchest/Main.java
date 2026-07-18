@@ -511,12 +511,12 @@ public class Main extends JavaPlugin {
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");
 		configFiles.setLang("audit.title", "<#cba6f7><bold>Lootbox lifecycle audit</bold>");
-		configFiles.setLang("audit.summary", "<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] <#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong <#89dceb>[Wrong] <#6c7086>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#6c7086>| <#a6e3a1>issues <#89dceb>[Issues]");
+		configFiles.setLang("audit.summary", "<#a6e3a1>Loaded <#89dceb>[Total] <#bac2de>| <#a6e3a1>present <#89dceb>[Present] <#bac2de>| <#a6e3a1>absent <#89dceb>[Absent] <#bac2de>| <#a6e3a1>wrong <#89dceb>[Wrong] <#bac2de>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#bac2de>| <#a6e3a1>issues <#89dceb>[Issues]");
 		configFiles.setLang("audit.index", "<#a6e3a1>Location index <#89dceb>[Indexed]/[Total]");
 		configFiles.setLang("audit.clean", "<#a6e3a1>No lifecycle inconsistencies were found.");
-		configFiles.setLang("audit.finding", "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#6c7086>: [Detail]");
+		configFiles.setLang("audit.finding", "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]");
 		configFiles.setLang("audit.truncated", "<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.");
-		configFiles.setLang("audit.read_only", "<#6c7086>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.");
+		configFiles.setLang("audit.read_only", "<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.");
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
 		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
 		configFiles.setLang("blockIsAlreadyLootchest", "<#f38ba8>This block is already registered as a LootChest.");

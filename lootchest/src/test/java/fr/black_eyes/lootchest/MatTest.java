@@ -56,6 +56,9 @@ class MatTest {
 
         assertEquals(COPPER_CHESTS, paperCopperChests);
         assertTrue(COPPER_CHESTS.stream().allMatch(Mat::isCopperChest));
+        assertTrue(COPPER_CHESTS.stream().allMatch(expected ->
+                COPPER_CHESTS.stream().allMatch(actual ->
+                        Mat.matchesContainerType(expected, actual))));
     }
 
     @Test
@@ -91,6 +94,23 @@ class MatTest {
         assertFalse(Mat.isLootChestMaterial(Material.HOPPER));
         assertFalse(Mat.isLootChestMaterial(Material.COPPER_CHESTPLATE));
         assertFalse(Mat.isLootChestMaterial(Material.SHULKER_SHELL));
+    }
+
+    @Test
+    void onlyCopperOxidationAndWaxStatesCanDifferDuringContainerMatching() {
+        assertTrue(Mat.matchesContainerType(Material.CHEST, Material.CHEST));
+        assertTrue(Mat.matchesContainerType(
+                Material.COPPER_CHEST,
+                Material.EXPOSED_COPPER_CHEST));
+        assertTrue(Mat.matchesContainerType(
+                Material.WEATHERED_COPPER_CHEST,
+                Material.WAXED_OXIDIZED_COPPER_CHEST));
+        assertFalse(Mat.matchesContainerType(Material.CHEST, Material.TRAPPED_CHEST));
+        assertFalse(Mat.matchesContainerType(
+                Material.WHITE_SHULKER_BOX,
+                Material.BLACK_SHULKER_BOX));
+        assertFalse(Mat.matchesContainerType(Material.COPPER_CHEST, Material.BARREL));
+        assertFalse(Mat.matchesContainerType(null, Material.COPPER_CHEST));
     }
 
     static Stream<Material> supportedContainerMaterials() {

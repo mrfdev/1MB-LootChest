@@ -12,6 +12,7 @@ import org.bukkit.World;
 import fr.black_eyes.lootchest.LootChestUtils;
 import fr.black_eyes.lootchest.Lootchest;
 import fr.black_eyes.lootchest.Main;
+import fr.black_eyes.lootchest.Mat;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ChestSnapshot;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.ContainerState;
 import fr.black_eyes.lootchest.lifecycle.LifecycleAudit.Report;
@@ -55,7 +56,7 @@ public final class LifecycleAuditor {
             if (world.isChunkLoaded(x >> 4, z >> 4)) {
                 Material actualMaterial = world.getBlockAt(x, y, z).getType();
                 actualType = actualMaterial.name();
-                if (chest.getType() == actualMaterial) {
+                if (Mat.matchesContainerType(chest.getType(), actualMaterial)) {
                     containerState = ContainerState.PRESENT;
                 } else if (actualMaterial.isAir()) {
                     containerState = ContainerState.ABSENT;
