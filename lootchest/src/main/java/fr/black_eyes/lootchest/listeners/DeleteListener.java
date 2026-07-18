@@ -49,7 +49,7 @@ import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 public class DeleteListener implements Listener  {
 	
 
-	private final Map<UUID, Location> openInvs = new HashMap<>();
+	private final Map<UUID, OpenLootChest> openInvs = new HashMap<>();
 	//gère la destruction d'un coffre au niveau des hologrames
 	
 	
@@ -151,7 +151,11 @@ public class DeleteListener implements Listener  {
 		}
 		LootChestContainer lootChestContainer = findLootChestContainer(event.getInventory());
 		if (lootChestContainer != null) {
-			openInvs.put(player.getUniqueId(), lootChestContainer.location());
+			openInvs.put(
+					player.getUniqueId(),
+					new OpenLootChest(
+							lootChestContainer.chest(),
+							lootChestContainer.location()));
 		}
 	}
    
@@ -171,14 +175,14 @@ public class DeleteListener implements Listener  {
 	}
 
 	private void handleTrackedInventoryClose(Player p, Inventory inv) {
-		Location trackedLocation = openInvs.remove(p.getUniqueId());
-		if (trackedLocation == null || !isInventoryAt(inv, trackedLocation)) {
+		OpenLootChest tracked = openInvs.remove(p.getUniqueId());
+		if (tracked == null || !isInventoryAt(inv, tracked.location())) {
 			return;
 		}
 
-		Location loc = trackedLocation.clone();
-		Lootchest key = LootChestUtils.isLootChest(loc);
-		if(key == null) {
+		Location loc = tracked.location().clone();
+		Lootchest key = tracked.chest();
+		if(LootChestUtils.isLootChest(loc) != key) {
 			return;
 		}
 		boolean inventoryEmpty = LootChestUtils.isEmpty(inv);
@@ -198,12 +202,14 @@ public class DeleteListener implements Listener  {
 	}
 
 	public void clearTrackedInventories() {
-		Map<UUID, Location> trackedInventories = new HashMap<>(openInvs);
+		Map<UUID, OpenLootChest> trackedInventories = new HashMap<>(openInvs);
 		openInvs.clear();
-		for (Map.Entry<UUID, Location> entry : trackedInventories.entrySet()) {
+		for (Map.Entry<UUID, OpenLootChest> entry : trackedInventories.entrySet()) {
 			Player player = Bukkit.getPlayer(entry.getKey());
 			if (player != null
-					&& isInventoryAt(player.getOpenInventory().getTopInventory(), entry.getValue())) {
+					&& isInventoryAt(
+							player.getOpenInventory().getTopInventory(),
+							entry.getValue().location())) {
 				player.closeInventory();
 			}
 		}
@@ -280,6 +286,9 @@ public class DeleteListener implements Listener  {
 	}
 
 	private record LootChestContainer(Lootchest chest, Location location) {
+	}
+
+	private record OpenLootChest(Lootchest chest, Location location) {
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
