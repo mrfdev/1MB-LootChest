@@ -459,6 +459,7 @@ public class Lootchest {
 			long now = (new Timestamp(System.currentTimeMillis())).getTime();
 			Main.getInstance().getProtection().put(block.getLocation(), now+protectionTime*1000);
 		}
+		Main.getInstance().trackLootChestLocation(this);
 		Bukkit.getPluginManager().callEvent(new LootChestSpawnEvent(this));
 		LootChestUtils.scheduleReSpawn(this);
 	}
@@ -624,6 +625,7 @@ public class Lootchest {
 	 * Saves the chest in data file, in case of crash, after a modification, or before server shutdown
 	 */
 	public void updateData() {
+		Main.getInstance().trackLootChestLocation(this);
 		saveInConfig();
 		Main.getInstance().getConfigFiles().saveData();
 	}
@@ -634,6 +636,7 @@ public class Lootchest {
 	public void deleteChest() {
 		despawn();
 		LootChestUtils.cancelReSpawn(this);
+		Main.getInstance().untrackLootChestLocation(this);
 		Main.getInstance().getLootChest().remove(getName());
 		Main.getInstance().getConfigFiles().getData().set(DATA_CHEST_PATH+ getName(), null);
 		Main.getInstance().getConfigFiles().saveData();

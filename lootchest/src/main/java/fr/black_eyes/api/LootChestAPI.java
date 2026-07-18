@@ -80,7 +80,11 @@ public class LootChestAPI {
      * @param lc The lootchest to add
      */
     public static void addLootChest(String name, Lootchest lc) {
-        getAllLootChests().put(name, lc);
+        Lootchest previous = getAllLootChests().put(name, lc);
+        if (previous != null && previous != lc) {
+            Main.getInstance().untrackLootChestLocation(previous);
+        }
+        Main.getInstance().trackLootChestLocation(lc);
     }
 
     /**

@@ -280,13 +280,16 @@ public class LootChestUtils  {
 	 * @return the Lootchest object if it's a lootchest, null otherwise
 	 */
 	public static Lootchest isLootChest(Location loc) {
+		Lootchest scannedChest = null;
 		for(Lootchest keys : Main.getInstance().getLootChest().values()) {
 			Location loc2 = keys.getActualLocation();
 			if(loc2.equals(loc)) {
-				return keys;
+				scannedChest = keys;
+				break;
 			}
 		}
-		return null;
+		Main.getInstance().observeLootChestLookup(loc, scannedChest);
+		return scannedChest;
 	}
 
 	/**

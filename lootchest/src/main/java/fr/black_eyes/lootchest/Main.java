@@ -22,6 +22,7 @@ import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
 import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
+import fr.black_eyes.lootchest.index.BlockLocationIndex;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
 import fr.black_eyes.lootchest.ui.ChestUi;
@@ -46,6 +47,7 @@ public class Main extends JavaPlugin {
 	private final Set<Particle> failedParticles = EnumSet.noneOf(Particle.class);
 	@Setter public static Config configs;
 	@Getter private HashMap<String, Lootchest> lootChest;
+	@Getter private BlockLocationIndex<Lootchest> lootChestLocationIndex;
 	@Getter @Setter private static Main instance;
 	@Getter private LootChestUtils utils;
 	@Getter private boolean cmiHologramsAvailable;
@@ -57,6 +59,7 @@ public class Main extends JavaPlugin {
 	@Getter private String hologramIntegrationStatus = "disabled during startup";
 	@Getter private boolean chestWorkInProgress;
 	private boolean cmiVersionWarningLogged;
+	private final Set<String> locationIndexMismatchWarnings = new HashSet<>();
 
 
 	@Override
@@ -86,6 +89,10 @@ public class Main extends JavaPlugin {
 		if (configFiles != null) {
 			configFiles.close();
 		}
+		if (lootChestLocationIndex != null) {
+			lootChestLocationIndex.clear();
+			locationIndexMismatchWarnings.clear();
+		}
 	}
 
 	@Override
@@ -107,6 +114,7 @@ public class Main extends JavaPlugin {
 		}
 
 		lootChest = new HashMap<>();
+		lootChestLocationIndex = new BlockLocationIndex<>();
 		taskRegistry = new TaskRegistry(this);
 
 		Messages.log("config files loaded");
@@ -280,6 +288,8 @@ public class Main extends JavaPlugin {
 		} else {
 			configFiles.reloadData();
 		}
+		lootChestLocationIndex.clear();
+		locationIndexMismatchWarnings.clear();
 		ChestLifecycle.clearForReload(
 				lootChest,
 				chest -> chest.getHologram().remove(),
@@ -333,6 +343,7 @@ public class Main extends JavaPlugin {
 				configs.chestsPerTick,
 				this::loadChestDefinition,
 				() -> {
+					rebuildLootChestLocationIndex();
 					Messages.log("Loaded " + lootChest.size() + " Lootchests in "
 							+ (System.currentTimeMillis() - startedAt) + " milliseconds.");
 					Messages.log("Starting LootChest timers in batches...");
@@ -357,10 +368,78 @@ public class Main extends JavaPlugin {
 		if (worldName != null
 				&& LootChestUtils.isWorldLoaded(randomWorldName)
 				&& LootChestUtils.isWorldLoaded(worldName)) {
-			lootChest.put(chestName, new Lootchest(chestName));
+			Lootchest chest = new Lootchest(chestName);
+			lootChest.put(chestName, chest);
+			trackLootChestLocation(chest);
 			return;
 		}
 		Messages.log("<#f38ba8>Could not load LootChest " + chestName + ": world " + worldName + " is not loaded.");
+	}
+
+	private void rebuildLootChestLocationIndex() {
+		lootChestLocationIndex.clear();
+		locationIndexMismatchWarnings.clear();
+		lootChest.values().forEach(this::trackLootChestLocation);
+		if (configs.debug) {
+			Messages.log(
+					"<#89b4fa>Shadow location index tracks [Indexed] of [Loaded] loaded LootChests; "
+							+ "the full scan remains authoritative.",
+					"[Indexed]", Integer.toString(lootChestLocationIndex.size()),
+					"[Loaded]", Integer.toString(lootChest.size()));
+		}
+	}
+
+	public void trackLootChestLocation(Lootchest chest) {
+		if (chest == null || lootChestLocationIndex == null
+				|| lootChest == null || !lootChest.containsValue(chest)) {
+			return;
+		}
+		Location location = chest.getActualLocation();
+		if (location == null || location.getWorld() == null) {
+			return;
+		}
+		lootChestLocationIndex.put(
+				chest,
+				location.getWorld().getUID(),
+				location.getBlockX(),
+				location.getBlockY(),
+				location.getBlockZ());
+	}
+
+	public void untrackLootChestLocation(Lootchest chest) {
+		if (lootChestLocationIndex != null) {
+			lootChestLocationIndex.remove(chest);
+		}
+	}
+
+	public void observeLootChestLookup(Location location, Lootchest scannedChest) {
+		if (lootChestLocationIndex == null || location == null || location.getWorld() == null) {
+			return;
+		}
+		Lootchest indexedChest = lootChestLocationIndex.get(
+				location.getWorld().getUID(),
+				location.getBlockX(),
+				location.getBlockY(),
+				location.getBlockZ());
+		if (indexedChest == scannedChest || configs == null || !configs.debug) {
+			return;
+		}
+
+		String warningKey = location.getWorld().getUID()
+				+ ":" + location.getBlockX()
+				+ ":" + location.getBlockY()
+				+ ":" + location.getBlockZ();
+		if (locationIndexMismatchWarnings.add(warningKey)) {
+			getLogger().warning(
+					"Shadow location index mismatch at " + warningKey
+							+ ": scan=" + chestName(scannedChest)
+							+ ", index=" + chestName(indexedChest)
+							+ ". The proven scan result remains authoritative.");
+		}
+	}
+
+	private String chestName(Lootchest chest) {
+		return chest == null ? "none" : chest.getName();
 	}
 
 	private void spawnLoadedChest(Lootchest chest, boolean forceSpawn) {

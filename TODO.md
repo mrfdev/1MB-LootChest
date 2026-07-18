@@ -36,6 +36,8 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Audit explosion, hopper, piston, and protection handling for every supported container.
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
   - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
+    - [x] Add a non-authoritative shadow index and debug-only scan comparison in build 221.
+    - [ ] Promote the index to the primary lookup only after shadow and manual gameplay validation.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
