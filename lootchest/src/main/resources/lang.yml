@@ -47,6 +47,14 @@ info:
   introduction: '<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.'
   commands: '<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.'
   documentation: "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>"
+audit:
+  title: '<#cba6f7><bold>Lootbox lifecycle audit</bold>'
+  summary: '<#a6e3a1>Loaded <#89dceb>[Total] <#6c7086>| <#a6e3a1>present <#89dceb>[Present] <#6c7086>| <#a6e3a1>absent <#89dceb>[Absent] <#6c7086>| <#a6e3a1>wrong <#89dceb>[Wrong] <#6c7086>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#6c7086>| <#a6e3a1>issues <#89dceb>[Issues]'
+  index: '<#a6e3a1>Location index <#89dceb>[Indexed]/[Total]'
+  clean: '<#a6e3a1>No lifecycle inconsistencies were found.'
+  finding: '<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#6c7086>: [Detail]'
+  truncated: '<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.'
+  read_only: '<#6c7086>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.'
 locate_command:
   main_message: '<#cba6f7>LootChest locations'
   chest_list: '<#6c7086>- <#89dceb>[Chest]<#bac2de>: [x], [y], [z] in [world]'
@@ -90,6 +98,7 @@ Menu:
 help:
   - '<#cba6f7><bold>Lootbox commands</bold>'
   - '<#6c7086>Paper 26.2 / Java 25 edition'
+  - '<#a6e3a1>/lc audit <#6c7086>- Inspect lifecycle consistency without making changes'
   - '<#a6e3a1>/lc info <#6c7086>- About Lootbox and its documentation'
   - '<#a6e3a1>/lc copy <#bac2de>\<source> \<destination> <#6c7086>- Copy one Lootbox into another'
   - '<#a6e3a1>/lc create <#bac2de>\<name> <#6c7086>- Create a Lootbox'

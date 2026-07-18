@@ -142,6 +142,10 @@ public class LootChestUtils  {
 		Main.getInstance().getTaskRegistry().cancel(respawnTaskKey(lc));
 	}
 
+	public static boolean hasRespawnTask(Lootchest lc) {
+		return Main.getInstance().getTaskRegistry().hasTask(respawnTaskKey(lc));
+	}
+
 	private static String respawnTaskKey(Lootchest lc) {
 		return "respawn:" + lc.getName();
 	}

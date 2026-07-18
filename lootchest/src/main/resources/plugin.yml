@@ -12,6 +12,9 @@ commands:
     aliases: lc
     usage: /lc <subcommand>
 permissions:
+  lootchest.audit:
+    description: Run the read-only Lootbox lifecycle consistency audit
+    default: op
   lootchest.info:
     description: View Lootbox information and its documentation link
     default: true
@@ -24,6 +27,7 @@ permissions:
     description: Access every Lootbox administrative command
     default: op
     children:
+      lootchest.audit: true
       lootchest.copy: true
       lootchest.create: true
       lootchest.despawn: true

@@ -2,6 +2,7 @@ package fr.black_eyes.lootchest.compat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,6 +23,8 @@ class PluginDescriptorTest {
             assertEquals(
                     List.of("CMI", "CMILib", "Multiverse-Core", "Bolt"),
                     descriptor.getStringList("softdepend"));
+            assertEquals("op", descriptor.getString("permissions.lootchest.audit.default"));
+            assertTrue(descriptor.getBoolean("permissions.lootchest.*.children.lootchest.audit"));
         } catch (Exception exception) {
             throw new AssertionError("Bundled plugin.yml could not be loaded", exception);
         }

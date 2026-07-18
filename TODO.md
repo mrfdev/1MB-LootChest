@@ -41,6 +41,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
     - [x] Add a non-authoritative shadow index and debug-only scan comparison in build 221.
     - [x] Add a guarded index-first lookup with exact-location validation, scan fallback, and self-repair in build 222.
     - [x] Promote the guarded index to the primary lookup after shadow and manual gameplay validation.
+  - [x] Add a read-only lifecycle audit for containers, duplicate locations, index entries, holograms, particles, and respawn tasks in build 223.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.

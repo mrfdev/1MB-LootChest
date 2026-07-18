@@ -66,6 +66,18 @@ public class LootChestHologram {
 
 	private CMIHologram hologram;
 
+	public boolean isActive() {
+		return hologram != null;
+	}
+
+	public boolean isExpectedActive() {
+		String configuredText = chest.getHolo();
+		return Main.configs != null
+				&& Main.configs.usehologram
+				&& configuredText != null
+				&& !NULL_NAME.contains(configuredText);
+	}
+
 	
 	/**
 	 * Kills the hologram

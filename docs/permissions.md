@@ -6,6 +6,7 @@ commands to selected groups.
 
 | Permission | Default | Purpose |
 | --- | --- | --- |
+| `lootchest.audit` | Operator | Run the read-only lifecycle consistency audit. |
 | `lootchest.info` | Everyone | Use `/lc info`. |
 | `lootchest.admin` | Operator | Full administrative access through the runtime admin override. |
 | `lootchest.*` | Operator | Grants every administrative subcommand. |

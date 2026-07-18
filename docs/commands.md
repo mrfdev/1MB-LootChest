@@ -7,6 +7,7 @@ permissions default to server operators unless explicitly granted.
 | Command | Context | Description |
 | --- | --- | --- |
 | `/lc` or `/lc help` | Console/player | Show the configured help list. |
+| `/lc audit` | Console/player | Inspect loaded chest, index, display, particle, and respawn-task consistency without changing state. |
 | `/lc info` | Console/player | Show the 1MoreBlock Lootbox introduction, version, and canonical docs link. |
 | `/lc create <name>` | Player | Register the filled supported container being targeted and open its editor. |
 | `/lc edit <name>` | Player | Open the graphical editor. |
