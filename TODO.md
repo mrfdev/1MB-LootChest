@@ -12,6 +12,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve manually approved build 212 with the `1mb-lootchest-v2.5.9.1-build212-approved` tag.
   - [x] Preserve manually approved build 220 with the `1mb-lootchest-v2.5.9.1-build220-approved` tag and retain build 212 for rollback.
   - [x] Preserve manually approved build 221 with the `1mb-lootchest-v2.5.9.1-build221-approved` tag and retain build 220 for rollback.
+  - [x] Preserve manually approved build 222 with the `1mb-lootchest-v2.5.9.1-build222-approved` tag and retain build 221 for rollback.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
@@ -36,10 +37,10 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Track chest access from `InventoryOpenEvent` rather than fragile interaction assumptions.
   - [x] Audit explosion, hopper, piston, and protection handling for every supported container.
   - [ ] Model spawn, open, empty, break, despawn, and respawn as idempotent chest state transitions.
-  - [ ] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
+  - [x] Index Lootboxes by world UUID and block coordinates instead of scanning every saved chest.
     - [x] Add a non-authoritative shadow index and debug-only scan comparison in build 221.
     - [x] Add a guarded index-first lookup with exact-location validation, scan fallback, and self-repair in build 222.
-    - [ ] Promote the index to the primary lookup only after shadow and manual gameplay validation.
+    - [x] Promote the guarded index to the primary lookup after shadow and manual gameplay validation.
 - [ ] **4. Remove unsupported platforms and integrations**
   - [x] Remove Bungee messaging, plugin channels, `SpigotConfig`, copied byte-stream helpers, and proxy config defaults.
   - [x] Remove Spigot, Bungee, Velocity, Folia, and Minecraft 1.x support claims from maintained documentation.
