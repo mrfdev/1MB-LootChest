@@ -14,6 +14,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve manually approved build 221 with the `1mb-lootchest-v2.5.9.1-build221-approved` tag and retain build 220 for rollback.
   - [x] Preserve manually approved build 222 with the `1mb-lootchest-v2.5.9.1-build222-approved` tag and retain build 221 for rollback.
   - [x] Preserve manually approved build 224 with the `1mb-lootchest-v2.5.9.1-build224-approved` tag and retain builds 223 and 222 for rollback.
+  - [x] Preserve manually approved build 225 with the `1mb-lootchest-v2.5.9.1-build225-approved` tag and retain build 224 for rollback.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.

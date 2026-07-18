@@ -4,7 +4,7 @@
 
 - Paper 26.2.
 - Java 25.
-- The release jar `1MB-LootChest-v2.5.9.1-224-CMI-j25-26.2.jar`.
+- The release jar `1MB-LootChest-v2.5.9.1-225-CMI-j25-26.2.jar`.
 - Optional CMI `9.8.8.5` and CMILib `1.5.9.9` when holograms are required.
 
 DecentHolograms is not a supported backend for this build.
@@ -31,7 +31,7 @@ Lootbox continues without holograms when CMI or CMILib is absent.
 6. Run `/lc reload` and `/lc respawnall`, then verify representative container types.
 
 The current live-approved source is preserved by the
-`1mb-lootchest-v2.5.9.1-build224-approved` tag. Build 223 is retained as the
+`1mb-lootchest-v2.5.9.1-build225-approved` tag. Build 224 is retained as the
 immediately previous rollback point.
 
 Saved particle names are validated against the running Paper API. Removed or typed
