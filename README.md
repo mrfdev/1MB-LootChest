@@ -57,8 +57,8 @@ The `origin` remote is the canonical 1MB repository
 (`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
 careful comparison only; do not build releases from an upstream branch.
 
-The current live-approved Paper 26.2 baseline is build 222, preserved by the
-`1mb-lootchest-v2.5.9.1-build222-approved` tag. Build 221 is the immediately
+The current live-approved Paper 26.2 baseline is build 224, preserved by the
+`1mb-lootchest-v2.5.9.1-build224-approved` tag. Build 223 is the immediately
 previous rollback release. Older snapshots remain tagged for history but are not
 development baselines.
 
@@ -121,7 +121,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 The current live-approved release is:
 
 ```text
-target/1MB-LootChest-v2.5.9.1-222-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.1-224-CMI-j25-26.2.jar
 ```
 
 The final rollback build containing direct WorldGuard random-spawn filtering is:
