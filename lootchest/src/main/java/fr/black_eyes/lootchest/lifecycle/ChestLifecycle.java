@@ -212,7 +212,7 @@ public final class ChestLifecycle {
         if (state instanceof InventoryHolder inventoryHolder) {
             inventoryHolder.getInventory().clear();
         }
-        block.setType(Material.AIR);
+        block.setType(Material.AIR, false);
         removeEffects(particleLocation, activeParticles, hologramCleanup);
     }
 

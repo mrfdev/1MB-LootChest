@@ -225,7 +225,7 @@ public class DeleteListener implements Listener  {
 				if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
 					loc.getWorld().dropItemNaturally(loc, new ItemStack(key.getType()));
 				}
-				key.completeRemovalNextTick(transition, loc);
+				key.completeRemovalAfterInventoryClose(transition, loc);
 			}
 		}
 		if(inventoryEmpty) {
@@ -346,7 +346,7 @@ public class DeleteListener implements Listener  {
 
 		event.setCancelled(true);
 		ChestLifecycle.Transition transition =
-				chest.beginRemoval(ChestLifecycle.RemovalCause.BREAK);
+				chest.beginRemoval(ChestLifecycle.RemovalCause.BREAK, lootChestLocation);
 		if (transition == null) {
 			return;
 		}
@@ -411,7 +411,8 @@ public class DeleteListener implements Listener  {
 
 			Location location = container.location();
 			ChestLifecycle.Transition transition = container.chest().beginRemoval(
-					ChestLifecycle.RemovalCause.EXPLOSION);
+					ChestLifecycle.RemovalCause.EXPLOSION,
+					location);
 			if (transition == null) {
 				continue;
 			}

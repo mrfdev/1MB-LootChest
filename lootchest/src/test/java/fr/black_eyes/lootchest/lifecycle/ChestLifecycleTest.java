@@ -150,6 +150,24 @@ class ChestLifecycleTest {
     }
 
     @Test
+    void survivingPhysicalContainerCanBeReconciledAndRemovedAgain() {
+        ChestLifecycle lifecycle = new ChestLifecycle(true);
+        ChestLifecycle.Transition emptyRemoval =
+                lifecycle.beginRemoval(ChestLifecycle.RemovalCause.EMPTY);
+
+        assertTrue(lifecycle.completeRemoval(emptyRemoval));
+        assertEquals(ChestLifecycle.State.DESPAWNED, lifecycle.state());
+
+        lifecycle.reconcile(true);
+        ChestLifecycle.Transition breakRemoval =
+                lifecycle.beginRemoval(ChestLifecycle.RemovalCause.BREAK);
+
+        assertNotNull(breakRemoval);
+        assertTrue(lifecycle.completeRemoval(breakRemoval));
+        assertEquals(ChestLifecycle.State.DESPAWNED, lifecycle.state());
+    }
+
+    @Test
     void emptyingPolicyMatchesConfiguredCollectionBehavior() {
         assertFalse(ChestLifecycle.shouldCollectAfterClose(false, false, false));
         assertFalse(ChestLifecycle.shouldCollectAfterClose(true, false, false));
@@ -179,9 +197,10 @@ class ChestLifecycleTest {
     void despawnClearsInventoryBlockParticleAndHologram() {
         AtomicInteger clears = new AtomicInteger();
         AtomicReference<Material> blockType = new AtomicReference<>(Material.CHEST);
+        AtomicReference<Boolean> blockPhysics = new AtomicReference<>(true);
         Inventory inventory = inventory(new ItemStack[0], clears);
         Container container = container(inventory);
-        Block block = block(container, blockType);
+        Block block = block(container, blockType, blockPhysics);
         Location particleLocation = location();
         Particle particle = Particle.FLAME;
         Map<Location, Particle> particles = new HashMap<>();
@@ -196,6 +215,7 @@ class ChestLifecycleTest {
 
         assertEquals(1, clears.get());
         assertEquals(Material.AIR, blockType.get());
+        assertFalse(blockPhysics.get());
         assertTrue(particles.isEmpty());
         assertEquals(1, hologramRemovals.get());
     }
@@ -260,11 +280,17 @@ class ChestLifecycleTest {
         });
     }
 
-    private Block block(Container state, AtomicReference<Material> type) {
+    private Block block(
+            Container state,
+            AtomicReference<Material> type,
+            AtomicReference<Boolean> physics) {
         return proxy(Block.class, (ignored, method, arguments) -> switch (method.getName()) {
             case "getState" -> state;
             case "setType" -> {
                 type.set((Material) arguments[0]);
+                if (arguments.length > 1) {
+                    physics.set((Boolean) arguments[1]);
+                }
                 yield null;
             }
             default -> defaultValue(method.getReturnType());
