@@ -38,7 +38,10 @@ public class CreateCommand extends SubCommand {
 			Messages.msg(sender, "notAChest", " ", " ");
 		} else if (LootChestUtils.isEmpty(((InventoryHolder) chest.getState()).getInventory())) {
 			Messages.msg(sender, "chestIsEmpy", " ", " ");
-		} else if (Main.getInstance().getLootChest().containsKey(chestName)) {
+		} else if (!Main.getInstance().getConfigFiles().getChestNameProblems(chestName).isEmpty()) {
+			Messages.msg(sender, "invalidChestName", Constants.CHEST_PLACEHOLDER, chestName);
+		} else if (Main.getInstance().getLootChest().containsKey(chestName)
+				|| Main.getInstance().getConfigFiles().hasSavedChestDefinition(chestName)) {
 			Messages.msg(sender, "chestAlreadyExist", Constants.CHEST_PLACEHOLDER, chestName);
 		} else if (LootChestUtils.isLootChest(chest.getLocation()) != null) {
 			Messages.msg(sender, "blockIsAlreadyLootchest", Constants.CHEST_PLACEHOLDER, chestName);

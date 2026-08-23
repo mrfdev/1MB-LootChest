@@ -17,7 +17,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Paper API | `26.2.build.84-stable` |
 | Java runtime and bytecode | Java 25 |
 | Plugin version | `2.5.9.2` |
-| Candidate build | `226` |
+| Candidate build | `227` |
 | Main command | `/lootchest`, alias `/lc` |
 | Holograms | Optional: CMI `9.8.8.5` and CMILib `1.5.9.9` |
 
@@ -124,7 +124,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 The current compatibility candidate is:
 
 ```text
-target/1MB-LootChest-v2.5.9.2-226-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.2-227-CMI-j25-26.2.jar
 ```
 
 The current live-approved release is:
@@ -172,7 +172,11 @@ released. Raw and ANSI-clean logs are retained under
 `fr.black_eyes.api.LootChestAPI` exposes lookup, creation, copy, removal, and save
 operations. `fr.black_eyes.api.events.LootChestSpawnEvent` is fired after a
 container is populated and activated. These APIs follow the plugin's runtime
-types and are not promised as a stable cross-version binary API.
+types and are not promised as a stable cross-version binary API. World,
+inventory, registration, removal, and save operations must run on Paper's main
+server thread. `getAllLootChests()` returns a read-only snapshot; use the named
+API methods for mutations so reserved and reload-in-progress definitions remain
+protected.
 
 ## Privacy
 

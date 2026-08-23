@@ -305,8 +305,16 @@ public class Lootchest {
 	 */
 	public void saveInConfig(){
 		Main main = Main.getInstance();
+		if (!main.canPersistLootChest(this)) {
+			return;
+		}
+		writeToConfig();
+	}
+
+	private void writeToConfig() {
+		Main main = Main.getInstance();
 		LootChestUtils utils = main.getUtils();
-		LootChestFiles configFiles = Main.getInstance().getConfigFiles();
+		LootChestFiles configFiles = main.getConfigFiles();
 		configFiles.getData().set(DATA_CHEST_PATH + name + ".inventory", null);
 		for(int i = 0 ; i < inv.getSize() ; i++) {
 			if(inv.getItem(i) != null && Objects.requireNonNull(inv.getItem(i)).getType() != Material.AIR) {
@@ -353,6 +361,15 @@ public class Lootchest {
 	 * If the chunk isn't loaded before doing this, it will be unloaded after (hopefully).
 	 */
 	public void despawn(){
+		despawn(true);
+	}
+
+	/** Removes a container for transactional reload without neighbor physics. */
+	public void despawnForReload(){
+		despawn(false);
+	}
+
+	private void despawn(boolean applyPhysics){
 		Location startLocation = getActualLocation();
 		int chunkX = startLocation.getBlockX() >> 4;
 		int chunkZ = startLocation.getBlockZ() >> 4;
@@ -362,7 +379,8 @@ public class Lootchest {
 					startLocation.getBlock(),
 					getParticleLocation(),
 					Main.getInstance().getPart(),
-					hologram::remove);
+					hologram::remove,
+					applyPhysics);
 		} else {
 			ChestLifecycle.removeEffects(
 					getParticleLocation(),
@@ -625,21 +643,29 @@ public class Lootchest {
 	 * Saves the chest in data file, in case of crash, after a modification, or before server shutdown
 	 */
 	public void updateData() {
-		Main.getInstance().trackLootChestLocation(this);
-		saveInConfig();
-		Main.getInstance().getConfigFiles().saveData();
+		Main main = Main.getInstance();
+		if (!main.canPersistLootChest(this)) {
+			return;
+		}
+		main.trackLootChestLocation(this);
+		writeToConfig();
+		main.getConfigFiles().saveData();
 	}
 	
 	/**
 	 * Deletes the chest from data file and despawns it
 	 */
 	public void deleteChest() {
+		Main main = Main.getInstance();
+		if (!main.canPersistLootChest(this)) {
+			return;
+		}
 		despawn();
 		LootChestUtils.cancelReSpawn(this);
-		Main.getInstance().untrackLootChestLocation(this);
-		Main.getInstance().getLootChest().remove(getName());
-		Main.getInstance().getConfigFiles().getData().set(DATA_CHEST_PATH+ getName(), null);
-		Main.getInstance().getConfigFiles().saveData();
+		main.untrackLootChestLocation(this);
+		main.getLootChest().remove(getName(), this);
+		main.getConfigFiles().getData().set(DATA_CHEST_PATH+ getName(), null);
+		main.getConfigFiles().saveData();
 	}
 
 

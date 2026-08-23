@@ -372,10 +372,33 @@ public class LootChestUtils  {
 	 * Save all chests in the data.yml file, saves the data.yml file
 	 */
 	public static void saveAllChests() {
-		for(Lootchest lc : Main.getInstance().getLootChest().values()) {
-			lc.saveInConfig();
+		Main main = Main.getInstance();
+		if (!main.canPersistAllLootChests()) {
+			main.getLogger().warning(
+					"Refused to save all LootChests while a reload transaction is in progress.");
+			return;
 		}
-		Main.getInstance().getConfigFiles().saveData();
+		writeAllChestsToMemory();
+		main.getConfigFiles().saveData();
+	}
+
+	/**
+	 * Serializes runtime chest state into the manager's current isolated YAML
+	 * object. Reload preparation uses this on the server thread and deliberately
+	 * leaves all file I/O to the file executor.
+	 */
+	static void writeAllChestsToMemory() {
+		Main main = Main.getInstance();
+		for(Lootchest lc : main.getLootChest().values()) {
+			try {
+				lc.saveInConfig();
+			} catch (RuntimeException | LinkageError exception) {
+				main.getLogger().log(
+						java.util.logging.Level.SEVERE,
+						"Could not serialize one active LootChest; continuing with the remaining definitions.",
+						exception);
+			}
+		}
 	}
 	
 

@@ -3,6 +3,7 @@ package fr.black_eyes.lootchest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -11,9 +12,13 @@ import fr.black_eyes.lootchest.commands.SubCommand;
 import fr.black_eyes.lootchest.compat.CompatibilityMigrations;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,7 +26,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
-import fr.black_eyes.lootchest.lifecycle.ChestLifecycle;
 import fr.black_eyes.lootchest.index.BlockLocationIndex;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
@@ -40,6 +44,13 @@ public class Main extends JavaPlugin {
 	private static final String CHEST_LOAD_TASK = "chest-load";
 	private static final String CHEST_SPAWN_TASK = "chest-spawn";
 	private static final String CHEST_BULK_TASK = "chest-bulk";
+	private static final String CHEST_RELOAD_DEACTIVATE_TASK = "chest-reload-deactivate";
+	private static final String CHEST_RELOAD_ROLLBACK_TASK = "chest-reload-rollback";
+	private enum ChestDefinitionLoadResult {
+		LOADED,
+		WORLD_UNAVAILABLE,
+		FAILED
+	}
 	@Getter private final HashMap<Location, Long> protection = new HashMap<>();
 	@Getter private final LinkedHashMap<String, Particle> particles = new LinkedHashMap<>();
 	@Getter private final HashMap<Location, Particle> part = new HashMap<>();
@@ -58,8 +69,16 @@ public class Main extends JavaPlugin {
 	@Getter private BuildInfo buildInfo = BuildInfo.unknown();
 	@Getter private String hologramIntegrationStatus = "disabled during startup";
 	@Getter private boolean chestWorkInProgress;
+	private LootChestFiles.PreparedReload pendingReload;
+	private CompletableFuture<?> reloadFileOperation;
+	private boolean snapshottingReloadData;
+	private List<ReloadRuntimeState> reloadRuntimeStates = List.of();
+	private IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> reloadTouched = new IdentityHashMap<>();
+	private boolean reloadRuntimeSuspended;
 	private boolean cmiVersionWarningLogged;
 	private final Set<String> locationIndexMismatchWarnings = new HashSet<>();
+	@Getter private final Set<String> unavailableChestDefinitions = new LinkedHashSet<>();
+	@Getter private final Map<String, String> failedChestDefinitions = new LinkedHashMap<>();
 
 
 	@Override
@@ -73,10 +92,15 @@ public class Main extends JavaPlugin {
 		if (taskRegistry != null) {
 			taskRegistry.cancelAll();
 		}
+		settleReloadDuringShutdown();
+		if (taskRegistry != null) {
+			taskRegistry.cancelAll();
+		}
 		if (lootChest != null) {
 			lootChest.values().forEach(chest -> chest.getHologram().remove());
 		}
-		if (lootChest != null && configFiles != null && configFiles.isInitialized()) {
+		if (lootChest != null && configFiles != null && configFiles.isInitialized()
+				&& !configFiles.isReloadInProgress()) {
 			try {
 				LootChestUtils.saveAllChests();
 				configFiles.flush();
@@ -85,6 +109,10 @@ public class Main extends JavaPlugin {
 			} catch (IOException | RuntimeException e) {
 				getLogger().log(Level.SEVERE, "Could not finish saving LootChest data", e);
 			}
+		} else if (configFiles != null && configFiles.isInitialized()
+				&& configFiles.isReloadInProgress()) {
+			getLogger().warning("Skipped the normal shutdown data save because a reload transaction "
+					+ "is still being preserved or committed.");
 		}
 		if (configFiles != null) {
 			configFiles.close();
@@ -93,6 +121,98 @@ public class Main extends JavaPlugin {
 			lootChestLocationIndex.clear();
 			locationIndexMismatchWarnings.clear();
 		}
+	}
+
+	private void settleReloadDuringShutdown() {
+		if (pendingReload == null || configFiles == null || !configFiles.isInitialized()) {
+			return;
+		}
+
+		if (reloadFileOperation != null) {
+			try {
+				reloadFileOperation.join();
+			} catch (RuntimeException operationFailure) {
+				getLogger().log(
+						Level.WARNING,
+						"The in-flight reload file operation failed while shutdown was settling it.",
+						unwrapCompletionFailure(operationFailure));
+			} finally {
+				reloadFileOperation = null;
+			}
+		}
+
+		if (pendingReload.isCommittedAwaitingPublish()) {
+			try {
+				configFiles.publishReload(pendingReload);
+				pendingReload = null;
+				clearReloadRollbackState();
+				activateCommittedReloadForShutdown();
+				return;
+			} catch (RuntimeException | LinkageError activationFailure) {
+				getLogger().log(
+						Level.SEVERE,
+						"A committed reload could not be made physically durable during shutdown.",
+						activationFailure);
+			}
+		}
+		if (pendingReload == null) {
+			return;
+		}
+
+		try {
+			if (pendingReload.isPreparedForAbort()) {
+				configFiles.abortReloadAsync(pendingReload).join();
+			}
+			if (pendingReload.isAbortReadyToFinish()) {
+				configFiles.finishAbortReload(pendingReload);
+				pendingReload = null;
+			}
+		} catch (RuntimeException abortFailure) {
+			getLogger().log(
+					Level.SEVERE,
+					"Could not preserve and abort the reload candidate during shutdown.",
+					unwrapCompletionFailure(abortFailure));
+		}
+
+		if (reloadRuntimeSuspended) {
+			for (ReloadRuntimeState runtimeState : reloadRuntimeStates) {
+				restoreReloadRuntimeState(runtimeState, reloadTouched);
+			}
+		}
+		clearReloadRollbackState();
+	}
+
+	private void activateCommittedReloadForShutdown() {
+		deleteListener.clearTrackedInventories();
+		taskRegistry.cancelAll();
+		clearRuntimeOwnershipAfterTeardown();
+		setConfigs(Config.getInstance(configFiles.getConfig()));
+		reloadParticleCatalog();
+		// Only physical durability matters now. Integrations and visual tasks are
+		// deliberately suppressed because the plugin is already disabling.
+		configs.usehologram = false;
+		unavailableChestDefinitions.clear();
+		failedChestDefinitions.clear();
+		for (String chestName : configFiles.getLoadableChestNames()) {
+			try {
+				if (loadChestDefinition(chestName) == ChestDefinitionLoadResult.LOADED) {
+					spawnLoadedChestSafely(lootChest.get(chestName), true);
+				}
+			} catch (RuntimeException | LinkageError activationFailure) {
+				recordDefinitionFailure(chestName, "shutdown activation", activationFailure);
+				getLogger().log(
+						Level.SEVERE,
+						"Could not materialize committed LootChest '"
+								+ printableChestName(chestName) + "' during shutdown.",
+						activationFailure);
+			}
+		}
+	}
+
+	private void clearReloadRollbackState() {
+		reloadRuntimeStates = List.of();
+		reloadTouched = new IdentityHashMap<>();
+		reloadRuntimeSuspended = false;
 	}
 
 	@Override
@@ -280,35 +400,516 @@ public class Main extends JavaPlugin {
 		}, countdown + 20L);
 	}
 
-	public void reloadLootChests(Runnable completion) {
-		uiHandler.closeAll(ChestUi.CloseReason.RELOAD);
-		deleteListener.clearTrackedInventories();
-		taskRegistry.cancelAll();
-		chestWorkInProgress = false;
+	public boolean reloadLootChests(Runnable completion, Runnable failure) {
+		return reloadLootChests(completion, failure, failure);
+	}
 
-		if (configs.saveDataFileDuringReload) {
-			LootChestUtils.saveAllChests();
-		} else {
-			configFiles.reloadData();
+	public boolean reloadLootChests(
+			Runnable completion,
+			Runnable failure,
+			Runnable committedActivationFailure) {
+		Objects.requireNonNull(completion, "completion");
+		Objects.requireNonNull(failure, "failure");
+		Objects.requireNonNull(committedActivationFailure, "committedActivationFailure");
+		if (pendingReload != null
+				|| reloadFileOperation != null
+				|| chestWorkInProgress
+				|| configFiles.isReloadInProgress()
+				|| taskRegistry.hasTask(CHEST_RELOAD_DEACTIVATE_TASK)
+				|| taskRegistry.hasTask(CHEST_RELOAD_ROLLBACK_TASK)) {
+			return false;
 		}
+
+		CompletableFuture<LootChestFiles.ReloadRawBundle> readOperation;
+		try {
+			readOperation = configFiles.beginReloadAsync();
+			uiHandler.closeAll(ChestUi.CloseReason.RELOAD);
+		} catch (RuntimeException | LinkageError exception) {
+			configFiles.cancelReloadGate();
+			getLogger().log(Level.SEVERE, "LootChest reload preflight could not start.", exception);
+			return false;
+		}
+
+		chestWorkInProgress = true;
+		reloadFileOperation = readOperation;
+		completeReloadFileOperation(readOperation, (rawBundle, readFailure) -> {
+			if (readFailure != null) {
+				configFiles.cancelReloadGate();
+				chestWorkInProgress = false;
+				getLogger().log(
+						Level.SEVERE,
+						"Could not read LootChest reload inputs; the running state was retained.",
+						unwrapCompletionFailure(readFailure));
+				failure.run();
+				return;
+			}
+
+			LootChestFiles.PreparedReload preparedReload;
+			try {
+				snapshottingReloadData = true;
+				preparedReload = configFiles.prepareReload(
+						rawBundle,
+						LootChestUtils::writeAllChestsToMemory);
+			} catch (RuntimeException | LinkageError exception) {
+				configFiles.cancelReloadGate();
+				chestWorkInProgress = false;
+				getLogger().log(
+						Level.SEVERE,
+						"LootChest reload decoding failed; the running state was retained.",
+						exception);
+				failure.run();
+				return;
+			} finally {
+				snapshottingReloadData = false;
+			}
+			pendingReload = preparedReload;
+
+			if (!canDeactivateLoadedChestsForReload()) {
+				getLogger().severe("LootChest reload was aborted because every previous container "
+						+ "could not be removed safely.");
+				abortPreparedReloadAsync(
+						preparedReload,
+						List.of(),
+						new IdentityHashMap<>(),
+						false,
+						failure);
+				return;
+			}
+
+			List<ReloadRuntimeState> runtimeStates;
+			try {
+				deleteListener.clearTrackedInventories();
+				runtimeStates = captureReloadRuntimeStates();
+			} catch (RuntimeException | LinkageError exception) {
+				getLogger().log(Level.SEVERE, "Could not snapshot runtime reload ownership.", exception);
+				abortPreparedReloadAsync(
+						preparedReload,
+						List.of(),
+						new IdentityHashMap<>(),
+						false,
+						failure);
+				return;
+			}
+
+			reloadRuntimeStates = runtimeStates;
+			reloadTouched = new IdentityHashMap<>();
+			reloadRuntimeSuspended = true;
+			taskRegistry.cancelAll();
+			beginReloadTeardown(
+					preparedReload,
+					runtimeStates,
+					completion,
+					failure,
+					committedActivationFailure);
+		});
+		return true;
+	}
+
+	private void beginReloadTeardown(
+			LootChestFiles.PreparedReload preparedReload,
+			List<ReloadRuntimeState> runtimeStates,
+			Runnable completion,
+			Runnable failure,
+			Runnable committedActivationFailure) {
+		IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> touched = reloadTouched;
+		boolean[] failed = {false};
+		taskRegistry.runBatched(
+				CHEST_RELOAD_DEACTIVATE_TASK,
+				runtimeStates,
+				configs.chestsPerTick,
+				runtimeState -> {
+					if (failed[0]) {
+						return;
+					}
+					Lootchest chest = runtimeState.chest();
+					try {
+						ReloadPhysicalSnapshot snapshot = captureReloadPhysicalSnapshot(chest);
+						touched.put(chest, snapshot);
+						chest.despawnForReload();
+					} catch (RuntimeException | LinkageError exception) {
+						ReloadPhysicalSnapshot captured = touched.get(chest);
+						if (captured != null && restoreImmediatelyAfterFailedDespawn(captured)) {
+							touched.remove(chest);
+						}
+						failed[0] = true;
+						taskRegistry.cancel(CHEST_RELOAD_DEACTIVATE_TASK);
+						getLogger().log(
+								Level.SEVERE,
+								"Could not remove the previous physical container for LootChest '"
+										+ printableChestName(chest.getName()) + "' during reload.",
+								exception);
+						abortPreparedReloadAsync(
+								preparedReload,
+								runtimeStates,
+								touched,
+								true,
+								failure);
+					}
+				},
+				() -> {
+					if (!failed[0]) {
+						commitPreparedReloadAsync(
+								preparedReload,
+								runtimeStates,
+								touched,
+								completion,
+								failure,
+								committedActivationFailure);
+					}
+				});
+	}
+
+	private void commitPreparedReloadAsync(
+			LootChestFiles.PreparedReload preparedReload,
+			List<ReloadRuntimeState> runtimeStates,
+			IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> touched,
+			Runnable completion,
+			Runnable failure,
+			Runnable committedActivationFailure) {
+		CompletableFuture<Void> commitOperation;
+		try {
+			commitOperation = configFiles.commitReloadAsync(preparedReload);
+		} catch (RuntimeException exception) {
+			getLogger().log(Level.SEVERE, "Could not start the prepared reload commit.", exception);
+			abortPreparedReloadAsync(preparedReload, runtimeStates, touched, true, failure);
+			return;
+		}
+
+		reloadFileOperation = commitOperation;
+		completeReloadFileOperation(commitOperation, (ignored, commitFailure) -> {
+			if (commitFailure != null) {
+				getLogger().log(
+						Level.SEVERE,
+						"Could not commit the prepared LootChest reload; restoring runtime ownership.",
+						unwrapCompletionFailure(commitFailure));
+				abortPreparedReloadAsync(preparedReload, runtimeStates, touched, true, failure);
+				return;
+			}
+
+			try {
+				configFiles.publishReload(preparedReload);
+				pendingReload = null;
+				clearReloadRollbackState();
+				finishCommittedReload(completion, committedActivationFailure);
+			} catch (RuntimeException | LinkageError exception) {
+				pendingReload = null;
+				getLogger().log(
+						Level.SEVERE,
+						"The candidate data was committed but could not be published or activated.",
+						exception);
+				taskRegistry.cancelAll();
+				clearRuntimeOwnershipAfterTeardown();
+				chestWorkInProgress = false;
+				committedActivationFailure.run();
+			}
+		});
+	}
+
+	private boolean canDeactivateLoadedChestsForReload() {
+		for (Lootchest chest : lootChest.values()) {
+			try {
+				Location actualLocation = chest.getActualLocation();
+				if (!LootChestUtils.isWorldLoaded(chest.getWorld())
+						|| actualLocation == null
+						|| actualLocation.getWorld() == null
+						|| Bukkit.getWorld(actualLocation.getWorld().getUID()) == null) {
+					getLogger().severe("Cannot safely reload while the current world for LootChest '"
+							+ printableChestName(chest.getName()) + "' is unavailable.");
+					return false;
+				}
+			} catch (RuntimeException | LinkageError exception) {
+				getLogger().log(
+						Level.SEVERE,
+						"Could not validate the current container for LootChest '"
+								+ printableChestName(chest.getName()) + "' before reload.",
+						exception);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private void finishCommittedReload(Runnable completion, Runnable failure) {
+		try {
+			deleteListener.clearTrackedInventories();
+			taskRegistry.cancelAll();
+			clearRuntimeOwnershipAfterTeardown();
+
+			setConfigs(Config.getInstance(configFiles.getConfig()));
+			startCmiHolograms();
+			reloadParticleCatalog();
+			if (configs.partEnable) {
+				startParticles();
+			}
+
+			Messages.log("Loading chests...");
+			loadChestDefinitions(true, completion);
+		} catch (RuntimeException | LinkageError exception) {
+			getLogger().log(
+					Level.SEVERE,
+					"The candidate files were committed, but runtime reload activation failed. "
+							+ "All old runtime ownership is being cleared so the failure remains fail-closed.",
+					exception);
+			taskRegistry.cancelAll();
+			clearRuntimeOwnershipAfterTeardown();
+			unavailableChestDefinitions.clear();
+			failedChestDefinitions.clear();
+			String detail = "reload initialization failed: " + exception.getClass().getSimpleName()
+					+ ": " + printableFailureDetail(exception.getMessage());
+			configFiles.getLoadableChestNames().forEach(name -> failedChestDefinitions.put(name, detail));
+			chestWorkInProgress = false;
+			failure.run();
+		}
+	}
+
+	private void clearRuntimeOwnershipAfterTeardown() {
+		for (Lootchest chest : new ArrayList<>(lootChest.values())) {
+			try {
+				chest.getHologram().remove();
+			} catch (RuntimeException | LinkageError exception) {
+				getLogger().log(
+						Level.WARNING,
+						"Could not remove a LootChest hologram while clearing reload state.",
+						exception);
+			}
+		}
+		lootChest.clear();
 		lootChestLocationIndex.clear();
 		locationIndexMismatchWarnings.clear();
-		ChestLifecycle.clearForReload(
-				lootChest,
-				chest -> chest.getHologram().remove(),
-				part,
-				protection);
+		part.clear();
+		protection.clear();
+	}
 
-		configFiles.reloadConfig();
-		setConfigs(Config.getInstance(configFiles.getConfig()));
-		startCmiHolograms();
-		reloadParticleCatalog();
-		if (configs.partEnable) {
-			startParticles();
+	private void abortPreparedReloadAsync(
+			LootChestFiles.PreparedReload preparedReload,
+			List<ReloadRuntimeState> runtimeStates,
+			IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> touched,
+			boolean runtimeSuspended,
+			Runnable failure) {
+		CompletableFuture<java.nio.file.Path> abortOperation;
+		try {
+			abortOperation = configFiles.abortReloadAsync(preparedReload);
+		} catch (RuntimeException exception) {
+			getLogger().log(
+					Level.SEVERE,
+					"Could not start preservation of the uncommitted data.yml candidate.",
+					exception);
+			finishAbortedRuntime(runtimeStates, touched, runtimeSuspended, failure);
+			return;
 		}
 
-		Messages.log("Loading chests...");
-		loadChestDefinitions(true, completion);
+		reloadFileOperation = abortOperation;
+		completeReloadFileOperation(abortOperation, (preserved, abortFailure) -> {
+			if (abortFailure != null) {
+				getLogger().log(
+						Level.SEVERE,
+						"Could not preserve the uncommitted data.yml candidate after reload was aborted. "
+								+ "Further data saves and reloads remain blocked.",
+						unwrapCompletionFailure(abortFailure));
+			} else {
+				try {
+					configFiles.finishAbortReload(preparedReload);
+					if (pendingReload == preparedReload) {
+						pendingReload = null;
+					}
+				} catch (RuntimeException exception) {
+					getLogger().log(Level.SEVERE, "Could not finish the reload abort transaction.", exception);
+				}
+			}
+			finishAbortedRuntime(runtimeStates, touched, runtimeSuspended, failure);
+		});
+	}
+
+	private void finishAbortedRuntime(
+			List<ReloadRuntimeState> runtimeStates,
+			IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> touched,
+			boolean runtimeSuspended,
+			Runnable failure) {
+		if (!runtimeSuspended) {
+			chestWorkInProgress = false;
+			failure.run();
+			return;
+		}
+
+		taskRegistry.runBatched(
+				CHEST_RELOAD_ROLLBACK_TASK,
+				runtimeStates,
+				configs.chestsPerTick,
+				runtimeState -> restoreReloadRuntimeState(runtimeState, touched),
+				() -> {
+					if (configs.partEnable) {
+						startParticles();
+					}
+					chestWorkInProgress = false;
+					clearReloadRollbackState();
+					failure.run();
+				});
+	}
+
+	private List<ReloadRuntimeState> captureReloadRuntimeStates() {
+		List<ReloadRuntimeState> states = new ArrayList<>(lootChest.size());
+		for (Lootchest chest : lootChest.values()) {
+			Location particleLocation = chest.getParticleLocation().clone();
+			states.add(new ReloadRuntimeState(
+					chest,
+					particleLocation,
+					part.containsKey(particleLocation),
+					part.get(particleLocation),
+					chest.getHologram().isActive(),
+					LootChestUtils.hasRespawnTask(chest)));
+		}
+		return states;
+	}
+
+	private ReloadPhysicalSnapshot captureReloadPhysicalSnapshot(Lootchest chest) {
+		Location location = Objects.requireNonNull(
+				chest.getActualLocation(),
+				"LootChest actual location").clone();
+		Block block = location.getBlock();
+		BlockState physicalState = null;
+		if (chest.isGoodType(block)) {
+			physicalState = block.getState(true);
+			if (!(physicalState instanceof InventoryHolder inventoryHolder)) {
+				throw new IllegalStateException("Matching LootChest block has no inventory state");
+			}
+			if (inventoryHolder.getInventory().getSize() != chest.getInv().getSize()) {
+				throw new IllegalStateException(
+						"Paired or unexpected-size containers cannot be transactionally reloaded");
+			}
+		}
+		return new ReloadPhysicalSnapshot(chest, location, physicalState);
+	}
+
+	private void restoreReloadRuntimeState(
+			ReloadRuntimeState runtimeState,
+			IdentityHashMap<Lootchest, ReloadPhysicalSnapshot> touched) {
+		Lootchest chest = runtimeState.chest();
+		try {
+			boolean physicalRestored = true;
+			if (touched.containsKey(chest)) {
+				physicalRestored = restoreReloadPhysicalSnapshot(touched.get(chest));
+			}
+
+			part.remove(runtimeState.particleLocation());
+			if (!physicalRestored) {
+				chest.getHologram().remove();
+				LootChestUtils.cancelReSpawn(chest);
+				failedChestDefinitions.put(
+						chest.getName(),
+						"reload rollback could not safely restore the previous physical container");
+				return;
+			}
+
+			if (runtimeState.particleTracked()) {
+				part.put(runtimeState.particleLocation(), runtimeState.trackedParticle());
+			}
+			if (runtimeState.hologramActive()) {
+				chest.getHologram().setLoc(chest.getActualLocation());
+			} else if (!runtimeState.hologramActive()) {
+				chest.getHologram().remove();
+			}
+			LootChestUtils.cancelReSpawn(chest);
+			if (runtimeState.respawnTaskActive()) {
+				LootChestUtils.scheduleReSpawn(chest);
+			}
+		} catch (RuntimeException | LinkageError exception) {
+			failedChestDefinitions.put(
+					chest.getName(),
+					"reload rollback failed: " + exception.getClass().getSimpleName());
+			getLogger().log(
+					Level.SEVERE,
+					"Could not restore LootChest '" + printableChestName(chest.getName())
+							+ "' after the reload was aborted; it remains inactive.",
+					exception);
+		}
+	}
+
+	private boolean restoreReloadPhysicalSnapshot(ReloadPhysicalSnapshot snapshot) {
+		if (snapshot.physicalState() == null) {
+			return true;
+		}
+		Block currentBlock = snapshot.location().getBlock();
+		if (currentBlock.getType() != Material.AIR) {
+			getLogger().severe("Refused to overwrite a non-air block while rolling back LootChest '"
+					+ printableChestName(snapshot.chest().getName()) + "'.");
+			return false;
+		}
+		if (!snapshot.physicalState().update(true, false)) {
+			getLogger().severe("Paper could not restore the captured block state for LootChest '"
+					+ printableChestName(snapshot.chest().getName()) + "'.");
+			return false;
+		}
+		return snapshot.chest().isGoodType(snapshot.location().getBlock());
+	}
+
+	private boolean restoreImmediatelyAfterFailedDespawn(ReloadPhysicalSnapshot snapshot) {
+		if (snapshot.physicalState() == null) {
+			return true;
+		}
+		Block currentBlock = snapshot.location().getBlock();
+		if (currentBlock.getType() != Material.AIR
+				&& currentBlock.getType() != snapshot.physicalState().getType()) {
+			return false;
+		}
+		try {
+			return snapshot.physicalState().update(true, false)
+					&& snapshot.chest().isGoodType(snapshot.location().getBlock());
+		} catch (RuntimeException | LinkageError restorationFailure) {
+			getLogger().log(
+					Level.SEVERE,
+					"Immediate rollback failed for LootChest '"
+							+ printableChestName(snapshot.chest().getName()) + "'.",
+					restorationFailure);
+			return false;
+		}
+	}
+
+	private <T> void completeReloadFileOperation(
+			CompletableFuture<T> operation,
+			java.util.function.BiConsumer<T, Throwable> continuation) {
+		operation.whenComplete((value, operationFailure) -> {
+			try {
+				Bukkit.getScheduler().runTask(this, () -> {
+					if (!isEnabled() || reloadFileOperation != operation) {
+						return;
+					}
+					reloadFileOperation = null;
+					continuation.accept(value, operationFailure);
+				});
+			} catch (RuntimeException schedulingFailure) {
+				if (isEnabled()) {
+					getLogger().log(
+							Level.SEVERE,
+							"Could not return a reload file operation to the server thread.",
+							schedulingFailure);
+				}
+			}
+		});
+	}
+
+	private Throwable unwrapCompletionFailure(Throwable failure) {
+		Throwable current = failure;
+		while ((current instanceof java.util.concurrent.CompletionException
+				|| current instanceof java.util.concurrent.ExecutionException)
+				&& current.getCause() != null) {
+			current = current.getCause();
+		}
+		return current;
+	}
+
+	private record ReloadRuntimeState(
+			Lootchest chest,
+			Location particleLocation,
+			boolean particleTracked,
+			Particle trackedParticle,
+			boolean hologramActive,
+			boolean respawnTaskActive) {
+	}
+
+	private record ReloadPhysicalSnapshot(
+			Lootchest chest,
+			Location location,
+			BlockState physicalState) {
 	}
 
 	public boolean runBatchedChestOperation(
@@ -335,48 +936,170 @@ public class Main extends JavaPlugin {
 	private void loadChestDefinitions(boolean forceSpawn, Runnable completion) {
 		chestWorkInProgress = true;
 		long startedAt = System.currentTimeMillis();
-		ConfigurationSection chestSection = configFiles.getData().getConfigurationSection("chests");
-		List<String> chestNames = chestSection == null
-				? Collections.emptyList()
-				: new ArrayList<>(chestSection.getKeys(false));
+		List<String> chestNames = new ArrayList<>(configFiles.getLoadableChestNames());
+		unavailableChestDefinitions.clear();
+		failedChestDefinitions.clear();
 
 		taskRegistry.runBatched(
 				CHEST_LOAD_TASK,
 				chestNames,
 				configs.chestsPerTick,
-				this::loadChestDefinition,
+				chestName -> {
+					ChestDefinitionLoadResult result;
+					try {
+						result = loadChestDefinition(chestName);
+					} catch (RuntimeException | LinkageError exception) {
+						result = ChestDefinitionLoadResult.FAILED;
+						recordDefinitionFailure(chestName, "load", exception);
+						containFailedActivation(chestName);
+						getLogger().log(
+								Level.SEVERE,
+								"Could not activate saved LootChest '" + printableChestName(chestName)
+										+ "'. Its definition remains preserved and inactive.",
+								exception);
+					}
+					if (result == ChestDefinitionLoadResult.WORLD_UNAVAILABLE) {
+						unavailableChestDefinitions.add(chestName);
+					}
+				},
 				() -> {
-					rebuildLootChestLocationIndex();
-					Messages.log("Loaded " + lootChest.size() + " Lootchests in "
-							+ (System.currentTimeMillis() - startedAt) + " milliseconds.");
 					Messages.log("Starting LootChest timers in batches...");
 					taskRegistry.runBatched(
 							CHEST_SPAWN_TASK,
 							new ArrayList<>(lootChest.values()),
 							configs.chestsPerTick,
-							chest -> spawnLoadedChest(chest, forceSpawn),
+							chest -> spawnLoadedChestSafely(chest, forceSpawn),
 							() -> {
+								logDefinitionLoadSummary(startedAt);
 								chestWorkInProgress = false;
 								completion.run();
 							});
 				});
 	}
 
-	private void loadChestDefinition(String chestName) {
+	private ChestDefinitionLoadResult loadChestDefinition(String chestName) {
 		String worldName = configFiles.getData().getString(DATA_CHEST_PATH + chestName + ".position.world");
 		String randomWorldName = worldName;
-		if (configFiles.getData().getInt(DATA_CHEST_PATH + chestName + ".randomradius") > 0) {
+		boolean savedRandomPosition = configFiles.getData().getInt(
+				DATA_CHEST_PATH + chestName + ".randomradius") > 0
+				&& configFiles.getData().isSet(DATA_CHEST_PATH + chestName + ".randomPosition.x");
+		if (savedRandomPosition) {
 			randomWorldName = configFiles.getData().getString(DATA_CHEST_PATH + chestName + ".randomPosition.world");
 		}
 		if (worldName != null
 				&& LootChestUtils.isWorldLoaded(randomWorldName)
 				&& LootChestUtils.isWorldLoaded(worldName)) {
+			World positionWorld = Bukkit.getWorld(worldName);
+			World randomPositionWorld = Bukkit.getWorld(randomWorldName);
+			double positionY = configFiles.getData().getDouble(
+					DATA_CHEST_PATH + chestName + ".position.y");
+			if (!isBlockYWithinWorld(positionWorld, positionY)) {
+				String detail = "position.y is outside the loaded world's build height";
+				recordDefinitionFailure(
+						chestName,
+						"load",
+						new IllegalArgumentException(detail));
+				getLogger().warning("Could not activate saved LootChest '"
+						+ printableChestName(chestName) + "': " + detail + ".");
+				return ChestDefinitionLoadResult.FAILED;
+			}
+			if (savedRandomPosition) {
+				double randomY = configFiles.getData().getDouble(
+						DATA_CHEST_PATH + chestName + ".randomPosition.y");
+				if (!isBlockYWithinWorld(randomPositionWorld, randomY)) {
+					String detail = "randomPosition.y is outside the loaded world's build height";
+					recordDefinitionFailure(
+							chestName,
+							"load",
+							new IllegalArgumentException(detail));
+					getLogger().warning("Could not activate saved LootChest '"
+							+ printableChestName(chestName) + "': " + detail + ".");
+					return ChestDefinitionLoadResult.FAILED;
+				}
+			}
 			Lootchest chest = new Lootchest(chestName);
 			lootChest.put(chestName, chest);
 			trackLootChestLocation(chest);
-			return;
+			return ChestDefinitionLoadResult.LOADED;
 		}
-		Messages.log("<#f38ba8>Could not load LootChest " + chestName + ": world " + worldName + " is not loaded.");
+		String unavailableWorld = !LootChestUtils.isWorldLoaded(worldName) ? worldName : randomWorldName;
+		getLogger().warning("Could not load LootChest '" + printableChestName(chestName)
+				+ "': world '" + printableText(Objects.toString(unavailableWorld, "null"), 120)
+				+ "' is not loaded.");
+		return ChestDefinitionLoadResult.WORLD_UNAVAILABLE;
+	}
+
+	private boolean isBlockYWithinWorld(World world, double y) {
+		if (world == null || !Double.isFinite(y)) {
+			return false;
+		}
+		double blockY = Math.floor(y);
+		return blockY >= world.getMinHeight() && blockY < world.getMaxHeight();
+	}
+
+	private void spawnLoadedChestSafely(Lootchest chest, boolean forceSpawn) {
+		try {
+			spawnLoadedChest(chest, forceSpawn);
+		} catch (RuntimeException | LinkageError exception) {
+			recordDefinitionFailure(chest.getName(), "spawn", exception);
+			boolean contained = containFailedActivation(chest.getName());
+			getLogger().log(
+					Level.SEVERE,
+					"Could not spawn saved LootChest '" + printableChestName(chest.getName()) + "'. "
+							+ (contained
+									? "Its runtime state was removed and its saved definition remains preserved."
+									: "Cleanup also failed, so runtime ownership was retained for safety."),
+					exception);
+		}
+	}
+
+	private boolean containFailedActivation(String chestName) {
+		Lootchest chest = lootChest.get(chestName);
+		if (chest == null) {
+			return true;
+		}
+
+		boolean contained = true;
+		try {
+			LootChestUtils.cancelReSpawn(chest);
+			chest.despawn();
+		} catch (RuntimeException | LinkageError cleanupFailure) {
+			contained = false;
+			getLogger().log(
+					Level.SEVERE,
+					"Could not fully contain failed LootChest '" + printableChestName(chestName)
+							+ "'; keeping it registered rather than leaving an unmanaged container.",
+					cleanupFailure);
+		}
+
+		if (contained) {
+			lootChest.remove(chestName, chest);
+			untrackLootChestLocation(chest);
+		} else {
+			trackLootChestLocation(chest);
+		}
+		return contained;
+	}
+
+	private void recordDefinitionFailure(String chestName, String phase, Throwable exception) {
+		failedChestDefinitions.put(
+				chestName,
+				phase + " failed: " + exception.getClass().getSimpleName() + ": "
+						+ printableFailureDetail(exception.getMessage()));
+	}
+
+	private void logDefinitionLoadSummary(long startedAt) {
+		int rejected = configFiles.getRejectedChestDefinitions().size();
+		int unavailable = unavailableChestDefinitions.size();
+		int failed = failedChestDefinitions.size();
+		getLogger().info("Activated " + lootChest.size() + " of "
+				+ configFiles.getSavedChestDefinitionCount() + " saved LootChests in "
+				+ (System.currentTimeMillis() - startedAt) + " milliseconds; rejected "
+				+ rejected + " malformed, deferred " + unavailable
+				+ " because a world is unavailable, and failed " + failed + " unexpectedly.");
+		if (rejected > 0) {
+			getLogger().warning("Rejected definitions remain preserved in data.yml and were not replaced from backup.");
+		}
 	}
 
 	private void rebuildLootChestLocationIndex() {
@@ -413,6 +1136,103 @@ public class Main extends JavaPlugin {
 		if (lootChestLocationIndex != null) {
 			lootChestLocationIndex.remove(chest);
 		}
+	}
+
+	boolean canPersistLootChest(Lootchest chest) {
+		if (chest == null || configFiles == null || !configFiles.isInitialized()) {
+			return false;
+		}
+		if (!snapshottingReloadData
+				&& (pendingReload != null
+				|| reloadFileOperation != null
+				|| configFiles.isReloadInProgress())) {
+			getLogger().warning("Refused to persist LootChest state while a reload transaction is in progress.");
+			return false;
+		}
+
+		String name = chest.getName();
+		boolean alreadySaved = configFiles.hasSavedChestDefinition(name);
+		List<String> nameProblems = alreadySaved
+				? configFiles.getSavedChestNameProblems(name)
+				: configFiles.getChestNameProblems(name);
+		if (!nameProblems.isEmpty()) {
+			getLogger().warning("Refused to persist LootChest with an unsafe name ("
+					+ String.join("; ", nameProblems) + ").");
+			return false;
+		}
+		if (isInactiveSavedChestDefinition(name)) {
+			getLogger().warning("Refused to overwrite inactive saved LootChest definition '"
+					+ printableChestName(name) + "'.");
+			return false;
+		}
+
+		Lootchest registeredByName = lootChest == null ? null : lootChest.get(name);
+		if (alreadySaved && registeredByName != chest) {
+			getLogger().warning("Refused to overwrite reserved saved LootChest definition '"
+					+ printableChestName(name) + "'.");
+			return false;
+		}
+		if (lootChest != null && lootChest.containsValue(chest) && registeredByName != chest) {
+			getLogger().warning("Refused to persist a registered LootChest under a different name.");
+			return false;
+		}
+		try {
+			Location position = chest.getPosition();
+			Location actualPosition = chest.getActualLocation();
+			if (chest.getType() == null || !Mat.isLootChestMaterial(chest.getType())
+					|| chest.getRadius() < 0
+					|| chest.getTime() < Integer.MIN_VALUE
+					|| chest.getTime() > Integer.MAX_VALUE
+					|| chest.getMaxFilledSlots() == null
+					|| !isSafeRuntimeLocation(position)
+					|| !isSafeRuntimeLocation(actualPosition)) {
+				getLogger().warning("Refused to persist LootChest '" + printableChestName(name)
+						+ "' because its runtime state is incomplete or unsafe.");
+				return false;
+			}
+		} catch (RuntimeException exception) {
+			getLogger().log(
+					Level.WARNING,
+					"Refused to persist LootChest '" + printableChestName(name)
+							+ "' because its runtime state could not be inspected.",
+					exception);
+			return false;
+		}
+		return true;
+	}
+
+	boolean canPersistAllLootChests() {
+		return snapshottingReloadData
+				|| (pendingReload == null
+				&& reloadFileOperation == null
+				&& !configFiles.isReloadInProgress());
+	}
+
+	private boolean isSafeRuntimeLocation(Location location) {
+		if (location == null
+				|| location.getWorld() == null
+				|| !Double.isFinite(location.getX())
+				|| !Double.isFinite(location.getY())
+				|| !Double.isFinite(location.getZ())
+				|| location.getX() < -30_000_000D
+				|| location.getX() >= 30_000_000D
+				|| location.getZ() < -30_000_000D
+				|| location.getZ() >= 30_000_000D) {
+			return false;
+		}
+		return isBlockYWithinWorld(location.getWorld(), location.getY());
+	}
+
+	public boolean hasInactiveSavedChestDefinitions() {
+		return !configFiles.getRejectedChestDefinitions().isEmpty()
+				|| !unavailableChestDefinitions.isEmpty()
+				|| !failedChestDefinitions.isEmpty();
+	}
+
+	private boolean isInactiveSavedChestDefinition(String chestName) {
+		return configFiles.getRejectedChestDefinitions().containsKey(chestName)
+				|| unavailableChestDefinitions.contains(chestName)
+				|| failedChestDefinitions.containsKey(chestName);
 	}
 
 	public Lootchest findLootChest(Location location) {
@@ -473,6 +1293,29 @@ public class Main extends JavaPlugin {
 		return chest == null ? "none" : chest.getName();
 	}
 
+	private String printableChestName(String chestName) {
+		return printableText(Objects.toString(chestName, "null"), 120);
+	}
+
+	private String printableFailureDetail(String detail) {
+		return printableText(Objects.toString(detail, "no detail"), 240);
+	}
+
+	private String printableText(String text, int maximumLength) {
+		StringBuilder printable = new StringBuilder();
+		text.codePoints().forEach(character -> {
+			if (Character.isISOControl(character)) {
+				printable.append('?');
+			} else if (printable.length() < maximumLength) {
+				printable.appendCodePoint(character);
+			}
+		});
+		if (text.length() > maximumLength) {
+			printable.append("...");
+		}
+		return printable.toString();
+	}
+
 	private void spawnLoadedChest(Lootchest chest, boolean forceSpawn) {
 		if (forceSpawn) {
 			chest.spawn(true);
@@ -493,12 +1336,14 @@ public class Main extends JavaPlugin {
 		CompatibilityMigrations.migrateConfig(configFiles.getConfig());
 		CompatibilityMigrations.migrateLanguage(configFiles.getLang());
 		boolean savedChestDataChanged =
-				CompatibilityMigrations.migrateSavedChestData(configFiles.getData());
+				CompatibilityMigrations.migrateSavedChestData(
+						configFiles.getData(),
+						configFiles.getLoadableChestNames());
 		configFiles.setConfig("spawn_on_non_solid_blocks", false);
 		configFiles.setConfig("Minimum_Height_For_Random_Spawn", 0);
 		configFiles.setConfig("Max_Height_For_Random_Spawn", 200);
 		configFiles.setConfig("Max_Filled_Slots_By_Default", 0);
-		configFiles.setConfig("SaveDataFileDuringReload", true);
+		configFiles.setConfig("SaveDataFileDuringReload", false);
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.enabled", true);
 		configFiles.setConfig("respawn_notify.respawn_all_with_command_in_world.message", "<#a6e3a1>All LootChests were force-respawned in <#89dceb>[World]<#a6e3a1>.");
 		configFiles.setConfig("respawn_notify.Minimum_Number_Of_Players_For_Natural_Spawning", 0);
@@ -514,11 +1359,18 @@ public class Main extends JavaPlugin {
 		configFiles.setLang("info.introduction", "<#bac2de>Discover repeatable loot containers with rewards configured for 1MoreBlock.");
 		configFiles.setLang("info.commands", "<#a6e3a1>Start with <#89dceb>/lc locate <#a6e3a1>when your rank grants access, or use <#89dceb>/lc help<#a6e3a1>.");
 		configFiles.setLang("info.documentation", "<click:open_url:'https://docs.1moreblock.com/custom-server-plugins/lootbox/'><hover:show_text:'Open the Lootbox guide'><#89dceb><underlined>docs.1moreblock.com/custom-server-plugins/lootbox/</underlined></#89dceb></hover></click>");
+		configFiles.setLang("PluginReloadedWithIssues", "<#f9e2af>Reload completed with inactive saved definitions: <#f38ba8>[Rejected] rejected<#f9e2af>, <#f38ba8>[Deferred] world-deferred<#f9e2af>, and <#f38ba8>[Failed] failed<#f9e2af>. Run <#89dceb>/lc audit<#f9e2af>.");
+		configFiles.setLang("PluginReloadFailed", "<#f38ba8>Reload was aborted before candidate publication. Check the server log and run <#f9e2af>/lc audit<#f38ba8> before retrying.");
+		configFiles.setLang("PluginReloadActivationFailed", "<#f38ba8>The candidate files were committed, but runtime activation failed and all LootChests were left inactive. Run <#f9e2af>/lc audit<#f38ba8>, inspect the log, then retry or restart.");
 		configFiles.setLang("audit.title", "<#cba6f7><bold>Lootbox lifecycle audit</bold>");
 		configFiles.setLang("audit.summary", "<#a6e3a1>Loaded <#89dceb>[Total] <#bac2de>| <#a6e3a1>present <#89dceb>[Present] <#bac2de>| <#a6e3a1>absent <#89dceb>[Absent] <#bac2de>| <#a6e3a1>wrong <#89dceb>[Wrong] <#bac2de>| <#a6e3a1>unavailable <#89dceb>[Unavailable] <#bac2de>| <#a6e3a1>issues <#89dceb>[Issues]");
 		configFiles.setLang("audit.index", "<#a6e3a1>Location index <#89dceb>[Indexed]/[Total]");
+		configFiles.setLang("audit.definitions", "<#a6e3a1>Saved definitions <#89dceb>[Saved] <#bac2de>| <#a6e3a1>loadable <#89dceb>[Loadable] <#bac2de>| <#a6e3a1>rejected <#89dceb>[Rejected] <#bac2de>| <#a6e3a1>world-deferred <#89dceb>[Deferred] <#bac2de>| <#a6e3a1>activation-failed <#89dceb>[Failed]");
 		configFiles.setLang("audit.clean", "<#a6e3a1>No lifecycle inconsistencies were found.");
 		configFiles.setLang("audit.finding", "<#f6c177>- <#f38ba8>[Code] <#89dceb>[Chest]<#cdd6f4>: [Detail]");
+		configFiles.setLang("audit.definition_finding", "<#f6c177>- <#f38ba8>saved-definition <#89dceb>[Chest]<#cdd6f4>: [Detail]");
+		configFiles.setLang("audit.definition_target", "<#cba6f7><bold>Lootbox saved definition:</bold> <#89dceb>[Chest] <#bac2de>([Status])");
+		configFiles.setLang("audit.definition_preserved", "<#f9e2af>The saved definition remains preserved in data.yml and was not replaced from backup.");
 		configFiles.setLang("audit.truncated", "<#f9e2af>[Remaining] additional findings were omitted to keep the report readable.");
 		configFiles.setLang("audit.read_only", "<#bac2de>Read-only audit complete; no chest, display, task, configuration, or saved data was changed.");
 		configFiles.setLang("audit.click_to_tp", "<#a6e3a1>Click to teleport to <#89dceb>[Chest]");
@@ -529,6 +1381,7 @@ public class Main extends JavaPlugin {
 		configFiles.setLang("audit.target_task", "<#a6e3a1>Respawn task <#bac2de>expected <#89dceb>[TaskExpected]<#bac2de>, active <#89dceb>[TaskActive]");
 		configFiles.setLang(MENU_MAIN_TYPE, "<#cba6f7>Select container type");
 		configFiles.setLang("notAnInteger", "<#f38ba8>[Number] is not a whole number.");
+		configFiles.setLang("invalidChestName", "<#f38ba8>LootChest names cannot be blank or contain spaces, control characters, or periods.");
 		configFiles.setLang("blockIsAlreadyLootchest", "<#f38ba8>This block is already registered as a LootChest.");
 		configFiles.setLang("editedMaxFilledSlots", "<#a6e3a1>Maximum filled slots updated for <#89dceb>[Chest]<#a6e3a1>.");
 		configFiles.setLang("copiedChest", "<#f6c177>Copied <#89dceb>[Chest1] <#f6c177>into <#89dceb>[Chest2]<#f6c177>.");

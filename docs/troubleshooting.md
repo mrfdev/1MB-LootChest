@@ -51,7 +51,40 @@ physical container can remain when removal settings are intentionally disabled.
 
 With `SaveDataFileDuringReload: false`, `/lc reload` reads edited `data.yml`. With
 it set to `true`, the in-memory definitions are saved first and can overwrite a
-manual edit. Stop Paper before major manual data changes and keep a backup.
+manual edit. The value read from the newly edited `config.yml` controls that same
+reload, rather than taking effect one reload later. Stop Paper before major
+manual data changes and keep a backup.
+
+## Saved Definition Was Rejected
+
+Lootbox keeps valid saved definitions active when one child in `data.yml` is
+malformed. The rejected child remains present and reserved, is not replaced from
+a numbered backup, and cannot be overwritten by `/lc create` or the developer
+API. Run `/lc audit` for the saved-definition totals, then `/lc audit <name>` for
+the exact invalid paths.
+
+Correct the reported fields in `data.yml` with
+`SaveDataFileDuringReload: false`, then run `/lc reload`. Required anchor fields
+are `position.world` plus finite numeric `position.x`, `position.y`, and
+`position.z`; horizontal coordinates must remain inside Minecraft's safe range,
+and loaded-world Y values must fit that world's build height. Inventory keys
+must resolve uniquely to slots from `0` through `26`, and their values must
+remain Bukkit-serialized item stacks. A missing inventory is a valid empty
+definition. Random radius must be a nonnegative integer. If a world is merely
+unloaded, the definition is reported as deferred rather than malformed.
+
+Whole-file backup recovery is reserved for YAML that cannot be parsed, contains
+a Bukkit object that cannot be deserialized, or lacks a usable top-level
+`chests` section. A `data.yml.invalid-<timestamp>` file therefore signals a
+document-level recovery, not an ordinary per-child schema rejection.
+
+If reload cannot safely remove every currently active container, it aborts
+without publishing the candidate files. A disk-loaded candidate is copied to
+`data.yml.reload-aborted-*.yml`, and already removed containers are restored from
+full block-state snapshots without rerolling rewards. A conflicting block is
+never overwritten during rollback; that definition remains inactive and is
+reported by `/lc audit`. Restore the unavailable world or resolve the logged
+cleanup error, then retry.
 
 ## Commands Are Denied
 

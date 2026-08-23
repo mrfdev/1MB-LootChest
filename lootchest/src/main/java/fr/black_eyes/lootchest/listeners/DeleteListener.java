@@ -108,6 +108,10 @@ public class DeleteListener implements Listener  {
 		if (lootChestContainer == null) {
 			return;
 		}
+		if (Main.getInstance().isChestWorkInProgress()) {
+			event.setCancelled(true);
+			return;
+		}
 
 		long protectionTime = isProtected(lootChestContainer.location().getBlock());
 		if (protectionTime > 0) {
@@ -298,6 +302,10 @@ public class DeleteListener implements Listener  {
 		if(lootChestContainer == null) {
 			return;
 		}
+		if (Main.getInstance().isChestWorkInProgress()) {
+			event.setCancelled(true);
+			return;
+		}
 
 		Lootchest chest = lootChestContainer.chest();
 		Location lootChestLocation = lootChestContainer.location();
@@ -391,12 +399,18 @@ public class DeleteListener implements Listener  {
 	private boolean blocksAutomatedAccess(Inventory inventory) {
 		LootChestContainer container = findLootChestContainer(inventory);
 		return container != null
-				&& (Main.configs.preventHopperPlacingUnderLootChest
+				&& (Main.getInstance().isChestWorkInProgress()
+				|| Main.configs.preventHopperPlacingUnderLootChest
 				|| isProtected(container.location().getBlock()) > 0);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onHopperPlace(BlockPlaceEvent event) {
+		if (Main.getInstance().isChestWorkInProgress()
+				&& Main.getInstance().findLootChest(event.getBlockPlaced().getLocation()) != null) {
+			event.setCancelled(true);
+			return;
+		}
 		Block hopper = event.getBlockPlaced();
 		if (Main.configs.preventHopperPlacingUnderLootChest
 				&& hopper.getType() == Material.HOPPER

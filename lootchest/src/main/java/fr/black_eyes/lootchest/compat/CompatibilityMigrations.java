@@ -1,6 +1,7 @@
 package fr.black_eyes.lootchest.compat;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -98,9 +99,28 @@ public final class CompatibilityMigrations {
             return false;
         }
 
+        return migrateSavedChestData(data, chests.getKeys(false));
+    }
+
+    /**
+     * Applies saved-data migrations only to definitions that passed structural
+     * validation. Rejected definitions remain untouched at the configuration
+     * value level so an automatic migration cannot conceal the operator input.
+     */
+    public static boolean migrateSavedChestData(
+            FileConfiguration data,
+            Collection<String> acceptedChestNames) {
+        ConfigurationSection chests = data.getConfigurationSection("chests");
+        if (chests == null) {
+            return false;
+        }
+
         boolean changed = false;
-        for (String chestName : chests.getKeys(false)) {
-            changed |= set(data, "chests." + chestName + ".fall", false);
+        for (String chestName : acceptedChestNames) {
+            Object rawDefinition = chests.getValues(false).get(chestName);
+            if (rawDefinition instanceof ConfigurationSection definition) {
+                changed |= set(definition, "fall", false);
+            }
         }
         return changed;
     }

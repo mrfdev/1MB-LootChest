@@ -8,9 +8,18 @@ Lootbox owns these files directly through Paper's YAML API. Existing files are
 never replaced during a normal startup, and missing defaults are added without
 overwriting local values. Saves use ordered atomic file replacement. On clean
 shutdown, `data.yml` is copied to the existing numbered `backups/` format and
-the newest ten backups are retained. If `data.yml` is invalid, the damaged file
-is preserved as `data.yml.invalid-<timestamp>` before the newest valid numbered
-backup is restored.
+the newest ten backups are retained. If `data.yml` cannot be parsed or its
+top-level `chests` section is unusable, the damaged document is preserved as
+`data.yml.invalid-<timestamp>` before the newest usable numbered backup is
+restored.
+
+A child definition that Paper's YAML loader can deserialize, but that fails the
+per-chest schema, does not trigger whole-file recovery because restoring a backup
+could roll back unrelated valid Lootboxes. Lootbox instead preserves that child
+in `data.yml`, excludes it from runtime activation, loads valid siblings, and
+reports each rejected field at startup and through `/lc audit [name]`. Automatic
+saved-data migrations also skip rejected children. A broken YAML document or a
+Bukkit object that cannot be deserialized is still a document-level load failure.
 
 ## General Settings
 
@@ -45,6 +54,17 @@ backup is restored.
 Reward contents, chances, respawn time, current/anchor position, random radius,
 hologram text, particle, message toggles, protection, container type, and last reset
 time are stored per Lootbox in `data.yml`.
+
+Saved definitions require a nonblank world name and finite, safe `x`, `y`, and
+`z` anchor coordinates. Loaded-world Y values must also fit that world's build
+height. Inventory slots must resolve unambiguously to `0` through `26` and
+contain serialized Bukkit items. Missing optional legacy fields, empty
+inventories, stale unused chance or inactive random-position entries, unknown
+material names that use the historical `CHEST` fallback, and unknown extra
+fields remain supported. Existing names may contain ordinary spaces for legacy
+compatibility, but new names cannot contain whitespace. Blank names, control
+characters, and periods are rejected because they are unsafe commands or YAML
+paths.
 
 ## Random Spawn Safety
 
@@ -104,7 +124,15 @@ proxy or cross-server broadcast mode.
 
 Use `/lc reload` for `config.yml`, `lang.yml`, and `data.yml`. It rebuilds the
 particle catalog, recreates its scheduler tasks, and respawns loaded Lootboxes in
-batches. The completion message is sent only after every batch has finished.
+batches. Raw file reads and durable writes run on the file worker; Bukkit item
+decoding and every world operation stay on the server thread. Candidate files
+are decoded without publication, then previously active physical containers are
+removed in batches from full block-state snapshots. An abort restores those
+snapshots without rerolling rewards and preserves the exact disk candidate as
+`data.yml.reload-aborted-*.yml`. Candidate objects are published only after the
+disk commit succeeds. Successful but degraded reloads report rejected, deferred,
+and failed counts and point operators to `/lc audit`. The completion message is
+sent only after every batch has finished.
 Restart Paper after adding or removing CMI or another integration plugin.
 
 An invalid `config.yml` or `lang.yml` fails startup without overwriting the

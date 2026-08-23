@@ -7,9 +7,9 @@ permissions default to server operators unless explicitly granted.
 | Command | Context | Description |
 | --- | --- | --- |
 | `/lc` or `/lc help` | Console/player | Show the configured help list. |
-| `/lc audit [name]` | Console/player | Inspect all Lootboxes or show saved/live container, index, display, particle, and respawn-task details for one named Lootbox without changing state. Player-facing chest names are clickable shortcuts to `/lc tp <name>`. |
+| `/lc audit [name]` | Console/player | Inspect lifecycle state plus saved-definition validation, or show details for one active, rejected, deferred, or activation-failed definition without changing state. Active player-facing chest names are clickable shortcuts to `/lc tp <name>`. |
 | `/lc info` | Console/player | Show the 1MoreBlock Lootbox introduction, version, and canonical docs link. |
-| `/lc create <name>` | Player | Register the filled supported container being targeted and open its editor. |
+| `/lc create <name>` | Player | Register the filled supported container being targeted and open its editor. Names cannot contain spaces, control characters, or periods, and rejected saved names remain reserved. |
 | `/lc edit <name>` | Player | Open the graphical editor. |
 | `/lc copy <source> <destination>` | Console/player | Copy settings and rewards into an existing Lootbox. |
 | `/lc give <name> <player>` | Console/player | Roll that Lootbox's configured contents into an online player's inventory. |

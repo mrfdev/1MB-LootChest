@@ -1,6 +1,10 @@
 package fr.black_eyes.lootchest.commands.commands;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -26,7 +30,7 @@ public final class AuditCommand extends SubCommand {
     private static final String TELEPORT_COMMAND = "/lc tp ";
 
     public AuditCommand() {
-        super("audit", List.of(), List.of(ArgType.LOOTCHEST));
+        super("audit", List.of(), List.of(ArgType.STRING));
     }
 
     @Override
@@ -43,14 +47,46 @@ public final class AuditCommand extends SubCommand {
         }
 
         if (args.length == 2) {
-            sendTargetReport(sender, plugin.getLootChest().get(args[1]));
+            String chestName = args[1];
+            Lootchest chest = plugin.getLootChest().get(chestName);
+            if (plugin.getConfigFiles().getRejectedChestDefinitions().containsKey(chestName)) {
+                sendRejectedDefinitionReport(
+                        sender,
+                        chestName,
+                        plugin.getConfigFiles().getRejectedChestDefinitions().get(chestName));
+            } else if (plugin.getUnavailableChestDefinitions().contains(chestName)) {
+                sendInactiveDefinitionReport(sender, chestName, "world-unavailable",
+                        "The saved world is not currently loaded.");
+            } else if (plugin.getFailedChestDefinitions().containsKey(chestName)) {
+                sendInactiveDefinitionReport(sender, chestName, "activation-failed",
+                        plugin.getFailedChestDefinitions().get(chestName));
+            } else if (chest != null) {
+                sendTargetReport(sender, chest);
+            } else {
+                Messages.msg(sender, "chestDoesntExist", "[Chest]", chestName);
+            }
             return;
         }
 
-        sendFullReport(sender, LifecycleAuditor.inspect(plugin));
+        sendFullReport(sender, plugin, LifecycleAuditor.inspect(plugin));
     }
 
-    private void sendFullReport(CommandSender sender, Report report) {
+    @Override
+    public List<String> getTabList(String[] args) {
+        if (args.length != 2) {
+            return List.of();
+        }
+        Set<String> names = new LinkedHashSet<>(Main.getInstance().getConfigFiles().getSavedChestNames());
+        names.addAll(Main.getInstance().getLootChest().keySet());
+        return names.stream().filter(AuditCommand::isSafeCommandArgument).toList();
+    }
+
+    private void sendFullReport(CommandSender sender, Main plugin, Report report) {
+        Map<String, List<String>> rejected = plugin.getConfigFiles().getRejectedChestDefinitions();
+        int definitionFindings = rejected.values().stream().mapToInt(List::size).sum()
+                + plugin.getUnavailableChestDefinitions().size()
+                + plugin.getFailedChestDefinitions().size();
+        int allFindings = report.findings().size() + definitionFindings;
         Messages.msg(sender, "audit.title");
         Messages.msg(
                 sender,
@@ -60,14 +96,22 @@ public final class AuditCommand extends SubCommand {
                 "[Absent]", Integer.toString(report.absent()),
                 "[Wrong]", Integer.toString(report.wrongType()),
                 "[Unavailable]", Integer.toString(report.unavailable()),
-                "[Issues]", Integer.toString(report.findings().size()));
+                "[Issues]", Integer.toString(allFindings));
         Messages.msg(
                 sender,
                 "audit.index",
                 "[Indexed]", Integer.toString(report.indexedEntries()),
                 "[Total]", Integer.toString(report.total()));
+        Messages.msg(
+                sender,
+                "audit.definitions",
+                "[Saved]", Integer.toString(plugin.getConfigFiles().getSavedChestDefinitionCount()),
+                "[Loadable]", Integer.toString(plugin.getConfigFiles().getLoadableChestNames().size()),
+                "[Rejected]", Integer.toString(rejected.size()),
+                "[Deferred]", Integer.toString(plugin.getUnavailableChestDefinitions().size()),
+                "[Failed]", Integer.toString(plugin.getFailedChestDefinitions().size()));
 
-        if (report.clean()) {
+        if (allFindings == 0) {
             Messages.msg(sender, "audit.clean");
         } else {
             List<Finding> findings = report.findings();
@@ -77,14 +121,77 @@ public final class AuditCommand extends SubCommand {
                             Messages.get("audit.click_to_tp"),
                             finding,
                             sender instanceof Player)));
-            if (findings.size() > MAX_FINDINGS) {
+            int sent = Math.min(findings.size(), MAX_FINDINGS);
+            for (Map.Entry<String, List<String>> entry : rejected.entrySet()) {
+                for (String problem : entry.getValue()) {
+                    if (sent == MAX_FINDINGS) {
+                        break;
+                    }
+                    sender.sendMessage(renderDefinitionFinding(entry.getKey(), problem));
+                    sent++;
+                }
+                if (sent == MAX_FINDINGS) {
+                    break;
+                }
+            }
+            if (sent < MAX_FINDINGS) {
+                for (String chestName : plugin.getUnavailableChestDefinitions()) {
+                    if (sent == MAX_FINDINGS) {
+                        break;
+                    }
+                    sender.sendMessage(renderDefinitionFinding(
+                            chestName,
+                            "world-unavailable: the saved world is not currently loaded"));
+                    sent++;
+                }
+            }
+            if (sent < MAX_FINDINGS) {
+                for (Map.Entry<String, String> entry : plugin.getFailedChestDefinitions().entrySet()) {
+                    if (sent == MAX_FINDINGS) {
+                        break;
+                    }
+                    sender.sendMessage(renderDefinitionFinding(
+                            entry.getKey(),
+                            "activation-failed: " + entry.getValue()));
+                    sent++;
+                }
+            }
+            if (allFindings > MAX_FINDINGS) {
                 Messages.msg(
                         sender,
                         "audit.truncated",
-                        "[Remaining]", Integer.toString(findings.size() - MAX_FINDINGS));
+                        "[Remaining]", Integer.toString(allFindings - MAX_FINDINGS));
             }
         }
         Messages.msg(sender, "audit.read_only");
+    }
+
+    private void sendRejectedDefinitionReport(
+            CommandSender sender,
+            String chestName,
+            List<String> problems) {
+        Messages.msg(sender, "audit.definition_target", "[Chest]", chestName, "[Status]", "rejected");
+        problems.forEach(problem -> sender.sendMessage(renderDefinitionFinding(chestName, problem)));
+        Messages.msg(sender, "audit.definition_preserved");
+        Messages.msg(sender, "audit.read_only");
+    }
+
+    private void sendInactiveDefinitionReport(
+            CommandSender sender,
+            String chestName,
+            String status,
+            String detail) {
+        Messages.msg(sender, "audit.definition_target", "[Chest]", chestName, "[Status]", status);
+        sender.sendMessage(renderDefinitionFinding(chestName, detail));
+        Messages.msg(sender, "audit.definition_preserved");
+        Messages.msg(sender, "audit.read_only");
+    }
+
+    private static Component renderDefinitionFinding(String chestName, String detail) {
+        return Messages.component(
+                Messages.get("audit.definition_finding"),
+                "[Chest]", chestName,
+                "[Detail]", detail);
     }
 
     private void sendTargetReport(CommandSender sender, Lootchest chest) {

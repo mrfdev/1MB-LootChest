@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
@@ -185,6 +186,26 @@ class CompatibilityMigrationsTest {
         assertEquals("BARREL", data.getString("chests.missing-flag.type"));
         assertEquals("FLAME", data.getString("chests.missing-flag.particle"));
         assertFalse(CompatibilityMigrations.migrateSavedChestData(data));
+    }
+
+    @Test
+    void migratesOnlyAcceptedSavedChestDefinitions() throws Exception {
+        YamlConfiguration data = yaml("""
+                chests:
+                  accepted:
+                    fall: true
+                    type: CHEST
+                  rejected:
+                    fall: true
+                    inventory:
+                      bad-slot: STONE
+                """);
+
+        assertTrue(CompatibilityMigrations.migrateSavedChestData(data, Set.of("accepted")));
+
+        assertFalse(data.getBoolean("chests.accepted.fall"));
+        assertTrue(data.getBoolean("chests.rejected.fall"));
+        assertEquals("STONE", data.getString("chests.rejected.inventory.bad-slot"));
     }
 
     private YamlConfiguration yaml(String source) throws Exception {

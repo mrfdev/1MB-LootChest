@@ -71,3 +71,10 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Add a repeatable Paper 26.2 smoke test for enable, commands, reload, respawn, and clean shutdown.
   - [x] Assert release jars contain no updater, metrics, DecentHolograms, proxy, NMS, or legacy adapter classes.
   - [x] Validate chest, trapped chest, barrel, shulker, and every copper chest state.
+- [x] **8. Saved-data definition hardening**
+  - [x] Validate each deserializable saved Lootbox independently without escalating a per-child schema failure into whole-file recovery.
+  - [x] Preserve rejected definitions while loading valid siblings and skipping automatic migrations for rejected data.
+  - [x] Reserve rejected names against command and developer-API overwrite paths.
+  - [x] Report rejected, world-deferred, and activation-failed definitions through startup logs and `/lc audit`.
+  - [x] Remove previously active physical containers before validated definitions are reloaded, and restore full block-state snapshots when a pre-commit abort occurs.
+  - [x] Document validation, repair, reload, and backup-recovery behavior.

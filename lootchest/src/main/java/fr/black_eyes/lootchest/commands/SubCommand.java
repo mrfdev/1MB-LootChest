@@ -62,6 +62,12 @@ public abstract class SubCommand {
 	}
 
 	public void execute(CommandSender sender, String[] args) {
+		Main plugin = Main.getInstance();
+		if (plugin != null && plugin.isChestWorkInProgress()
+				&& !name.equals("help") && !name.equals("info")) {
+			Messages.msg(sender, "ChestOperationInProgress");
+			return;
+		}
 		if (isPlayerRequired && !(sender instanceof Player)) {
 			Messages.send(sender, "<#f38ba8>Please run this command in-game.");
 			return;

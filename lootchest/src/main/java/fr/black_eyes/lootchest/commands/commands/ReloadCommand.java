@@ -16,6 +16,24 @@ public class ReloadCommand extends SubCommand {
 	@Override
 	protected void onCommand(CommandSender sender, String[] args) {
 		Main main = Main.getInstance();
-		main.reloadLootChests(() -> Messages.msg(sender, "PluginReloaded", " ", " "));
+		Runnable failure = () -> Messages.msg(sender, "PluginReloadFailed");
+		Runnable committedActivationFailure = () -> Messages.msg(sender, "PluginReloadActivationFailed");
+		if (!main.reloadLootChests(
+				() -> {
+					if (main.hasInactiveSavedChestDefinitions()) {
+						Messages.msg(
+								sender,
+								"PluginReloadedWithIssues",
+								"[Rejected]", Integer.toString(main.getConfigFiles().getRejectedChestDefinitions().size()),
+								"[Deferred]", Integer.toString(main.getUnavailableChestDefinitions().size()),
+								"[Failed]", Integer.toString(main.getFailedChestDefinitions().size()));
+					} else {
+						Messages.msg(sender, "PluginReloaded", " ", " ");
+					}
+				},
+				failure,
+				committedActivationFailure)) {
+			failure.run();
+		}
 	}
 }

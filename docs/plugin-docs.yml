@@ -12,6 +12,6 @@ paper_build: "84"
 paper_channel: STABLE
 paper_api: 26.2.build.84-stable
 plugin_version: 2.5.9.2
-build_number: "226"
+build_number: "227"
 official_project: true
 repository: mrfdev/1MB-LootChest

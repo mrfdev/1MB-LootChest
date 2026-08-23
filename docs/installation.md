@@ -4,7 +4,7 @@
 
 - Paper 26.2 build 84 from the `STABLE` channel.
 - Java 25.
-- The compatibility candidate `1MB-LootChest-v2.5.9.2-226-CMI-j25-26.2.jar`.
+- The compatibility candidate `1MB-LootChest-v2.5.9.2-227-CMI-j25-26.2.jar`.
 - Optional CMI `9.8.8.5` and CMILib `1.5.9.9` when holograms are required.
 
 DecentHolograms is not a supported backend for this build.
