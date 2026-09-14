@@ -5,7 +5,8 @@ staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
 The maintained runtime, build, documentation, and test target is **Paper 26.2**
-with **Java 25**.
+with **Java 25 bytecode**, built using **JDK 25.0.4.1** and tested on **Java 25
+and Java 26**. Live servers run Java 26.
 
 Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/lootbox/)
 
@@ -15,9 +16,11 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | --- | --- |
 | Server | Paper 26.2 build 84 (`STABLE`) |
 | Paper API | `26.2.build.84-stable` |
-| Java runtime and bytecode | Java 25 |
+| Java bytecode | Java 25 |
+| Build JDK | `25.0.4.1` |
+| Tested runtimes | Java `25.0.4.1` and `26.0.2.1` (live) |
 | Plugin version | `2.5.9.2` |
-| Candidate build | `227` |
+| Candidate build | `228` |
 | Main command | `/lootchest`, alias `/lc` |
 | Holograms | Optional: CMI `9.8.8.5` and CMILib `1.5.9.9` |
 
@@ -106,13 +109,14 @@ directory together, then start and verify the server again.
 The root `pom.xml` is the release source of truth for semantic version, build
 number, Paper target/API/build/channel, and Java target. Before shipping a new
 build, increment `buildNumber` exactly once and update `revision` only when the
-plugin version changes. Build from the repository root with JDK 25.0.4:
+plugin version changes. Build from the repository root with JDK 25.0.4.1:
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.jdk/Contents/Home
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
-mvn clean test
-mvn clean package
+java -version
+mvn -version
+mvn clean verify
 ```
 
 Release artifacts use this format:
@@ -124,7 +128,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
 The current compatibility candidate is:
 
 ```text
-target/1MB-LootChest-v2.5.9.2-227-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.2-228-CMI-j25-26.2.jar
 ```
 
 The current live-approved release is:
@@ -147,6 +151,12 @@ Later builds intentionally contain no direct WorldGuard integration. WorldGuard
 may remain installed for the server's regions; the 1MoreBlock deployment places
 randomized Lootboxes only in staff-selected regions.
 
+The canonical full rebuild is `mvn clean verify`; it runs all unit tests and the
+release-jar checks. Preserve previous `target/` artifacts and test reports in
+`archive/` before running `clean` when they are needed as historical records.
+The compiler's `release`, `source`, and `target` remain 25. The same jar runs on
+Java 25 and Java 26; Java 26 is a runtime verification target.
+
 The project emits Java 25 class files and uses only the Paper API for Minecraft
 integration. The unused falling-package feature and its version-specific NMS
 adapters were removed after build 197. Every artifact embeds its build number,
@@ -157,8 +167,12 @@ Run the repeatable central smoke test against the exact candidate jar before
 merging or publishing:
 
 ```bash
-./scripts/smoke-paper-26.2.sh \
-  target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
+for jdk in 25.0.4.1 26.0.2.1; do
+  export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-$jdk.jdk/Contents/Home"
+  export PATH="$JAVA_HOME/bin:$PATH"
+  ./scripts/smoke-paper-26.2.sh \
+    target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
+done
 ```
 
 The smoke test creates an isolated Paper 26.2 instance through the centralized

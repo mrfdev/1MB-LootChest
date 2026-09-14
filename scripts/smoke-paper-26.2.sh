@@ -5,15 +5,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNNER="${LOOTCHEST_TEST_RUNNER:-/Users/floris/Projects/Codex/servers/run-test-server}"
 STARTUP_TIMEOUT="${LOOTCHEST_SMOKE_STARTUP_TIMEOUT:-180}"
 COMMAND_TIMEOUT="${LOOTCHEST_SMOKE_COMMAND_TIMEOUT:-45}"
-DEFAULT_JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-25.0.4.jdk/Contents/Home"
+DEFAULT_JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home"
 
-if [[ -z "${JAVA_BIN:-}" ]]; then
-  if [[ -n "${JAVA_HOME:-}" ]]; then
-    JAVA_BIN="$JAVA_HOME/bin/java"
-  else
-    JAVA_BIN="$DEFAULT_JAVA_HOME/bin/java"
-  fi
-fi
+export JAVA_HOME="${JAVA_HOME:-$DEFAULT_JAVA_HOME}"
+export PATH="$JAVA_HOME/bin:$PATH"
+# The central launcher discovers Java through PATH. Keep its JVM and the
+# version checked here identical, including when JAVA_BIN was already set.
+JAVA_BIN="$JAVA_HOME/bin/java"
 [[ -x "$JAVA_BIN" ]] || {
   printf '[smoke] Java executable not found: %s\n' "$JAVA_BIN" >&2
   exit 2
@@ -22,12 +20,17 @@ export JAVA_BIN
 
 JAVA_VERSION_OUTPUT="$("$JAVA_BIN" -version 2>&1)"
 JAVA_VERSION_LINE="${JAVA_VERSION_OUTPUT%%$'\n'*}"
-if [[ "$JAVA_VERSION_LINE" =~ version\ \"([0-9]+) ]]; then
+if [[ "$JAVA_VERSION_LINE" =~ version\ \"([0-9]+)([^\"]*)\" ]]; then
   JAVA_MAJOR="${BASH_REMATCH[1]}"
+  JAVA_VERSION="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
 else
   printf '[smoke] Could not determine Java major version from: %s\n' "$JAVA_VERSION_LINE" >&2
   exit 2
 fi
+case "$JAVA_MAJOR" in
+  25|26) ;;
+  *) printf '[smoke] Expected Java 25 or 26, found: %s\n' "$JAVA_VERSION_LINE" >&2; exit 2 ;;
+esac
 
 usage() {
   printf 'Usage: %s <LootChest Paper 26.2 jar>\n' "$(basename "$0")" >&2
@@ -67,6 +70,7 @@ FIFO="$RUN_DIR/console.in"
 METADATA_FILE="$RUN_DIR/lootchest-build.properties"
 SERVER_PID=""
 mkdir -p "$RUN_DIR"
+printf '%s\n' "$JAVA_VERSION_OUTPUT" > "$RUN_DIR/java-version.txt"
 
 if ! unzip -p "$JAR" lootchest-build.properties > "$METADATA_FILE"; then
   printf '[smoke] Embedded lootchest-build.properties is missing from %s\n' "$JAR" >&2
@@ -177,6 +181,7 @@ SERVER_PID=$!
 exec 3> "$FIFO"
 
 wait_for_log "Running Java $JAVA_MAJOR " "Paper used Java $JAVA_MAJOR" "$STARTUP_TIMEOUT"
+wait_for_log "Server VM $JAVA_VERSION+" "Paper used runtime $JAVA_VERSION" "$STARTUP_TIMEOUT"
 wait_for_log \
   "This server is running Paper version $PAPER_TARGET-$PAPER_BUILD-" \
   "Paper build $PAPER_BUILD started" \
@@ -201,6 +206,7 @@ send_and_wait \
   "/lc reload completed"
 send_and_wait "lc despawnall" "All LootChests were despawned." "/lc despawnall completed"
 send_and_wait "lc respawnall" "All LootChests were respawned." "/lc respawnall completed"
+send_and_wait "lc audit" "No lifecycle inconsistencies were found." "/lc audit completed cleanly"
 
 printf '[smoke] Command: stop\n'
 printf 'stop\n' >&3
@@ -214,7 +220,7 @@ fi
 SERVER_PID=""
 refresh_log
 
-ERROR_PATTERN='Error occurred while (enabling|disabling) LootChest|NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|CommandException|PluginClassLoader.*LootChest|zip file closed|\[ERROR\].*(LootChest|lootchest)|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception'
+ERROR_PATTERN='Error occurred while (enabling|disabling) LootChest|NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|Command[[:space:]]*Exception|PluginClassLoader.*LootChest|zip file closed|\[ERROR\].*(LootChest|lootchest)|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception'
 if grep -Eiq "$ERROR_PATTERN" "$CLEAN_LOG"; then
   grep -Ein "$ERROR_PATTERN" "$CLEAN_LOG" >&2 || true
   fail "a LootChest compatibility error was found in the server log"

@@ -42,7 +42,7 @@ class ReleaseMetadataDriftTest {
         assertContains(readme, "| Server | Paper " + paperTarget + " build " + paperBuild
                 + " (`" + paperChannel + "`) |", "README Paper release");
         assertContains(readme, "| Paper API | `" + paperApi + "` |", "README Paper API");
-        assertContains(readme, "| Java runtime and bytecode | Java " + javaTarget + " |",
+        assertContains(readme, "| Java bytecode | Java " + javaTarget + " |",
                 "README Java target");
         assertContains(readme, "| Plugin version | `" + version + "` |", "README version");
         assertContains(readme, "| Candidate build | `" + build + "` |", "README build");

@@ -2,7 +2,7 @@
 
 ## Lootbox Does Not Enable
 
-Confirm Paper 26.2 and Java 25 first. `UnsupportedClassVersionError` means the Java
+Confirm Paper 26.2 and Java 25 or 26 first (`25.0.4.1` or `26.0.2.1`). `UnsupportedClassVersionError` means the Java
 runtime is too old. Remove duplicate LootChest/Lootbox jars and inspect the first
 LootChest exception in `logs/latest.log` rather than later shutdown noise.
 

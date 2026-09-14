@@ -10,18 +10,29 @@ candidate testing happen on a `codex/<feature>` branch.
    exactly once in the root `pom.xml`.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
-5. Build from that clean commit with JDK 25.0.4. The package phase runs the
+5. Build from that clean commit with JDK 25.0.4.1. Set
+   `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home`
+   and prepend `$JAVA_HOME/bin` to `PATH`, then run `mvn clean verify` from the
+   repository root. Keep the Java compiler release/source/target at 25 and Paper
+   at 26.2. Preserve historical artifacts and reports in `archive/` before
+   cleaning. If unrelated working changes exist, build from a clean worktree of
+   the candidate commit. The package phase runs the
    release-jar policy and fails before copying the named artifact if updater,
    metrics, DecentHolograms, proxy, NMS, falling-effect, version-adapter, or
    retired shaded configuration-framework classes are present.
 6. Confirm `/lc info` reports the expected semantic version, build, source
    commit, Paper target/build/channel/API, Java target, and artifact filename
    without a `-dirty` suffix.
-7. Run the repeatable central Paper smoke test against the exact candidate:
+7. Run the repeatable central Paper smoke test against the same exact candidate
+   on JDK 25.0.4.1 and JDK 26.0.2.1 (the live runtime). Set `JAVA_HOME` to each
+   JDK and prepend its `bin` directory to `PATH` before invoking
    `./scripts/smoke-paper-26.2.sh target/<candidate>.jar`. It verifies enable,
-   info/help/list commands, reload, despawn, respawn, clean shutdown, compatibility
+   info/help/list/audit commands, reload, despawn, respawn, clean shutdown, compatibility
    exceptions, and port release. Review the retained logs under
    `target/smoke-paper-26.2/<timestamp>/`.
+   The runner must use the embedded Paper build/API; if the shared cache has
+   moved ahead, use `LOOTCHEST_TEST_RUNNER` to select an isolated copy of the
+   central runner with cache updates disabled and the pinned Paper jar installed.
 8. Move the current approved jar into the test server's `archive/` directory and
    install the candidate as the only top-level LootChest jar.
 9. Manually test create, edit, open, empty, break, respawn, reload, particles,

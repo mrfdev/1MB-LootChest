@@ -20,7 +20,7 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <revision>2.5.9.2</revision>
-        <buildNumber>227</buildNumber>
+        <buildNumber>228</buildNumber>
         <paperVersion>26.2</paperVersion>
         <paperBuild>84</paperBuild>
         <paperChannel>STABLE</paperChannel>
