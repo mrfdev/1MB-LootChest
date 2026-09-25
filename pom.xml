@@ -27,7 +27,7 @@
         <paperApiVersion>26.2.build.84-stable</paperApiVersion>
         <cmiApiVersion>9.8.6.4</cmiApiVersion>
         <cmiLibApiVersion>1.5.9.6</cmiLibApiVersion>
-        <cmiTestedVersion>9.8.8.5</cmiTestedVersion>
+        <cmiTestedVersion>9.8.9.9</cmiTestedVersion>
         <cmiLibTestedVersion>1.5.9.9</cmiLibTestedVersion>
         <junitVersion>6.0.3</junitVersion>
         <lombokVersion>1.18.46</lombokVersion>

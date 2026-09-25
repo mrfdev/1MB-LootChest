@@ -8,7 +8,7 @@ LootChest exception in `logs/latest.log` rather than later shutdown noise.
 
 ## Hologram Is Missing
 
-- Confirm CMI `9.8.8.5` and CMILib `1.5.9.9` enabled before LootChest.
+- Confirm CMI `9.8.9.9` and CMILib `1.5.9.9` enabled before LootChest.
 - Confirm `UseHologram: true`.
 - Run `/lc reload`, then `/lc respawnall`.
 - Run `/lc info` and check the `Holograms` status line.

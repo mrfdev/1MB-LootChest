@@ -26,6 +26,8 @@ class ReleaseMetadataDriftTest {
         String paperChannel = required(release, "paper.channel");
         String paperApi = required(release, "paper.api");
         String javaTarget = required(release, "java.target");
+        String cmiTested = required(release, "cmi.tested");
+        String cmiLibTested = required(release, "cmilib.tested");
         String artifact = required(release, "artifact.name");
 
         assertEquals(
@@ -46,6 +48,10 @@ class ReleaseMetadataDriftTest {
                 "README Java target");
         assertContains(readme, "| Plugin version | `" + version + "` |", "README version");
         assertContains(readme, "| Candidate build | `" + build + "` |", "README build");
+        assertContains(readme,
+                "| Holograms | Optional: CMI `" + cmiTested + "` and CMILib `"
+                        + cmiLibTested + "` |",
+                "README CMI runtime pair");
         assertContains(readme, "target/" + artifact, "README candidate artifact");
 
         String installation = Files.readString(root.resolve("docs/installation.md"));
@@ -53,6 +59,25 @@ class ReleaseMetadataDriftTest {
                 + " from the `" + paperChannel + "` channel", "installation Paper release");
         assertContains(installation, "`" + artifact + "`", "installation artifact");
         assertContains(installation, "Paper API `" + paperApi + "`", "installation Paper API");
+        assertContains(installation,
+                "Optional CMI `" + cmiTested + "` and CMILib `" + cmiLibTested + "`",
+                "installation CMI runtime pair");
+
+        String integrations = Files.readString(root.resolve("docs/integrations.md"));
+        assertContains(integrations, "| CMI runtime | `" + cmiTested + "` |",
+                "integrations CMI runtime");
+        assertContains(integrations, "| CMILib runtime | `" + cmiLibTested + "` |",
+                "integrations CMILib runtime");
+
+        String configuration = Files.readString(root.resolve("docs/configuration.md"));
+        assertContains(configuration,
+                "CMI `" + cmiTested + "` with CMILib `" + cmiLibTested + "`",
+                "configuration CMI runtime pair");
+
+        String troubleshooting = Files.readString(root.resolve("docs/troubleshooting.md"));
+        assertContains(troubleshooting,
+                "Confirm CMI `" + cmiTested + "` and CMILib `" + cmiLibTested + "`",
+                "troubleshooting CMI runtime pair");
 
         String publicManifest = Files.readString(root.resolve("docs/plugin-docs.yml"));
         assertContains(publicManifest, "java_target: \"" + javaTarget + "\"", "docs Java target");

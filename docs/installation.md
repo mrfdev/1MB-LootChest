@@ -5,7 +5,7 @@
 - Paper 26.2 build 84 from the `STABLE` channel.
 - Java 25 or Java 26. Verified runtimes: `25.0.4.1` and `26.0.2.1`; live uses Java 26.
 - The compatibility candidate `1MB-LootChest-v2.5.9.2-228-CMI-j25-26.2.jar`.
-- Optional CMI `9.8.8.5` and CMILib `1.5.9.9` when holograms are required.
+- Optional CMI `9.8.9.9` and CMILib `1.5.9.9` when holograms are required.
 
 DecentHolograms is not a supported backend for this build.
 Lootbox continues without holograms when CMI or CMILib is absent.

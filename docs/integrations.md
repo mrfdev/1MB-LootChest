@@ -12,7 +12,7 @@ The supported and gameplay-tested Paper 26.2 pair is:
 
 | Component | Version |
 | --- | --- |
-| CMI runtime | `9.8.8.5` |
+| CMI runtime | `9.8.9.9` |
 | CMILib runtime | `1.5.9.9` |
 | Public CMI API used to compile | `9.8.6.4` |
 | Public CMILib API used to compile | `1.5.9.6` |

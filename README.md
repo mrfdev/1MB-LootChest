@@ -22,7 +22,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Plugin version | `2.5.9.2` |
 | Candidate build | `228` |
 | Main command | `/lootchest`, alias `/lc` |
-| Holograms | Optional: CMI `9.8.8.5` and CMILib `1.5.9.9` |
+| Holograms | Optional: CMI `9.8.9.9` and CMILib `1.5.9.9` |
 
 ## Features
 
