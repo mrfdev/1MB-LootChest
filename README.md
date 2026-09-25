@@ -4,9 +4,10 @@ Lootbox is the custom 1MoreBlock edition of LootChest. It creates repeatable,
 staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
-The maintained runtime, build, documentation, and test target is **Paper 26.2**
-with **Java 25 bytecode**, built using **JDK 25.0.4.1** and tested on **Java 25
-and Java 26**. Live servers run Java 26.
+The maintained target is **Paper 26.3 build 41 (ALPHA)** with **Java 25 bytecode**,
+built using **JDK 25.0.4.1** and tested locally on **Java 27**. This experimental
+Paper target is deliberate; manual gameplay approval is still required before
+promoting the candidate to the live baseline.
 
 Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/lootbox/)
 
@@ -14,15 +15,15 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 
 | Component | Target |
 | --- | --- |
-| Server | Paper 26.2 build 84 (`STABLE`) |
-| Paper API | `26.2.build.84-stable` |
+| Server | Paper 26.3 build 41 (`ALPHA`) |
+| Paper API | `26.3.build.41-alpha` |
 | Java bytecode | Java 25 |
 | Build JDK | `25.0.4.1` |
-| Tested runtimes | Java `25.0.4.1` and `26.0.2.1` (live) |
-| Plugin version | `2.5.9.2` |
-| Candidate build | `228` |
+| Tested runtimes | Java `27+35-2325` |
+| Plugin version | `2.5.9.3` |
+| Candidate build | `229` |
 | Main command | `/lootchest`, alias `/lc` |
-| Holograms | Optional: CMI `9.8.9.9` and CMILib `1.5.9.9` |
+| Holograms | Optional: CMI `9.8.10.1` and CMILib `1.6.0.0` |
 
 ## Features
 
@@ -66,7 +67,12 @@ The current live-approved Paper 26.2 baseline is build 225, preserved by the
 previous rollback release. Older snapshots remain tagged for history but are not
 development baselines.
 
-Start future work from an up-to-date `master`:
+The Paper 26.3 upgrade continues the preserved build-228 snapshot on
+`codex/paper-26.3`. Its rollback source is `v2.5.9.2-paper-26.2`; see the
+[snapshot evidence](docs/releases/paper-26.2-snapshot.md). The stopped instance at
+`servers/Paper-26.2/` remains intact beside `servers/Paper-26.3/`.
+
+For unrelated future features, start from an up-to-date `master`:
 
 ```bash
 git switch master
@@ -75,7 +81,7 @@ git switch -c codex/<short-feature-name>
 ```
 
 Build and test on the feature branch. Promote its clean source commit to `master`
-only after the exact candidate jar passes the central Paper smoke test and manual
+only after the exact candidate jar passes the local Paper smoke test and manual
 gameplay approval. Tag that approved commit and retain the previous approved jar.
 The complete checklist is in [Release process](docs/release-process.md).
 
@@ -122,13 +128,13 @@ mvn clean verify
 Release artifacts use this format:
 
 ```text
-target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
+target/1MB-LootChest-v<version>-<build>-CMI-j25-26.3.jar
 ```
 
 The current compatibility candidate is:
 
 ```text
-target/1MB-LootChest-v2.5.9.2-228-CMI-j25-26.2.jar
+target/1MB-LootChest-v2.5.9.3-229-CMI-j25-26.3.jar
 ```
 
 The current live-approved release is:
@@ -154,8 +160,9 @@ randomized Lootboxes only in staff-selected regions.
 The canonical full rebuild is `mvn clean verify`; it runs all unit tests and the
 release-jar checks. Preserve previous `target/` artifacts and test reports in
 `archive/` before running `clean` when they are needed as historical records.
-The compiler's `release`, `source`, and `target` remain 25. The same jar runs on
-Java 25 and Java 26; Java 26 is a runtime verification target.
+The compiler's `release`, `source`, and `target` remain 25. Paper 26.3 is tested
+with Java 27; the bytecode target does not lower Paper's runtime requirements.
+Reuse the reserved build number after a failed attempt; do not increment again.
 
 The project emits Java 25 class files and uses only the Paper API for Minecraft
 integration. The unused falling-package feature and its version-specific NMS
@@ -163,23 +170,20 @@ adapters were removed after build 197. Every artifact embeds its build number,
 source commit, clean/dirty state, Paper target/build/channel/API, Java target,
 and filename. These details are printed during startup and by `/lc info`.
 
-Run the repeatable central smoke test against the exact candidate jar before
-merging or publishing:
+Run the repeatable local smoke test against the exact clean candidate:
 
 ```bash
-for jdk in 25.0.4.1 26.0.2.1; do
-  export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-$jdk.jdk/Contents/Home"
-  export PATH="$JAVA_HOME/bin:$PATH"
-  ./scripts/smoke-paper-26.2.sh \
-    target/1MB-LootChest-v<version>-<build>-CMI-j25-26.2.jar
-done
+./scripts/smoke-paper-26.3.py \
+  target/1MB-LootChest-v2.5.9.3-229-CMI-j25-26.3.jar
 ```
 
-The smoke test creates an isolated Paper 26.2 instance through the centralized
-runner, verifies enable, `/lc info`, help, list, reload, despawn, respawn, and
-clean shutdown, scans for compatibility exceptions, and confirms its port is
-released. Raw and ANSI-clean logs are retained under
-`target/smoke-paper-26.2/<timestamp>/`.
+The runner uses the maintained `servers/Paper-26.3/1MB-minecraft.sh` launcher
+with JDK 27, checks the pinned server checksum and release metadata, and requires
+available local ports. It verifies plugin enable, info/help/list/reload/despawn/
+respawn/audit, clean shutdown and port release. Logs remain under
+`target/smoke-paper-26.3/`. The legacy 26.2 runner is retained for rollback checks.
+See [the local test setup](docs/test-server.md) and
+[the upgrade record](docs/releases/paper-26.3.md) for results and manual checks.
 
 ## Developer API
 

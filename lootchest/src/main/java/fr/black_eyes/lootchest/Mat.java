@@ -4,7 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 
 /**
- * Materials used by LootChest's menus and container checks on Paper 26.2.
+ * Materials used by LootChest's menus and container checks on Paper 26.3.
  *
  * <p>The field names retain the plugin's historical names so saved data and the
  * rest of the code do not need a migration.</p>

@@ -105,6 +105,8 @@ class CompatibilityMigrationsTest {
                 enabledFallEffect: old
                 disabledFallEffect: old
                 help:
+                  - "<#6c7086>Paper 26.2 / Java 25 edition"
+                  - "My custom Paper 26.2 help"
                   - "/lc info"
                   - "/lc togglefall test"
                   - "/lc removeAllHolo"
@@ -117,6 +119,8 @@ class CompatibilityMigrationsTest {
         assertEquals("Chance: 25", language.getString("Menu.chances.lore"));
         assertEquals(
                 List.of(
+                        "<#6c7086>Paper 26.3 / Java 25 edition",
+                        "My custom Paper 26.2 help",
                         "/lc info",
                         "/lc list",
                         "<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox"),

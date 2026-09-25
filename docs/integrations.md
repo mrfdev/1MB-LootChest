@@ -8,12 +8,12 @@ This 1MoreBlock edition creates transient CMI holograms. They are not written in
 CMI's permanent hologram files. When CMI is missing, disabled, or its hologram
 manager fails, Lootbox disables holograms safely while keeping containers active.
 
-The supported and gameplay-tested Paper 26.2 pair is:
+The Paper 26.3 integration pair used for automated smoke testing is:
 
 | Component | Version |
 | --- | --- |
-| CMI runtime | `9.8.9.9` |
-| CMILib runtime | `1.5.9.9` |
+| CMI runtime | `9.8.10.1` |
+| CMILib runtime | `1.6.0.0` |
 | Public CMI API used to compile | `9.8.6.4` |
 | Public CMILib API used to compile | `1.5.9.6` |
 

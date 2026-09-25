@@ -112,7 +112,7 @@ Menu:
     name: '<#cba6f7>Select container type'
 help:
   - '<#cba6f7><bold>Lootbox commands</bold>'
-  - '<#6c7086>Paper 26.2 / Java 25 edition'
+  - '<#6c7086>Paper 26.3 / Java 25 edition'
   - '<#a6e3a1>/lc audit <#bac2de>[chest] <#6c7086>- Inspect all Lootboxes or one named Lootbox'
   - '<#a6e3a1>/lc info <#6c7086>- About Lootbox and its documentation'
   - '<#a6e3a1>/lc copy <#bac2de>\<source> \<destination> <#6c7086>- Copy one Lootbox into another'

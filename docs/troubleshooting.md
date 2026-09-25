@@ -2,13 +2,13 @@
 
 ## Lootbox Does Not Enable
 
-Confirm Paper 26.2 and Java 25 or 26 first (`25.0.4.1` or `26.0.2.1`). `UnsupportedClassVersionError` means the Java
+Confirm Paper 26.3 build 41 (`ALPHA`) and Java 27 first. Compilation remains on JDK `25.0.4.1` with Java 25 bytecode. `UnsupportedClassVersionError` means the Java
 runtime is too old. Remove duplicate LootChest/Lootbox jars and inspect the first
 LootChest exception in `logs/latest.log` rather than later shutdown noise.
 
 ## Hologram Is Missing
 
-- Confirm CMI `9.8.9.9` and CMILib `1.5.9.9` enabled before LootChest.
+- Confirm CMI `9.8.10.1` and CMILib `1.6.0.0` enabled before LootChest.
 - Confirm `UseHologram: true`.
 - Run `/lc reload`, then `/lc respawnall`.
 - Run `/lc info` and check the `Holograms` status line.

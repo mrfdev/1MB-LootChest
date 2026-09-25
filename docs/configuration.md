@@ -110,7 +110,7 @@ per-chest `fall` values are migrated to `false` when data is saved.
 Available timer substitutions are `%Hours`, `%Minutes`, `%Seconds`, `%Hsep`, `%Msep`,
 `%Ssep`, and `%Hologram`.
 
-The supported hologram runtime is CMI `9.8.9.9` with CMILib `1.5.9.9`. When
+The supported hologram runtime is CMI `9.8.10.1` with CMILib `1.6.0.0`. When
 either optional dependency is unavailable, Lootbox keeps all non-hologram
 features active and reports the integration state through `/lc info`.
 

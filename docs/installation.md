@@ -2,10 +2,10 @@
 
 ## Requirements
 
-- Paper 26.2 build 84 from the `STABLE` channel.
-- Java 25 or Java 26. Verified runtimes: `25.0.4.1` and `26.0.2.1`; live uses Java 26.
-- The compatibility candidate `1MB-LootChest-v2.5.9.2-228-CMI-j25-26.2.jar`.
-- Optional CMI `9.8.9.9` and CMILib `1.5.9.9` when holograms are required.
+- Paper 26.3 build 41 from the `ALPHA` channel (explicit experimental target).
+- Java 27 at runtime. Compile with JDK `25.0.4.1` and Java 25 bytecode.
+- The compatibility candidate `1MB-LootChest-v2.5.9.3-229-CMI-j25-26.3.jar`.
+- Optional CMI `9.8.10.1` and CMILib `1.6.0.0` when holograms are required.
 
 DecentHolograms is not a supported backend for this build.
 Lootbox continues without holograms when CMI or CMILib is absent.
@@ -54,10 +54,11 @@ mvn -version
 mvn clean verify
 ```
 
-The active reactor compiles against Paper API `26.2.build.84-stable`, emits Java 25
+The active reactor compiles against Paper API `26.3.build.41-alpha`, emits Java 25
 bytecode, and writes the named release jar to the root `target/` directory. It
 does not compile or package version-specific Minecraft internals. Follow the
 [release process](release-process.md) before promoting a candidate to `master`.
-Run the same named jar through `scripts/smoke-paper-26.2.sh` with `JAVA_HOME`
-and `PATH` set to each installed JDK, `25.0.4.1` and `26.0.2.1`. Keep compilation
-on JDK 25.0.4.1 with `--release 25` so both runtimes can load the artifact.
+Run the same named jar through `scripts/smoke-paper-26.3.py`; it selects JDK 27
+for the project-local instance. Keep compilation on JDK 25.0.4.1 with
+`--release 25`. The 26.3 work continues the preserved 26.2 build-228 branch;
+see [the upgrade record](releases/paper-26.3.md) and [local setup](test-server.md).

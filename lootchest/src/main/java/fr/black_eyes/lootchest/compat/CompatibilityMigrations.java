@@ -76,10 +76,13 @@ public final class CompatibilityMigrations {
             changed |= set(language, HELP, help);
         }
         for (int index = 0; index < help.size(); index++) {
+            if (Objects.equals(help.get(index), "<#6c7086>Paper 26.2 / Java 25 edition")) {
+                help.set(index, "<#6c7086>Paper 26.3 / Java 25 edition");
+                changed |= set(language, HELP, help);
+            }
             if (Objects.equals(help.get(index), OLD_AUDIT_HELP)) {
                 help.set(index, TARGETED_AUDIT_HELP);
                 changed |= set(language, HELP, help);
-                break;
             }
         }
 

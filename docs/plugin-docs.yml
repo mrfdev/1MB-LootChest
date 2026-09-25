@@ -7,11 +7,11 @@ docs_url: https://docs.1moreblock.com/custom-server-plugins/lootbox/
 player_guide: player-guide.md
 technical_readme: ../README.md
 java_target: "25"
-paper_target: "26.2"
-paper_build: "84"
-paper_channel: STABLE
-paper_api: 26.2.build.84-stable
-plugin_version: 2.5.9.2
-build_number: "228"
+paper_target: "26.3"
+paper_build: "41"
+paper_channel: ALPHA
+paper_api: 26.3.build.41-alpha
+plugin_version: 2.5.9.3
+build_number: "229"
 official_project: true
 repository: mrfdev/1MB-LootChest

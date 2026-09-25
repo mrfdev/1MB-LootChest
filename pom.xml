@@ -19,16 +19,17 @@
         <maven.compiler.release>25</maven.compiler.release>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
-        <revision>2.5.9.2</revision>
-        <buildNumber>228</buildNumber>
-        <paperVersion>26.2</paperVersion>
-        <paperBuild>84</paperBuild>
-        <paperChannel>STABLE</paperChannel>
-        <paperApiVersion>26.2.build.84-stable</paperApiVersion>
+        <revision>2.5.9.3</revision>
+        <buildNumber>229</buildNumber>
+        <paperVersion>26.3</paperVersion>
+        <paperBuild>41</paperBuild>
+        <paperChannel>ALPHA</paperChannel>
+        <paperApiVersion>26.3.build.41-alpha</paperApiVersion>
+        <paperSha256>2b77166ee61886a9bc9ab33dc9e4847fa3538b36d9ba6e5f2fa7ed90973aa748</paperSha256>
         <cmiApiVersion>9.8.6.4</cmiApiVersion>
         <cmiLibApiVersion>1.5.9.6</cmiLibApiVersion>
-        <cmiTestedVersion>9.8.9.9</cmiTestedVersion>
-        <cmiLibTestedVersion>1.5.9.9</cmiLibTestedVersion>
+        <cmiTestedVersion>9.8.10.1</cmiTestedVersion>
+        <cmiLibTestedVersion>1.6.0.0</cmiLibTestedVersion>
         <junitVersion>6.0.3</junitVersion>
         <lombokVersion>1.18.46</lombokVersion>
     </properties>

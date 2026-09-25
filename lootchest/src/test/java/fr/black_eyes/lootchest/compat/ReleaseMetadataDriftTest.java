@@ -88,6 +88,22 @@ class ReleaseMetadataDriftTest {
         assertContains(publicManifest, "plugin_version: " + version, "docs plugin version");
         assertContains(publicManifest, "build_number: \"" + build + "\"", "docs build number");
 
+        String agentInstructions = Files.readString(root.resolve("AGENTS.md"));
+        assertContains(agentInstructions, "Paper " + paperTarget + " build " + paperBuild,
+                "agent Paper target");
+        assertContains(agentInstructions, "API `" + paperApi + "`", "agent Paper API");
+        assertContains(agentInstructions, "Version `" + version + "`, build `" + build + "`",
+                "agent reserved release");
+
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("lang.yml")) {
+            assertNotNull(stream, "bundled lang.yml is missing");
+            YamlConfiguration language = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            assertTrue(language.getStringList("help").contains(
+                    "<#6c7086>Paper " + paperTarget + " / Java " + javaTarget + " edition"),
+                    "bundled help target");
+        }
+
         try (InputStream stream = getClass().getClassLoader().getResourceAsStream("plugin.yml")) {
             assertNotNull(stream, "filtered plugin.yml is missing");
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(

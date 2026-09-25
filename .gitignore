@@ -18,3 +18,6 @@ dependency-reduced-pom.xml
 # Locally installed optional plugin APIs
 /requirements/local-repo/com/local/zrips/
 /requirements/local-repo/eu/decentsoftware/
+
+# Python smoke-runner cache
+/scripts/__pycache__/
