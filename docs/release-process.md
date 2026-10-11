@@ -7,17 +7,17 @@ candidate testing happen on a `codex/<feature>` branch.
 ## Candidate Checklist
 
 1. Start from current `master` and create a feature branch. For this upgrade,
-   continue the preserved build-228 snapshot on `codex/paper-26.3`.
+   continue the existing build-229 source on `codex/paper-26.3`.
 2. Increment `revision` for a semantic release and increment `buildNumber`
    exactly once in the root `pom.xml`. This release reserves version `2.5.9.3`
-   and build `229`. Reuse that number after failures.
+   and build `230`. Reuse that number after failures.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
 5. Build from that clean commit with JDK 25.0.4.1. Set
    `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home`
    and prepend `$JAVA_HOME/bin` to `PATH`, then run `mvn clean verify` from the
    repository root. Keep the Java compiler release/source/target at 25 and Paper
-   at 26.3 build 41 `ALPHA`, API `26.3.build.41-alpha`. Preserve historical
+   at 26.3 build 175 `STABLE`, API `26.3.build.175-stable`. Preserve historical
    artifacts and reports in `archive/` before cleaning. If unrelated working changes exist, build from a clean worktree of
    the candidate commit. The package phase runs the
    release-jar policy and fails before copying the named artifact if updater,
@@ -29,8 +29,12 @@ candidate testing happen on a `codex/<feature>` branch.
 7. Run `./scripts/smoke-paper-26.3.py target/<candidate>.jar`. It uses the
    maintained local launcher and JDK 27, validates the pinned Paper checksum,
    checks the embedded release metadata and dependency versions, exercises
-   info/help/list/reload/despawn/respawn/audit, and verifies clean shutdown and
-   port release. Retain logs under `target/smoke-paper-26.3/`. Never use the
+   info/help/list/reload/despawn/respawn/audit, malformed reload recovery,
+   new chest creation, custom-item metadata and the async API guard. It checks
+   two cold boots, persisted definitions, clean shutdown and port release.
+   Run `python3 -m unittest discover -s scripts -p 'test_*.py' -v` for harness
+   guards and repeat smoke with `--without-integrations` for the optional-plugin
+   fallback. Retain logs under `target/smoke-paper-26.3/`. Never use the
    shared test server for this smoke run. See [local setup](test-server.md).
 8. Move the current approved jar into the test server's `archive/` directory and
    install the candidate as the only top-level LootChest jar.

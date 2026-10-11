@@ -2,19 +2,21 @@
 
 ## Maintained build and test target
 
-- Paper 26.3 build 41, channel `ALPHA`, API `26.3.build.41-alpha` is the
-  deliberately selected experimental target. Review the live PaperMC
+- Paper 26.3 build 175, channel `STABLE`, API `26.3.build.175-stable` is the
+  maintained stable target. Review the live PaperMC
   `https://docs.papermc.io/llms.txt` index and exact-version Javadocs before
-  changing it. Never silently fall back to 26.2.
+  changing it. Keep Minecraft 26.3 and require STABLE releases; never silently
+  fall back to 26.2 or an alpha/beta API.
 - Build and unit test with JDK 25.0.4.1 using `JAVA_HOME` and `PATH`; retain
   Java 25 release/source/target. Use JDK 27 for the local Paper 26.3 runtime.
-- Root `pom.xml` owns release metadata. Version `2.5.9.3`, build `229` is
-  reserved for this upgrade; reuse it after failures.
+- Root `pom.xml` owns release metadata. Version `2.5.9.3`, build `230` is
+  reserved for the stable migration; reuse it after failures.
 - Follow `docs/release-process.md` and `docs/test-server.md`. Preserve
-  `servers/Paper-26.2/`; only launch the new `servers/Paper-26.3/` for this upgrade.
+  `servers/Paper-26.2/`; only launch isolated instances under
+  `servers/Paper-26.3/` for this migration.
 - The shared server `/Users/floris/MinecraftServer/test-1mb-3.14-mc-26.3` must
-  remain stopped. Only replace the `LootChest` plugin's verified JAR after
-  local tests, with a recoverable backup and a deployment lock. Never launch it.
+  remain stopped and untouched during compatibility work. Deployment is a
+  separate request and requires a verified JAR, recoverable backup and lock.
 
 ### Issue tracker
 

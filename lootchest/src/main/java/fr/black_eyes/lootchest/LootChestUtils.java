@@ -481,8 +481,9 @@ public class LootChestUtils  {
 	 * @return the name of the world
 	 */
 	public static String getWorldName(World world) {
-		String name =  world.toString().replace("CraftWorld{name=", "");
-		return name.substring(0, name.length() - 1);
+		// Saved definitions use Bukkit world names, not dimension keys or the
+		// implementation's debug representation (which changed in Paper 26.3).
+		return world.getName();
 	}
 
 	/**

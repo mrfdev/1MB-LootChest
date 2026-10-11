@@ -11,11 +11,40 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Locale;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 class ReleaseMetadataDriftTest {
+    @Test
+    void maintainedReleaseRequiresStable263AndRetainsJava25() throws Exception {
+        Properties release = loadReleaseProperties();
+        assertEquals("26.3", required(release, "paper.target"));
+        assertEquals("STABLE", required(release, "paper.channel"));
+        assertTrue(required(release, "paper.api").matches("26\\.3\\.build\\.[1-9][0-9]*-stable"));
+        var pom = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                .parse(projectRoot().resolve("pom.xml").toFile());
+        for (String property : new String[] {"release", "source", "target",
+                "maven.compiler.release", "maven.compiler.source", "maven.compiler.target"}) {
+            assertEquals("25", pom.getElementsByTagName(property).item(0).getTextContent(), property);
+        }
+        String sha = pom.getElementsByTagName("paperSha256").item(0).getTextContent();
+        assertTrue(sha.matches("[0-9a-f]{64}"), "Server checksum must be reproducibly pinned");
+        String setup = Files.readString(projectRoot().resolve("docs/test-server.md"));
+        assertContains(setup, sha, "test-server checksum");
+        assertContains(setup, "Paper-26.3-" + required(release, "paper.build") + ".jar",
+                "test-server pinned JAR");
+        assertContains(setup, "channel `STABLE`", "test-server channel");
+        String process = Files.readString(projectRoot().resolve("docs/release-process.md"));
+        assertContains(process, "26.3 build " + required(release, "paper.build") + " `STABLE`",
+                "release process target");
+        assertContains(process, "API `" + required(release, "paper.api") + "`",
+                "release process API");
+    }
+
     @Test
     void maintainedMetadataAndDocumentationMatchGeneratedReleaseProperties() throws IOException {
         Properties release = loadReleaseProperties();
@@ -31,7 +60,7 @@ class ReleaseMetadataDriftTest {
         String artifact = required(release, "artifact.name");
 
         assertEquals(
-                paperTarget + ".build." + paperBuild + "-" + paperChannel.toLowerCase(),
+                paperTarget + ".build." + paperBuild + "-" + paperChannel.toLowerCase(Locale.ROOT),
                 paperApi,
                 "Paper API must describe the configured target/build/channel");
         assertEquals(

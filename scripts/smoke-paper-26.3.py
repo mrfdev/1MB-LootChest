@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Smoke the pinned project-local Paper 26.3 instance, never the shared server."""
 import datetime
+import argparse
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
@@ -32,6 +34,83 @@ def properties(text):
                 if '=' in line and not line.startswith('#'))
 
 
+def validate_target(props):
+    require(props['paperVersion'] == '26.3' and props['maven.compiler.release'] == '25',
+            'Expected Paper 26.3 and Java 25 compilation')
+    require(props['paperChannel'] == 'STABLE', 'Compatibility testing requires Paper STABLE')
+    require(props['paperBuild'].isdigit() and int(props['paperBuild']) > 0,
+            'Paper build must be a positive reproducible pin')
+    require(props['paperApiVersion'] == f"26.3.build.{props['paperBuild']}-stable",
+            'Paper API must match the pinned stable server build')
+    require(re.fullmatch(r'[0-9a-f]{64}', props['paperSha256']),
+            'Paper server must have a SHA-256 pin')
+
+
+def persisted_definitions(text):
+    # Paper may reorder serialized component mappings between JVMs. Sort whole
+    # entries with their folded continuation lines, preserving every value byte.
+    # This is limited to the pinned fixture's item component maps, not a general
+    # YAML parser. Real ItemStack equality is also checked by the runtime probe.
+    require(text.startswith('chests:\n'), 'Expected the existing saved-chest fixture')
+    def order_components(match):
+        entries = []
+        for line in match[1].splitlines(keepends=True):
+            if len(line) > 10 and not line[10].isspace():
+                entries.append(line)
+            else:
+                require(entries, 'Unexpected component continuation without a key')
+                entries[-1] += line
+        return '        components:\n' + ''.join(sorted(entries))
+
+    text = re.sub(r'^        components:\n((?: {10}[^\n]*\n)+)',
+                  order_components, text, flags=re.MULTILINE)
+    return re.sub(r'^    lastreset: [0-9]+$', '    lastreset: <clock>', text, flags=re.MULTILINE)
+
+
+@contextmanager
+def installed_probe(plugins):
+    classes = ROOT / 'lootchest/target/test-classes'
+    probe_class = classes / 'fr/black_eyes/lootchest/compat/PaperRuntimeProbe.class'
+    require(probe_class.is_file(), 'Run mvn clean verify to compile the runtime probe')
+    path = plugins / 'LootChestSmokeProbe.jar'
+    require(not path.exists() and not path.is_symlink(), 'Remove the stale smoke probe first')
+    try:
+        with zipfile.ZipFile(path, 'x', zipfile.ZIP_DEFLATED) as zipped:
+            zipped.write(probe_class, probe_class.relative_to(classes))
+            zipped.writestr('plugin.yml', '''name: LootChestSmokeProbe
+version: '1'
+main: fr.black_eyes.lootchest.compat.PaperRuntimeProbe
+api-version: '26.3'
+depend: [LootChest]
+commands:
+  lootchestprobe:
+    description: Isolated console-only compatibility checks
+''')
+        yield
+    finally:
+        path.unlink(missing_ok=True)
+
+
+@contextmanager
+def optional_integrations(identities, backup, without_integrations):
+    moved = []
+    try:
+        if without_integrations:
+            directory = backup / 'optional-plugins'
+            directory.mkdir()
+            for path, name in identities.items():
+                if name != 'LootChest':
+                    require(not path.is_symlink(), 'Refuse a symlinked optional plugin JAR')
+                    destination = directory / path.name
+                    shutil.move(path, destination)
+                    moved.append((path, destination))
+        yield
+    finally:
+        for original, archived in reversed(moved):
+            require(not original.exists(), f'Refuse to overwrite a changed optional plugin: {original}')
+            shutil.move(archived, original)
+
+
 def identity(path):
     with zipfile.ZipFile(path) as jar:
         for descriptor in ('plugin.yml', 'paper-plugin.yml'):
@@ -44,8 +123,11 @@ def identity(path):
 
 
 def sha256(path):
+    digest = hashlib.sha256()
     with path.open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def free_ports(ports):
@@ -72,14 +154,17 @@ def stopped():
 
 
 def run():
-    require(len(sys.argv) == 2, 'Usage: smoke-paper-26.3.py <candidate.jar>')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('jar', type=Path)
+    parser.add_argument('--without-integrations', action='store_true',
+                        help='Temporarily archive optional plugin JARs and test the standalone fallback')
+    args = parser.parse_args()
     require(INSTANCE.is_dir() and INSTANCE.resolve() == INSTANCE,
             'Prepare the separate project-local Paper-26.3 directory first')
     props = {n.tag.rsplit('}', 1)[-1]: n.text for n in
              ET.parse(ROOT / 'pom.xml').getroot().find('{*}properties')}
-    require(props['paperVersion'] == '26.3' and props['maven.compiler.release'] == '25',
-            'Expected Paper 26.3 and Java 25 compilation')
-    jar = Path(sys.argv[1]).resolve()
+    validate_target(props)
+    jar = args.jar.resolve()
     artifact_sha = sha256(jar)
     with zipfile.ZipFile(jar) as zipped:
         release = properties(zipped.read('lootchest-build.properties').decode())
@@ -108,6 +193,8 @@ def run():
     require(launcher_config['default_channel'] == props['paperChannel'] and
             launcher_config['check_latest_channel_only'] == props['paperChannel'],
             'PaperScript channel does not match the selected release')
+    require(launcher_config['allow_same_version_build_upgrade'] is False,
+            'Automatic Paper build upgrades must remain disabled')
     require(launcher_config['tmux_session'] == f'lootchest-paper-26.3-{ports[0]}',
             'PaperScript must use the distinct LootChest session name')
     plugins = INSTANCE / 'plugins'
@@ -139,77 +226,23 @@ def run():
         require(sha256(temporary) == artifact_sha, 'Installed artifact checksum mismatch')
         temporary.replace(plugins / jar.name)
         env = dict(os.environ, JAVA_HOME=str(JDK), PATH=str(JDK / 'bin') + ':' + os.environ['PATH'])
-        raw = logdir / 'console.raw.log'
-        process = None
-        with raw.open('w') as output:
-            try:
-                process = subprocess.Popen([str(INSTANCE / '1MB-minecraft.sh')], cwd=INSTANCE,
-                                           env=env, stdin=subprocess.PIPE, stdout=output,
-                                           stderr=subprocess.STDOUT, text=True, start_new_session=True)
-
-                def log():
-                    return ANSI.sub('', raw.read_text(errors='replace'))
-
-                def wait_for(text, offset=0, timeout=180):
-                    deadline = time.monotonic() + timeout
-                    while time.monotonic() < deadline:
-                        if text in log()[offset:]:
-                            print(f'[smoke] OK: {text}', flush=True)
-                            return
-                        require(process.poll() is None, f'Server exited waiting for {text}; see {raw}')
-                        time.sleep(0.5)
-                    raise RuntimeError(f'Timed out waiting for {text}; see {raw}')
-
-                def command(text, response):
-                    offset = len(log())
-                    process.stdin.write(text + '\n')
-                    process.stdin.flush()
-                    wait_for(response, offset, 60)
-
-                wait_for('Running Java 27 ')
-                wait_for(f"This server is running Paper version 26.3-{props['paperBuild']}-")
-                wait_for(f"Implementing API version {props['paperApiVersion']}")
-                wait_for('[LootChest] Plugin loaded')
-                wait_for('Done (')
-                command('lc info', f"Paper release 26.3 build {props['paperBuild']} {props['paperChannel']}")
-                wait_for(f"Source {release['source.commit']}" + ('-dirty' if release['source.dirty'] == 'true' else ''))
-                wait_for(f"Using CMI holograms: CMI {props['cmiTestedVersion']} / CMILib {props['cmiLibTestedVersion']}")
-                command('lc help', '/lc help -')
-                command('lc list', 'LootChests:')
-                # The cloned fixture area spans ten chunks. With no players
-                # online, keep these loaded so the audit actually checks blocks.
-                command('execute in minecraft:overworld run forceload add -64 -64 15 -33',
-                        'force load')
-                command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')
-                command('lc despawnall', 'All LootChests were despawned.')
-                command('lc respawnall', 'All LootChests were respawned.')
-                audit_offset = len(log())
-                command('lc audit', 'No lifecycle inconsistencies were found.')
-                require('unavailable 0 | issues 0' in log()[audit_offset:],
-                        'Audit must inspect loaded fixture chunks, with zero issues')
-                command('save-all flush', 'Saved the game')
-                command('stop', '[LootChest] Disabling LootChest')
-                require(process.wait(timeout=60) == 0, 'Server exited with a failure status')
-                text = log()
-                require('All RegionFile I/O tasks to complete' in text,
-                        'Paper 26.3 region save completion missing')
-                errors = r'NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|Error occurred while (?:enabling|disabling) LootChest|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception|LootChest holograms disabled|CommandException'
-                require(not re.search(errors, text), f'Compatibility failure; inspect {raw}')
-                activated = re.findall(r'Activated (\d+) of (\d+) saved LootChests', text)
-                require(activated and all(int(a) > 0 and a == b for a, b in activated),
-                        'All existing saved chests must activate')
-            finally:
-                if process is not None and process.poll() is None:
-                    process.stdin.write('stop\n')
-                    process.stdin.flush()
-                    try:
-                        process.wait(timeout=60)
-                    except subprocess.TimeoutExpired:
-                        os.killpg(process.pid, signal.SIGTERM)
-                        process.wait(timeout=15)
-                (logdir / 'console.log').write_text(ANSI.sub('', raw.read_text(errors='replace')))
-        free_ports(ports)
-        stopped()
+        env['JDK_JAVA_OPTIONS'] = env.get('JDK_JAVA_OPTIONS', '') + ' -Dlootchest.smoke=true'
+        saved_after_first_stop = None
+        # A second cold boot verifies actual disk persistence, not just reload.
+        with optional_integrations(identities, backup, args.without_integrations), installed_probe(plugins):
+            for boot in (1, 2):
+                raw = logdir / f'boot-{boot}.raw.log'
+                with raw.open('w') as output:
+                    run_boot(output, raw, boot, env, props, release, plugins, args.without_integrations)
+                saved = (plugins / 'LootChest/data.yml').read_text()
+                (logdir / f'data-after-boot-{boot}.yml').write_text(saved)
+                if boot == 1:
+                    saved_after_first_stop = persisted_definitions(saved)
+                else:
+                    require(persisted_definitions(saved) == saved_after_first_stop,
+                            'Saved definitions/items changed across restart (excluding clocks/component key order)')
+                free_ports(ports)
+                stopped()
         require(sha256(jar) == artifact_sha and sha256(plugins / jar.name) == artifact_sha,
                 'Candidate or installed JAR changed during the smoke run')
         (logdir / 'result.json').write_text(json.dumps({
@@ -218,8 +251,115 @@ def run():
             'paper': f"26.3-{props['paperBuild']}-{props['paperChannel']}",
             'api': props['paperApiVersion'], 'java': runtime.strip(),
             'instance': str(INSTANCE), 'ports': ports, 'shared_server_started': False,
+            'cold_boots': 2, 'persistence': 'unchanged except respawn clocks and component key order',
+            'malformed_reload': 'rejected; runtime retained; valid retry passed',
+            'item_metadata': 'PDC, data components and nested shulker contents preserved',
+            'async_api': 'off-thread mutation refused before world access',
+            'profile': 'standalone' if args.without_integrations else 'integrated',
         }, indent=2) + '\n')
-        print(f'[smoke] PASS; clean stop and ports released. Evidence: {logdir}', flush=True)
+        print(f'[smoke] PASS; restart, persistence, clean stops and ports released. Evidence: {logdir}', flush=True)
+
+
+def run_boot(output, raw, boot, env, props, release, plugins, without_integrations):
+    process = None
+    try:
+        process = subprocess.Popen([str(INSTANCE / '1MB-minecraft.sh')], cwd=INSTANCE,
+                                   env=env, stdin=subprocess.PIPE, stdout=output,
+                                   stderr=subprocess.STDOUT, text=True, start_new_session=True)
+
+        def log():
+            return ANSI.sub('', raw.read_text(errors='replace'))
+
+        def wait_for(text, offset=0, timeout=180):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                require('PROBE FAIL' not in log(), f'Runtime probe failed; see {raw}')
+                if text in log()[offset:]:
+                    print(f'[smoke] OK: {text}', flush=True)
+                    return
+                require(process.poll() is None, f'Server exited waiting for {text}; see {raw}')
+                time.sleep(0.5)
+            raise RuntimeError(f'Timed out waiting for {text}; see {raw}')
+
+        def command(text, response):
+            offset = len(log())
+            process.stdin.write(text + '\n')
+            process.stdin.flush()
+            wait_for(response, offset, 60)
+
+        wait_for('Running Java 27 ')
+        wait_for(f"This server is running Paper version 26.3-{props['paperBuild']}-")
+        wait_for(f"Implementing API version {props['paperApiVersion']}")
+        wait_for('[LootChest] Plugin loaded')
+        wait_for('Done (')
+        command('lc info', f"Paper release 26.3 build {props['paperBuild']} {props['paperChannel']}")
+        wait_for(f"Source {release['source.commit']}" + ('-dirty' if release['source.dirty'] == 'true' else ''))
+        if without_integrations:
+            wait_for('disabled (optional CMI/CMILib unavailable)')
+            wait_for('LootChest will continue without holograms.')
+        else:
+            wait_for(f"Using CMI holograms: CMI {props['cmiTestedVersion']} / CMILib {props['cmiLibTestedVersion']}")
+        command('lc help', '/lc help -')
+        command('lc list', 'LootChests:')
+        # The cloned fixture area spans ten chunks. With no players
+        # online, keep these loaded so the audit actually checks blocks.
+        command('execute in minecraft:overworld run forceload add -64 -64 15 -33',
+                'force load')
+        if boot == 1:
+            command('lootchestprobe prepare', 'PROBE PASS prepare')
+        else:
+            command('lootchestprobe verify', 'PROBE PASS metadata, nested items and inventory isolation')
+        command('lootchestprobe async', 'PROBE PASS async API refused before world access')
+        command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')
+        if boot == 1:
+            # All writes target the disposable fixture. Restore the exact
+            # language bytes even when the rejection check fails.
+            language_path = plugins / 'LootChest/lang.yml'
+            original_language = language_path.read_bytes()
+            invalid_language = b'help: [unterminated\n'
+            failure_offset = len(log())
+            try:
+                language_path.write_bytes(invalid_language)
+                command('lc reload', 'Reload was aborted before candidate publication.')
+                expected_failure_log = log()[failure_offset:]
+                require('LootChest reload decoding failed; the running state was retained.'
+                        in expected_failure_log
+                        and 'InvalidConfigurationException' in expected_failure_log,
+                        'Expected malformed YAML decoding failure')
+                require(language_path.read_bytes() == invalid_language,
+                        'Rejected reload overwrote the invalid candidate')
+            finally:
+                language_path.write_bytes(original_language)
+            command('lc audit', 'No lifecycle inconsistencies were found.')
+            command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')
+        command('lc despawnall', 'All LootChests were despawned.')
+        command('lc respawnall', 'All LootChests were respawned.')
+        command('lootchestprobe verify', 'PROBE PASS metadata, nested items and inventory isolation')
+        audit_offset = len(log())
+        command('lc audit', 'No lifecycle inconsistencies were found.')
+        require('unavailable 0 | issues 0' in log()[audit_offset:],
+                'Audit must inspect loaded fixture chunks, with zero issues')
+        command('save-all flush', 'Saved the game')
+        command('stop', '[LootChest] Disabling LootChest')
+        require(process.wait(timeout=60) == 0, 'Server exited with a failure status')
+        text = log()
+        require('All RegionFile I/O tasks to complete' in text,
+                'Paper 26.3 region save completion missing')
+        errors = r'PROBE FAIL|NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|Error occurred while (?:enabling|disabling) LootChest|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception|LootChest holograms disabled|CommandException'
+        require(not re.search(errors, text), f'Compatibility failure; inspect {raw}')
+        activated = re.findall(r'Activated (\d+) of (\d+) saved LootChests', text)
+        require(activated and all(int(a) > 0 and a == b for a, b in activated),
+                'All existing saved chests must activate')
+    finally:
+        if process is not None and process.poll() is None:
+            process.stdin.write('stop\n')
+            process.stdin.flush()
+            try:
+                process.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGTERM)
+                process.wait(timeout=15)
+        raw.with_name(f'boot-{boot}.log').write_text(ANSI.sub('', raw.read_text(errors='replace')))
 
 
 if __name__ == '__main__':

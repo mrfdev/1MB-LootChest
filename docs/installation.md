@@ -2,9 +2,10 @@
 
 ## Requirements
 
-- Paper 26.3 build 41 from the `ALPHA` channel (explicit experimental target).
-- Java 27 at runtime. Compile with JDK `25.0.4.1` and Java 25 bytecode.
-- The compatibility candidate `1MB-LootChest-v2.5.9.3-229-CMI-j25-26.3.jar`.
+- Paper 26.3 build 175 from the `STABLE` channel.
+- Java 25 or newer; the local test runtime remains Java 27. Compile with
+  JDK `25.0.4.1` and Java 25 bytecode.
+- The compatibility candidate `1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar`.
 - Optional CMI `9.8.10.1` and CMILib `1.6.0.0` when holograms are required.
 
 DecentHolograms is not a supported backend for this build.
@@ -39,13 +40,13 @@ particles use `Particles.fallback_particle` and produce a concise warning.
 
 ## Building from Source
 
-Build candidates on a `codex/<feature>` branch from canonical `master`. The root `pom.xml` is the
-release source of truth. Increment `buildNumber` exactly once for each shipped
+Build candidates on a `codex/<feature>` branch. Until the stable migration is
+approved into `master`, use `codex/paper-26.3` as the development base. The root
+`pom.xml` is the release source of truth. Increment `buildNumber` exactly once for each shipped
 jar, then perform the full rebuild with JDK 25.0.4.1 and Maven:
 
 ```bash
-git switch master
-git pull --ff-only origin master
+git switch codex/paper-26.3
 git switch -c codex/<short-feature-name>
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -54,11 +55,11 @@ mvn -version
 mvn clean verify
 ```
 
-The active reactor compiles against Paper API `26.3.build.41-alpha`, emits Java 25
+The active reactor compiles against Paper API `26.3.build.175-stable`, emits Java 25
 bytecode, and writes the named release jar to the root `target/` directory. It
 does not compile or package version-specific Minecraft internals. Follow the
 [release process](release-process.md) before promoting a candidate to `master`.
 Run the same named jar through `scripts/smoke-paper-26.3.py`; it selects JDK 27
 for the project-local instance. Keep compilation on JDK 25.0.4.1 with
-`--release 25`. The 26.3 work continues the preserved 26.2 build-228 branch;
-see [the upgrade record](releases/paper-26.3.md) and [local setup](test-server.md).
+`--release 25`. The stable migration continues the existing 26.3 branch;
+see [the migration record](releases/paper-26.3-stable.md) and [local setup](test-server.md).
