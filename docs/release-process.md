@@ -13,11 +13,11 @@ candidate testing happen on a `codex/<feature>` branch.
    and build `230`. Reuse that number after failures.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
-5. Build from that clean commit with JDK 25.0.4.1. Set
-   `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home`
+5. Build from that clean commit with JDK 25.0.5. Set
+   `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home`
    and prepend `$JAVA_HOME/bin` to `PATH`, then run `mvn clean verify` from the
    repository root. Keep the Java compiler release/source/target at 25 and Paper
-   at 26.3 build 175 `STABLE`, API `26.3.build.175-stable`. Preserve historical
+   at 26.3 build 207 `STABLE`, API `26.3.build.207-stable`. Preserve historical
    artifacts and reports in `archive/` before cleaning. If unrelated working changes exist, build from a clean worktree of
    the candidate commit. The package phase runs the
    release-jar policy and fails before copying the named artifact if updater,

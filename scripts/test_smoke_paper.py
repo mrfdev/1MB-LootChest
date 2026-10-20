@@ -3,7 +3,9 @@ import importlib.util
 from pathlib import Path
 import unittest
 import tempfile
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
+import zipfile
 
 SPEC = importlib.util.spec_from_file_location(
     'paper_smoke', Path(__file__).with_name('smoke-paper-26.3.py'))
@@ -18,6 +20,37 @@ class StableSmokeTest(unittest.TestCase):
 
     def test_current_pinned_target_is_accepted(self):
         SMOKE.validate_target(self.props)
+
+    def test_runtime_requires_the_requested_oracle_patch(self):
+        runtime = '    java.version = 27.0.1\n    java.vendor = Oracle Corporation\n'
+        SMOKE.validate_runtime(runtime)
+        for invalid in (runtime.replace('27.0.1', '27'), runtime.replace('27.0.1', '27.0.2'),
+                        runtime.replace('Oracle Corporation', 'Eclipse Adoptium'),
+                        'java version "27.0.1"'):
+            with self.subTest(runtime=invalid), self.assertRaises(RuntimeError):
+                SMOKE.validate_runtime(invalid)
+
+    def test_probe_packages_guarded_helpers_and_removes_them_after_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            compiled = root / 'lootchest/target/test-classes/fr/black_eyes/lootchest/compat'
+            compiled.mkdir(parents=True)
+            names = ('PaperRuntimeProbe.class', 'PaperRuntimeProbe$CmiChecks.class')
+            for name in names:
+                (compiled / name).write_bytes(b'test-class')
+            (compiled / 'UnrelatedTest.class').write_bytes(b'exclude')
+            plugins = root / 'plugins'
+            plugins.mkdir()
+            with patch.object(SMOKE, 'ROOT', root):
+                with self.assertRaisesRegex(RuntimeError, 'simulated failure'):
+                    with SMOKE.installed_probe(plugins):
+                        with zipfile.ZipFile(plugins / 'LootChestSmokeProbe.jar') as jar:
+                            self.assertEqual(
+                                {'plugin.yml'} | {'fr/black_eyes/lootchest/compat/' + n for n in names},
+                                set(jar.namelist()))
+                            self.assertIn(b'softdepend: [CMI, CMILib]', jar.read('plugin.yml'))
+                        raise RuntimeError('simulated failure')
+            self.assertFalse((plugins / 'LootChestSmokeProbe.jar').exists())
 
     def test_unstable_or_mismatched_coordinates_are_rejected(self):
         for key, value in [('paperChannel', 'ALPHA'), ('paperChannel', 'BETA'),

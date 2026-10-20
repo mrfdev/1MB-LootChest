@@ -22,14 +22,14 @@
         <revision>2.5.9.3</revision>
         <buildNumber>230</buildNumber>
         <paperVersion>26.3</paperVersion>
-        <paperBuild>175</paperBuild>
+        <paperBuild>207</paperBuild>
         <paperChannel>STABLE</paperChannel>
-        <paperApiVersion>26.3.build.175-stable</paperApiVersion>
-        <paperSha256>ece5afb6d0cdf0c930489618bf92341e33d2ebcd4f21e6d365daff6ed26dafb0</paperSha256>
+        <paperApiVersion>26.3.build.207-stable</paperApiVersion>
+        <paperSha256>2df3b846f70716907d380915cc026667a9cadedf99b1ec680b0c5ff0e6132526</paperSha256>
         <cmiApiVersion>9.8.6.4</cmiApiVersion>
         <cmiLibApiVersion>1.5.9.6</cmiLibApiVersion>
-        <cmiTestedVersion>9.8.10.1</cmiTestedVersion>
-        <cmiLibTestedVersion>1.6.0.0</cmiLibTestedVersion>
+        <cmiTestedVersion>9.8.11.0</cmiTestedVersion>
+        <cmiLibTestedVersion>1.6.1.0</cmiLibTestedVersion>
         <junitVersion>6.0.3</junitVersion>
         <lombokVersion>1.18.46</lombokVersion>
     </properties>

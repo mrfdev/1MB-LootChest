@@ -21,3 +21,6 @@ dependency-reduced-pom.xml
 
 # Python smoke-runner cache
 /scripts/__pycache__/
+
+# Local dependency inspection and compatibility evidence
+/.scratch/

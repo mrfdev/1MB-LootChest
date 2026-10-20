@@ -2,13 +2,13 @@
 
 ## Maintained build and test target
 
-- Paper 26.3 build 175, channel `STABLE`, API `26.3.build.175-stable` is the
+- Paper 26.3 build 207, channel `STABLE`, API `26.3.build.207-stable` is the
   maintained stable target. Review the live PaperMC
   `https://docs.papermc.io/llms.txt` index and exact-version Javadocs before
   changing it. Keep Minecraft 26.3 and require STABLE releases; never silently
   fall back to 26.2 or an alpha/beta API.
-- Build and unit test with JDK 25.0.4.1 using `JAVA_HOME` and `PATH`; retain
-  Java 25 release/source/target. Use JDK 27 for the local Paper 26.3 runtime.
+- Build and unit test with JDK 25.0.5 using `JAVA_HOME` and `PATH`; retain
+  Java 25 release/source/target. Use Oracle JDK 27.0.1 for the local Paper 26.3 runtime.
 - Root `pom.xml` owns release metadata. Version `2.5.9.3`, build `230` is
   reserved for the stable migration; reuse it after failures.
 - Follow `docs/release-process.md` and `docs/test-server.md`. Preserve

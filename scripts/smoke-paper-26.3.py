@@ -20,7 +20,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 INSTANCE = ROOT / 'servers/Paper-26.3'
-JDK = Path('/Library/Java/JavaVirtualMachines/jdk-27.jdk/Contents/Home')
+JDK = Path('/Library/Java/JavaVirtualMachines/jdk-27.0.1.jdk/Contents/Home')
 ANSI = re.compile(r'\x1b\[[0-9;?]*[ -/]*[@-~]')
 
 
@@ -44,6 +44,12 @@ def validate_target(props):
             'Paper API must match the pinned stable server build')
     require(re.fullmatch(r'[0-9a-f]{64}', props['paperSha256']),
             'Paper server must have a SHA-256 pin')
+
+
+def validate_runtime(runtime):
+    require(re.search(r'^\s*java\.version = 27\.0\.1\s*$', runtime, re.MULTILINE)
+            and re.search(r'^\s*java\.vendor = Oracle Corporation\s*$', runtime, re.MULTILINE),
+            'Expected the installed Oracle Java 27.0.1 runtime')
 
 
 def persisted_definitions(text):
@@ -76,12 +82,14 @@ def installed_probe(plugins):
     require(not path.exists() and not path.is_symlink(), 'Remove the stale smoke probe first')
     try:
         with zipfile.ZipFile(path, 'x', zipfile.ZIP_DEFLATED) as zipped:
-            zipped.write(probe_class, probe_class.relative_to(classes))
+            for compiled in sorted(probe_class.parent.glob('PaperRuntimeProbe*.class')):
+                zipped.write(compiled, compiled.relative_to(classes))
             zipped.writestr('plugin.yml', '''name: LootChestSmokeProbe
 version: '1'
 main: fr.black_eyes.lootchest.compat.PaperRuntimeProbe
 api-version: '26.3'
 depend: [LootChest]
+softdepend: [CMI, CMILib]
 commands:
   lootchestprobe:
     description: Isolated console-only compatibility checks
@@ -202,9 +210,9 @@ def run():
     require('DiscordSRV' not in identities.values(), 'DiscordSRV must remain inactive')
     require(all(name not in ('LootChest', 'DiscordSRV') for path in (plugins / 'update').glob('*.jar')
                 for name in [identity(path)]), 'Remove pending LootChest or DiscordSRV update JARs')
-    runtime = subprocess.run([str(JDK / 'bin/java'), '-version'],
+    runtime = subprocess.run([str(JDK / 'bin/java'), '-XshowSettings:properties', '-version'],
                              capture_output=True, text=True, check=True).stderr
-    require('java version "27"' in runtime, 'Expected installed Java 27 runtime')
+    validate_runtime(runtime)
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     logdir = ROOT / 'target/smoke-paper-26.3' / stamp
     logdir.mkdir(parents=True)
@@ -254,7 +262,10 @@ def run():
             'cold_boots': 2, 'persistence': 'unchanged except respawn clocks and component key order',
             'malformed_reload': 'rejected; runtime retained; valid retry passed',
             'item_metadata': 'PDC, data components and nested shulker contents preserved',
+            'copper_effects': 'all eight oxidation/wax states reactivate; unrelated barrel rejected',
             'async_api': 'off-thread mutation refused before world access',
+            'holograms': ('optional integration absent' if args.without_integrations else
+                          'CMI registry, transient settings, text updates, timers and despawn cleanup'),
             'profile': 'standalone' if args.without_integrations else 'integrated',
         }, indent=2) + '\n')
         print(f'[smoke] PASS; restart, persistence, clean stops and ports released. Evidence: {logdir}', flush=True)
@@ -287,7 +298,8 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
             process.stdin.flush()
             wait_for(response, offset, 60)
 
-        wait_for('Running Java 27 ')
+        # Paper prints the major version before the VM's exact runtime build.
+        wait_for('Running Java 27 (Java HotSpot(TM) 64-Bit Server VM 27.0.1+')
         wait_for(f"This server is running Paper version 26.3-{props['paperBuild']}-")
         wait_for(f"Implementing API version {props['paperApiVersion']}")
         wait_for('[LootChest] Plugin loaded')
@@ -310,7 +322,13 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
         else:
             command('lootchestprobe verify', 'PROBE PASS metadata, nested items and inventory isolation')
         command('lootchestprobe async', 'PROBE PASS async API refused before world access')
+        command('lootchestprobe copper',
+                'PROBE PASS all eight copper states reactivate effects; barrel rejected')
+        if not without_integrations:
+            command('lootchestprobe holograms', 'PROBE PASS CMI registry, transience and text updates')
         command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')
+        if not without_integrations:
+            command('lootchestprobe holograms', 'PROBE PASS CMI registry, transience and text updates')
         if boot == 1:
             # All writes target the disposable fixture. Restore the exact
             # language bytes even when the rejection check fails.
@@ -333,8 +351,13 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
             command('lc audit', 'No lifecycle inconsistencies were found.')
             command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')
         command('lc despawnall', 'All LootChests were despawned.')
+        if not without_integrations:
+            command('lootchestprobe despawned', 'PROBE PASS CMI registry empty after despawn')
         command('lc respawnall', 'All LootChests were respawned.')
         command('lootchestprobe verify', 'PROBE PASS metadata, nested items and inventory isolation')
+        if not without_integrations:
+            command('lootchestprobe holograms', 'PROBE PASS CMI registry, transience and text updates')
+            command('lootchestprobe timer', 'PROBE PASS CMI timer updates and cleanup')
         audit_offset = len(log())
         command('lc audit', 'No lifecycle inconsistencies were found.')
         require('unavailable 0 | issues 0' in log()[audit_offset:],

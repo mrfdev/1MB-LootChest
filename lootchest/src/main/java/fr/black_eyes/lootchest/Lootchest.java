@@ -674,7 +674,7 @@ public class Lootchest {
 	 * @return true if the block is the good one for the chest
 	 */
 	public boolean isGoodType(Block block) {
-		return type.equals(block.getType());
+		return Mat.matchesContainerType(type, block.getType());
 	}
 
 	/**

@@ -12,8 +12,8 @@ The Paper 26.3 integration pair used for automated smoke testing is:
 
 | Component | Version |
 | --- | --- |
-| CMI runtime | `9.8.10.1` |
-| CMILib runtime | `1.6.0.0` |
+| CMI runtime | `9.8.11.0` |
+| CMILib runtime | `1.6.1.0` |
 | Public CMI API used to compile | `9.8.6.4` |
 | Public CMILib API used to compile | `1.5.9.6` |
 
@@ -29,6 +29,20 @@ public hologram API. An API or linkage failure disables only holograms.
 
 Restart Paper after installing or replacing CMI/CMILib so plugin load order and
 hologram hooks are established normally.
+
+CMI 9.8.11.0 restores floating `ICON:` items; `SICON:` keeps an item fixed to
+the hologram. Floating items can occupy multiple text lines, so leave a blank
+`_` line above them when needed. Existing icons are not rewritten automatically.
+Check their spacing in a player client after upgrading.
+
+Lootbox chat, `/lc list` click-to-edit links and `/lc audit` teleport links use
+Paper Adventure components directly. They do not use CMILib `RawMessage`.
+CMILib 1.6.1.0's new Paper message backend therefore does not change that
+Lootbox code path. CMI's own raw messages still need an in-game click/hover check.
+
+After `/cmi hologram reload` or `/cmi reload holograms`, run `/lc reload`.
+CMI rebuilds its registry from permanent definitions and can discard third-party
+transient entries. A normal server restart establishes them in plugin load order.
 
 ## Bolt
 

@@ -5,14 +5,14 @@
 and LootChest data. All runtime files remain Git-ignored.
 
 The 26.3 launcher, `servers/Paper-26.3/1MB-minecraft.sh`, uses
-`/Library/Java/JavaVirtualMachines/jdk-27.jdk/Contents/Home` and requires Java 27.
-Its active server JAR is `Paper-26.3-175.jar`, channel `STABLE`, SHA-256
-`ece5afb6d0cdf0c930489618bf92341e33d2ebcd4f21e6d365daff6ed26dafb0`.
+`/Library/Java/JavaVirtualMachines/jdk-27.0.1.jdk/Contents/Home` and requires Java 27.
+Its active server JAR is `Paper-26.3-207.jar`, channel `STABLE`, SHA-256
+`2df3b846f70716907d380915cc026667a9cadedf99b1ec680b0c5ff0e6132526`.
 The root POM pins the same build/API and checksum. Compile and unit-test with
-JDK 25.0.4.1, retaining Java 25 bytecode.
+JDK 25.0.5, retaining Java 25 bytecode.
 Paper's minimum runtime is Java 25; Java 27 is this project's selected test
-runtime, not a Paper minimum. Stable build 175 was verified on 2026-10-11.
-Its API dependency is `26.3.build.175-stable`.
+runtime, not a Paper minimum. Stable build 207 was selected on 2026-10-20.
+Its API dependency is `26.3.build.207-stable`.
 
 The clone binds `127.0.0.1:32931` for Minecraft TCP; query UDP `32932` and
 RCON TCP `32933` are separately assigned but disabled. PaperScript uses session
@@ -27,13 +27,14 @@ JAR, checksum and absolute directory. Never restore copied 26.2 launcher state
 into the active 26.3 instance.
 
 During the historical 2026-09-25 alpha upgrade, dependency JARs were copied
-into this local fixture. The stable migration reuses those local copies and
-does not read or modify the shared server:
+into this local fixture. On 2026-10-20, CMI and CMILib were updated from the
+user's Downloads; the other listed plugins remain at their previous tested
+versions. The shared server is not used:
 
 | Plugin | Previous local version | New local version |
 | --- | --- | --- |
-| CMI | 9.8.9.9 | 9.8.10.1 |
-| CMILib | 1.5.9.9 | 1.6.0.0 |
+| CMI | 9.8.10.1 | 9.8.11.0 |
+| CMILib | 1.6.0.0 | 1.6.1.0 |
 | CoreProtect | 24.0-dev1 | 25.0 |
 | Jobs | 5.2.6.5 | 5.2.6.6 |
 | LuckPerms | 5.5.81 | 5.5.85 |
@@ -48,7 +49,7 @@ bundled. DiscordSRV remains inactive in `plugins-disabled/`.
 Build the clean source, then run:
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 mvn clean verify
 python3 -m unittest discover -s scripts -p 'test_*.py' -v
@@ -80,6 +81,14 @@ must preserve those items; modifying a delivered item must leave its template
 unchanged. Off-thread API mutation must be refused before world access. The
 probe JAR is removed after the test and release packaging tests forbid it in
 the distributable.
+Integrated checks also compare CMI's actual hologram registry with the active
+LootChest set, require transient (unsaved) holograms, verify text updates reach
+the registered object, and require complete registry/timer cleanup on despawn.
+A temporary timer on the disposable fixture must advance before its original
+state is restored. These assertions run around reload, respawn and cold boots.
+The disposable metadata fixture also temporarily exercises all eight copper
+oxidation/wax states through effect reactivation and rejects a barrel. Its
+original block, inventory, configured type and effects are restored afterward.
 Each first boot verifies and recreates an existing probe fixture, so subsequent
 runs exercise new chest creation as well as loading saved definitions.
 
@@ -120,6 +129,8 @@ Keep only the pinned `Paper-26.3-<build>.jar` active and align `current_build`,
 settings and the example configuration. The launcher records the actual selected
 JAR after startup. Build-41 backups for this migration are under
 `archive/paper-26.3-stable/before-server-update/`.
+The pre-207 server, plugin JARs, configurations, local world and previous build
+evidence are retained under `archive/compat-2026-10-20/before-update/`.
 
 Retain safe Paper defaults for piston/headless-piston/permanent-block-break
 exploits, unsafe end-portal teleportation and tripwire placement validation;

@@ -4,8 +4,8 @@ Lootbox is the custom 1MoreBlock edition of LootChest. It creates repeatable,
 staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
-The maintained target is **Paper 26.3 build 175 (STABLE)** with **Java 25 bytecode**,
-built using **JDK 25.0.4.1** and tested locally on **Java 27**. Paper requires
+The maintained target is **Paper 26.3 build 207 (STABLE)** with **Java 25 bytecode**,
+built using **JDK 25.0.5** and tested locally on **Oracle Java 27.0.1**. Paper requires
 Java 25 or newer. Stable 26.3 is the target for future development and tests;
 manual gameplay approval is still required before promoting a release live.
 
@@ -15,15 +15,15 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 
 | Component | Target |
 | --- | --- |
-| Server | Paper 26.3 build 175 (`STABLE`) |
-| Paper API | `26.3.build.175-stable` |
+| Server | Paper 26.3 build 207 (`STABLE`) |
+| Paper API | `26.3.build.207-stable` |
 | Java bytecode | Java 25 |
-| Build JDK | `25.0.4.1` |
-| Tested runtimes | Java `27+35-2325` |
+| Build JDK | `25.0.5` |
+| Tested runtimes | Java `27.0.1+9-62` |
 | Plugin version | `2.5.9.3` |
 | Candidate build | `230` |
 | Main command | `/lootchest`, alias `/lc` |
-| Holograms | Optional: CMI `9.8.10.1` and CMILib `1.6.0.0` |
+| Holograms | Optional: CMI `9.8.11.0` and CMILib `1.6.1.0` |
 
 ## Features
 
@@ -48,6 +48,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Release process](docs/release-process.md)
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [October 2026 compatibility checks and in-game test steps](docs/releases/compatibility-2026-10-20.md)
 
 Lootbox does not currently expose or require PlaceholderAPI placeholders.
 
@@ -115,10 +116,10 @@ directory together, then start and verify the server again.
 The root `pom.xml` is the release source of truth for semantic version, build
 number, Paper target/API/build/channel, and Java target. Before shipping a new
 build, increment `buildNumber` exactly once and update `revision` only when the
-plugin version changes. Build from the repository root with JDK 25.0.4.1:
+plugin version changes. Build from the repository root with JDK 25.0.5:
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.1.jdk/Contents/Home
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 java -version
 mvn -version
