@@ -176,3 +176,45 @@ The checkout remained clean throughout the verification. Automated checks passed
 manual player gameplay and release approval remain outstanding. The preserved
 Paper 26.2 instance and shared server were untouched. No deployment or push was
 performed.
+
+## Pending manual gameplay approval for 563e4ca
+
+This checklist applies to the verified JAR from `563e4ca`, using the artifact
+and checksum recorded above. All items remain pending. Record the results
+against that exact JAR before release approval.
+
+- [ ] **Clients and permissions:** Test Java and Floodgate/Bedrock accounts.
+  Preserve usernames and Bedrock prefixes; use actual server UUIDs for permission
+  grants. Confirm `/lc info` is public and unprivileged players cannot create,
+  edit, reload, give, or respawn chests.
+- [ ] **Container lifecycle:** Create, edit, open, empty, break, respawn, and
+  reload every supported type: chest, trapped chest, barrel, all 17 shulker
+  variants, and all eight copper oxidation/wax states.
+- [ ] **Menus and inventory interactions:** Exercise normal clicks, shift-click,
+  drag, double-click, hotbar swaps, offhand, dropping, and creative actions.
+  Close, quit, reconnect, and reopen after reload. Confirm no stale menu changes
+  or duplicated rewards.
+- [ ] **Reward delivery:** Test full inventories, overflow, AutoSell interactions,
+  and real items carrying third-party metadata, custom components, or nested
+  container contents. Confirm intended rewards arrive exactly once with metadata
+  intact.
+- [ ] **Bolt protection:** Attempt to open and break a locked Lootbox using an
+  unauthorized account. Confirm no rewards, container removal, or respawn
+  scheduling occurs.
+- [ ] **Visuals:** Inspect particles, menu text, hologram placement, names, timers,
+  and cleanup through reload/respawn. Check naturally oxidized copper containers
+  and CMI's floating `ICON:` versus static `SICON:` display.
+- [ ] **Interactive messages and CMI reloads:** Check `/lc list` click-to-edit,
+  `/lc audit` click-to-teleport, hover text, colors, and the CMILib clickable-message
+  test. Verify `/lc reload` while standing still and hologram recovery using
+  `/lc reload` after a CMI hologram reload.
+- [ ] **Concurrency and interruptions:** Exercise rapid simultaneous use,
+  quit/kick/death/world changes, and shutdown during reload. On a disposable copy
+  with backups, verify recovery after forced termination between persistence
+  stages and disk-full failures, then inspect saved data and `/lc audit`.
+
+The current fixture is Java-only, so Bedrock checks require a suitable Floodgate
+setup. See the [manual approval checklist](releases/paper-26.3-stable.md#remaining-manual-checks)
+and [CMI in-game notes](releases/compatibility-2026-10-20.md#in-game-approval)
+for the existing test context. Adding this checklist does not record gameplay
+approval or change the verified artifact.
