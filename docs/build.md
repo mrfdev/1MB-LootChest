@@ -118,7 +118,14 @@ The [Paper Java installation guidance](https://docs.papermc.io/misc/java-install
 was checked through its live documentation index; the project's Oracle vendor
 selection and Java 27 test runtime are explicit local requirements.
 
-## Local verification on 2026-10-25
+## Clean verification of 563e4ca on 2026-10-25
+
+The full suite was rerun from clean commit
+`563e4ca23c34f9a33dd54039653fe0d96f508fba` on
+`codex/oracle-25-build-27-tests`. Every build and test invocation explicitly
+unset `LOOTCHEST_ALLOW_DIRTY` with `env -u LOOTCHEST_ALLOW_DIRTY`.
+The generated JAR records `source.commit=563e4ca23c34` and
+`source.dirty=false`; both Paper smoke profiles reported that same clean source.
 
 These paths record the installations actually used on this Mac, not configuration
 pins. Every future invocation discovers and validates the installed homes again.
@@ -129,39 +136,43 @@ pins. Every future invocation discovers and validates the installed homes again.
 | Plugin and test compiler | `/Library/Java/JavaVirtualMachines/jdk-25.0.5.0.3.jdk/Contents/Home/bin/javac` | `javac 25.0.5.0.3`, validated Oracle home above |
 | Surefire, Failsafe, child Java and Paper | `/Library/Java/JavaVirtualMachines/jdk-27.0.1.0.3.jdk/Contents/Home/bin/java` | `27.0.1.0.3`, Oracle Corporation |
 
-- `./mvnw -o clean verify` passed using the existing local dependency cache:
+- `env -u LOOTCHEST_ALLOW_DIRTY ./mvnw clean verify` passed:
   112 unit tests and 14 integration tests, with no failures, errors or skips.
   Both compilation phases reported forked Oracle 25 `javac` with `release 25`.
   Runtime assertions and all JUnit XML reports confirmed Oracle 27 test JVMs.
 - All 80 production and 22 test class files have major 69, minor 0 (Java 25,
   without preview bytecode).
-- All 24 Python tests passed. Nine actual invalid launcher configurations were
-  rejected; an invalid ambient `JAVA_HOME` was ignored safely. Raw Maven lifecycle
-  invocation failed with guidance to use `./mvnw`.
+- All 24 Python harness tests passed, with no failures or errors, using
+  `env -u LOOTCHEST_ALLOW_DIRTY python3 -m unittest discover -s scripts -p 'test_*.py' -v`.
 - Both Paper 26.3 build 207 profiles passed: integrated and standalone, each with
-  two cold boots, persistence checks, clean shutdown and released ports. Optional
-  plugins were restored, the temporary probe was removed, and the local instance
-  was confirmed stopped afterward.
+  two cold boots, persistence checks, clean shutdown and released ports. Both
+  commands used `env -u LOOTCHEST_ALLOW_DIRTY ./scripts/smoke-paper-26.3.py`;
+  the standalone profile added `--without-integrations`. Optional plugins were
+  restored with their original checksums, the temporary probe was removed, and
+  the local instance was confirmed stopped afterward.
 - Installed Maven 3.10.0 and compiler plugin 3.14.0 were retained. Surefire is
   explicitly pinned to 3.5.4, matching the existing Failsafe version. No JDK or
   Maven installation was downloaded or changed.
 
 Machine-readable evidence is in
-`.scratch/oracle-toolchains/verification.json`; the same directory holds
-`clean-verify.log`, `python-tests.log`, `negative-checks.log`,
-`raw-maven-rejection.log`, and both smoke console logs. Paper's full evidence is
-in `target/smoke-paper-26.3/20261025-105630/` (integrated) and
-`target/smoke-paper-26.3/20261025-105852/` (standalone).
+`.scratch/verify-563e4ca-20261025-110831/verification.json`. That directory also
+holds the build, Python and smoke console logs, Maven version output, JUnit XML
+reports, embedded build metadata, and a copy of the verified JAR and checksum.
+Full Paper evidence is retained in its `paper-smoke/20261025-110857/` directory
+(integrated) and `paper-smoke/20261025-111031/` directory (standalone), with the
+original run output under the matching `target/smoke-paper-26.3/` directories.
 
 The generated artifact is `target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar`,
-SHA-256 `717fbe92d8ed595f72cd38823837fbf331f892d0f5903825bafc48e84c9a117b`.
-Previous build outputs and the local launcher's original file were preserved in
-`archive/oracle-toolchains-20261025-105543/` before cleaning or editing them.
+SHA-256 `ae6aad1457388f12e79738dd96a84685fa90bda67a7196f497b5166540a775a6`.
+The sidecar checksum is at the same path with `.sha256` appended. This checksum
+identifies the artifact built from `563e4ca`, before this documentation update.
 
-This was a local development verification with uncommitted source and
-`LOOTCHEST_ALLOW_DIRTY=1` for smoke. It is not a clean release approval; manual
-player gameplay was not performed. Paper logged warnings from OS detection and
-LuckPerms' reflective field mutation, without failing the compatibility checks.
-The preserved Paper 26.2 instance and shared server were untouched. This
-verification preceded the local commit on `codex/oracle-25-build-27-tests`;
-no deployment or push was performed.
+The preceding development build and its Paper reports were preserved in
+`archive/before-clean-563e4ca-20261025-110831/`. Earlier launcher rejection
+checks remain under `.scratch/oracle-toolchains/`; the original launcher and
+older build outputs remain in `archive/oracle-toolchains-20261025-105543/`.
+
+The checkout remained clean throughout the verification. Automated checks passed;
+manual player gameplay and release approval remain outstanding. The preserved
+Paper 26.2 instance and shared server were untouched. No deployment or push was
+performed.
