@@ -1,11 +1,14 @@
 """Offline regression checks for the stable server smoke runner's fail-closed gates."""
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 import tempfile
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
 import zipfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 SPEC = importlib.util.spec_from_file_location(
     'paper_smoke', Path(__file__).with_name('smoke-paper-26.3.py'))
@@ -21,11 +24,19 @@ class StableSmokeTest(unittest.TestCase):
     def test_current_pinned_target_is_accepted(self):
         SMOKE.validate_target(self.props)
 
-    def test_runtime_requires_the_requested_oracle_patch(self):
-        runtime = '    java.version = 27.0.1\n    java.vendor = Oracle Corporation\n'
-        SMOKE.validate_runtime(runtime)
-        for invalid in (runtime.replace('27.0.1', '27'), runtime.replace('27.0.1', '27.0.2'),
+    def test_runtime_accepts_new_oracle_27_patches(self):
+        for version in ('27', '27.0.1', '27.0.1.0.3', '27.0.2'):
+            with self.subTest(version=version):
+                SMOKE.validate_runtime(
+                    f'    java.version = {version}\n    java.specification.version = 27\n'
+                    '    java.vendor = Oracle Corporation\n')
+
+    def test_runtime_rejects_wrong_major_vendor_or_unverified_output(self):
+        runtime = ('    java.version = 27.0.2\n    java.specification.version = 27\n'
+                   '    java.vendor = Oracle Corporation\n')
+        for invalid in (runtime.replace('specification.version = 27', 'specification.version = 25'),
                         runtime.replace('Oracle Corporation', 'Eclipse Adoptium'),
+                        runtime.replace('    java.specification.version = 27\n', ''),
                         'java version "27.0.1"'):
             with self.subTest(runtime=invalid), self.assertRaises(RuntimeError):
                 SMOKE.validate_runtime(invalid)

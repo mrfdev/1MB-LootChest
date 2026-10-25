@@ -5,7 +5,7 @@ staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
 The maintained target is **Paper 26.3 build 207 (STABLE)** with **Java 25 bytecode**,
-built using **JDK 25.0.5** and tested locally on **Oracle Java 27.0.1**. Paper requires
+built using **Oracle JDK 25** and tested locally on **Oracle JDK 27**. Paper requires
 Java 25 or newer. Stable 26.3 is the target for future development and tests;
 manual gameplay approval is still required before promoting a release live.
 
@@ -18,8 +18,8 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Server | Paper 26.3 build 207 (`STABLE`) |
 | Paper API | `26.3.build.207-stable` |
 | Java bytecode | Java 25 |
-| Build JDK | `25.0.5` |
-| Tested runtimes | Java `27.0.1+9-62` |
+| Maven and compiler JDK | Installed Oracle JDK 25 |
+| Unit, integration and Paper test JDK | Installed Oracle JDK 27 |
 | Plugin version | `2.5.9.3` |
 | Candidate build | `230` |
 | Main command | `/lootchest`, alias `/lc` |
@@ -46,6 +46,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Configuration](docs/configuration.md)
 - [Installation and updates](docs/installation.md)
 - [Release process](docs/release-process.md)
+- [Local build and JDK setup](docs/build.md)
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [October 2026 compatibility checks and in-game test steps](docs/releases/compatibility-2026-10-20.md)
@@ -116,15 +117,21 @@ directory together, then start and verify the server again.
 The root `pom.xml` is the release source of truth for semantic version, build
 number, Paper target/API/build/channel, and Java target. Before shipping a new
 build, increment `buildNumber` exactly once and update `revision` only when the
-plugin version changes. Build from the repository root with JDK 25.0.5:
+plugin version changes. Build from the repository root with the local launcher:
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home
-export PATH="$JAVA_HOME/bin:$PATH"
-java -version
-mvn -version
-mvn clean verify
+./mvnw -version
+./mvnw clean verify
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ```
+
+The launcher uses installed Maven and Python 3.9+. On macOS it resolves installed
+Oracle JDKs with `/usr/libexec/java_home -F -v 25` and `-v 27`, then validates
+their actual major versions and vendor. Maven and both source compilations run
+on Oracle 25 with `--release 25`; unit and integration test forks run on Oracle
+27. It downloads neither Maven nor a JDK. New Oracle patch installations require
+no project edits. See [the build guide](docs/build.md) for explicit installed-home
+overrides, configuration guards and verification evidence.
 
 Release artifacts use this format:
 
@@ -158,11 +165,11 @@ Later builds intentionally contain no direct WorldGuard integration. WorldGuard
 may remain installed for the server's regions; the 1MoreBlock deployment places
 randomized Lootboxes only in staff-selected regions.
 
-The canonical full rebuild is `mvn clean verify`; it runs all unit tests and the
-release-jar checks. Preserve previous `target/` artifacts and test reports in
+The canonical full rebuild is `./mvnw clean verify`; it runs all unit tests,
+integration tests and release-jar checks. Preserve previous `target/` artifacts and test reports in
 `archive/` before running `clean` when they are needed as historical records.
 The compiler's `release`, `source`, and `target` remain 25. Paper 26.3 is tested
-with Java 27; the bytecode target does not lower Paper's runtime requirements.
+with Oracle Java 27; the bytecode target does not lower Paper's runtime requirements.
 Reuse the reserved build number after a failed attempt; do not increment again.
 
 The project emits Java 25 class files and uses only the Paper API for Minecraft
@@ -179,7 +186,7 @@ Run the repeatable local smoke test against the exact clean candidate:
 ```
 
 The runner uses the maintained `servers/Paper-26.3/1MB-minecraft.sh` launcher
-with JDK 27, checks the pinned server checksum and release metadata, and requires
+with dynamically selected Oracle JDK 27, checks the pinned server checksum and release metadata, and requires
 available local ports. It verifies plugin enable, info/help/list/reload/despawn/
 respawn/audit, malformed reload recovery, custom-item metadata, a cold restart,
 saved definitions, clean shutdown and port release. Logs remain under

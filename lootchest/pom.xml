@@ -36,7 +36,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.4</version>
                 <executions>
                     <execution>
                         <id>verify-release-jar</id>
@@ -46,9 +45,6 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <includes>
-                                <include>**/ReleaseJarContentsIT.java</include>
-                            </includes>
                             <systemPropertyVariables>
                                 <lootchest.release.jar>${project.build.directory}/lootchest.jar</lootchest.release.jar>
                             </systemPropertyVariables>

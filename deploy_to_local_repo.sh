@@ -9,10 +9,13 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
   exit 1
 fi
 
-mvn deploy:deploy-file \
+# The Maven launcher runs from the project root; retain the caller's JAR path.
+jar_file="$(cd -- "$(dirname -- "$1")" && pwd)/$(basename -- "$1")"
+
+"$actual_path/mvnw" deploy:deploy-file \
   -Durl="file://$local_repo_path" \
   -DrepositoryId=local-repo \
-  -Dfile="$1" \
+  -Dfile="$jar_file" \
   -DgroupId="$2" \
   -DartifactId="$3" \
   -Dversion="$4" \

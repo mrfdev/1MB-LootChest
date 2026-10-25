@@ -18,9 +18,10 @@ import time
 import xml.etree.ElementTree as ET
 import zipfile
 
+from oracle_jdks import java_properties, resolve_jdk
+
 ROOT = Path(__file__).resolve().parent.parent
 INSTANCE = ROOT / 'servers/Paper-26.3'
-JDK = Path('/Library/Java/JavaVirtualMachines/jdk-27.0.1.jdk/Contents/Home')
 ANSI = re.compile(r'\x1b\[[0-9;?]*[ -/]*[@-~]')
 
 
@@ -47,9 +48,9 @@ def validate_target(props):
 
 
 def validate_runtime(runtime):
-    require(re.search(r'^\s*java\.version = 27\.0\.1\s*$', runtime, re.MULTILINE)
+    require(re.search(r'^\s*java\.specification\.version = 27\s*$', runtime, re.MULTILINE)
             and re.search(r'^\s*java\.vendor = Oracle Corporation\s*$', runtime, re.MULTILINE),
-            'Expected the installed Oracle Java 27.0.1 runtime')
+            'Expected an installed Oracle Java 27 runtime')
 
 
 def persisted_definitions(text):
@@ -77,7 +78,7 @@ def persisted_definitions(text):
 def installed_probe(plugins):
     classes = ROOT / 'lootchest/target/test-classes'
     probe_class = classes / 'fr/black_eyes/lootchest/compat/PaperRuntimeProbe.class'
-    require(probe_class.is_file(), 'Run mvn clean verify to compile the runtime probe')
+    require(probe_class.is_file(), 'Run ./mvnw clean verify to compile the runtime probe')
     path = plugins / 'LootChestSmokeProbe.jar'
     require(not path.exists() and not path.is_symlink(), 'Remove the stale smoke probe first')
     try:
@@ -167,6 +168,8 @@ def run():
     parser.add_argument('--without-integrations', action='store_true',
                         help='Temporarily archive optional plugin JARs and test the standalone fallback')
     args = parser.parse_args()
+    jdk = resolve_jdk(27, 'ONE_MB_TEST_JAVA_HOME')
+    runtime_properties = java_properties(jdk)
     require(INSTANCE.is_dir() and INSTANCE.resolve() == INSTANCE,
             'Prepare the separate project-local Paper-26.3 directory first')
     props = {n.tag.rsplit('}', 1)[-1]: n.text for n in
@@ -210,7 +213,7 @@ def run():
     require('DiscordSRV' not in identities.values(), 'DiscordSRV must remain inactive')
     require(all(name not in ('LootChest', 'DiscordSRV') for path in (plugins / 'update').glob('*.jar')
                 for name in [identity(path)]), 'Remove pending LootChest or DiscordSRV update JARs')
-    runtime = subprocess.run([str(JDK / 'bin/java'), '-XshowSettings:properties', '-version'],
+    runtime = subprocess.run([str(jdk / 'bin/java'), '-XshowSettings:properties', '-version'],
                              capture_output=True, text=True, check=True).stderr
     validate_runtime(runtime)
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -233,7 +236,7 @@ def run():
         shutil.copy2(jar, temporary)
         require(sha256(temporary) == artifact_sha, 'Installed artifact checksum mismatch')
         temporary.replace(plugins / jar.name)
-        env = dict(os.environ, JAVA_HOME=str(JDK), PATH=str(JDK / 'bin') + ':' + os.environ['PATH'])
+        env = dict(os.environ, JAVA_HOME=str(jdk), PATH=str(jdk / 'bin') + ':' + os.environ['PATH'])
         env['JDK_JAVA_OPTIONS'] = env.get('JDK_JAVA_OPTIONS', '') + ' -Dlootchest.smoke=true'
         saved_after_first_stop = None
         # A second cold boot verifies actual disk persistence, not just reload.
@@ -241,7 +244,8 @@ def run():
             for boot in (1, 2):
                 raw = logdir / f'boot-{boot}.raw.log'
                 with raw.open('w') as output:
-                    run_boot(output, raw, boot, env, props, release, plugins, args.without_integrations)
+                    run_boot(output, raw, boot, env, props, release, plugins, args.without_integrations,
+                             runtime_properties['java.vm.version'])
                 saved = (plugins / 'LootChest/data.yml').read_text()
                 (logdir / f'data-after-boot-{boot}.yml').write_text(saved)
                 if boot == 1:
@@ -257,7 +261,7 @@ def run():
             'result': 'PASS', 'artifact': jar.name, 'sha256': artifact_sha,
             'source': release['source.commit'], 'dirty': release['source.dirty'],
             'paper': f"26.3-{props['paperBuild']}-{props['paperChannel']}",
-            'api': props['paperApiVersion'], 'java': runtime.strip(),
+            'api': props['paperApiVersion'], 'java': runtime.strip(), 'java_home': str(jdk),
             'instance': str(INSTANCE), 'ports': ports, 'shared_server_started': False,
             'cold_boots': 2, 'persistence': 'unchanged except respawn clocks and component key order',
             'malformed_reload': 'rejected; runtime retained; valid retry passed',
@@ -271,7 +275,7 @@ def run():
         print(f'[smoke] PASS; restart, persistence, clean stops and ports released. Evidence: {logdir}', flush=True)
 
 
-def run_boot(output, raw, boot, env, props, release, plugins, without_integrations):
+def run_boot(output, raw, boot, env, props, release, plugins, without_integrations, runtime_vm_version):
     process = None
     try:
         process = subprocess.Popen([str(INSTANCE / '1MB-minecraft.sh')], cwd=INSTANCE,
@@ -299,7 +303,7 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
             wait_for(response, offset, 60)
 
         # Paper prints the major version before the VM's exact runtime build.
-        wait_for('Running Java 27 (Java HotSpot(TM) 64-Bit Server VM 27.0.1+')
+        wait_for(f'Running Java 27 (Java HotSpot(TM) 64-Bit Server VM {runtime_vm_version}')
         wait_for(f"This server is running Paper version 26.3-{props['paperBuild']}-")
         wait_for(f"Implementing API version {props['paperApiVersion']}")
         wait_for('[LootChest] Plugin loaded')

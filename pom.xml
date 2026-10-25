@@ -47,17 +47,90 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.0</version>
                     <configuration>
-                        <release>${maven.compiler.release}</release>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
+                        <release>25</release>
+                        <source>25</source>
+                        <target>25</target>
+                        <testRelease>25</testRelease>
+                        <testSource>25</testSource>
+                        <testTarget>25</testTarget>
+                        <compilerId>javac</compilerId>
+                        <fork>true</fork>
+                        <jdkToolchain>
+                            <version>25</version>
+                            <vendor>Oracle Corporation</vendor>
+                        </jdkToolchain>
                         <encoding>${project.build.sourceEncoding}</encoding>
                         <showDeprecation>true</showDeprecation>
                         <showWarnings>true</showWarnings>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.4</version>
+                    <configuration>
+                        <jdkToolchain>
+                            <version>27</version>
+                            <vendor>Oracle Corporation</vendor>
+                        </jdkToolchain>
+                        <forkCount>1</forkCount>
+                        <reuseForks>true</reuseForks>
+                        <failIfNoTests>true</failIfNoTests>
+                        <environmentVariables>
+                            <JAVA_HOME>${env.ONE_MB_TEST_JAVA_HOME}</JAVA_HOME>
+                            <PATH>${env.ONE_MB_TEST_JAVA_HOME}/bin:${env.PATH}</PATH>
+                        </environmentVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.4</version>
+                    <configuration>
+                        <jdkToolchain>
+                            <version>27</version>
+                            <vendor>Oracle Corporation</vendor>
+                        </jdkToolchain>
+                        <forkCount>1</forkCount>
+                        <reuseForks>true</reuseForks>
+                        <failIfNoTests>true</failIfNoTests>
+                        <environmentVariables>
+                            <JAVA_HOME>${env.ONE_MB_TEST_JAVA_HOME}</JAVA_HOME>
+                            <PATH>${env.ONE_MB_TEST_JAVA_HOME}/bin:${env.PATH}</PATH>
+                        </environmentVariables>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.6.2</version>
+                <executions>
+                    <execution>
+                        <id>require-validated-local-jdks</id>
+                        <phase>validate</phase>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <requireEnvironmentVariable>
+                                    <variableName>LOOTCHEST_TOOLCHAINS_VALIDATED</variableName>
+                                    <regex>1</regex>
+                                    <message>Use ./mvnw: it validates installed Oracle JDKs 25 and 27 before Maven starts.</message>
+                                </requireEnvironmentVariable>
+                                <requireJavaVersion><version>[25,26)</version></requireJavaVersion>
+                                <requireJavaVendor><includes><include>Oracle Corporation</include></includes></requireJavaVendor>
+                                <requireProperty>
+                                    <property>java.home</property>
+                                    <regex>\Q${env.ONE_MB_BUILD_JAVA_HOME}\E</regex>
+                                    <message>Maven must use the validated Oracle 25 home. Run ./mvnw.</message>
+                                </requireProperty>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>

@@ -13,10 +13,12 @@ candidate testing happen on a `codex/<feature>` branch.
    and build `230`. Reuse that number after failures.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
-5. Build from that clean commit with JDK 25.0.5. Set
-   `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home`
-   and prepend `$JAVA_HOME/bin` to `PATH`, then run `mvn clean verify` from the
-   repository root. Keep the Java compiler release/source/target at 25 and Paper
+5. Build from that clean commit with `./mvnw clean verify` from the repository
+   root. The launcher validates installed Oracle JDK 25 for Maven and compilation
+   of both plugin and test sources, and Oracle JDK 27 for unit and integration
+   test JVMs. It discovers installed homes dynamically without patch pins or
+   automatic JDK downloads; see [the build guide](build.md). Keep the Java
+   compiler release/source/target at 25 and Paper
    at 26.3 build 207 `STABLE`, API `26.3.build.207-stable`. Preserve historical
    artifacts and reports in `archive/` before cleaning. If unrelated working changes exist, build from a clean worktree of
    the candidate commit. The package phase runs the
@@ -27,7 +29,7 @@ candidate testing happen on a `codex/<feature>` branch.
    commit, Paper target/build/channel/API, Java target, and artifact filename
    without a `-dirty` suffix.
 7. Run `./scripts/smoke-paper-26.3.py target/<candidate>.jar`. It uses the
-   maintained local launcher and JDK 27, validates the pinned Paper checksum,
+   maintained local launcher and dynamically resolved Oracle JDK 27, validates the pinned Paper checksum,
    checks the embedded release metadata and dependency versions, exercises
    info/help/list/reload/despawn/respawn/audit, malformed reload recovery,
    new chest creation, custom-item metadata and the async API guard. It checks

@@ -4,12 +4,22 @@
 2026-09-25 upgrade cloned it to `servers/Paper-26.3/`, including its local world
 and LootChest data. All runtime files remain Git-ignored.
 
-The 26.3 launcher, `servers/Paper-26.3/1MB-minecraft.sh`, uses
-`/Library/Java/JavaVirtualMachines/jdk-27.0.1.jdk/Contents/Home` and requires Java 27.
+`scripts/smoke-paper-26.2.sh` and historical release records retain their old
+Java settings as rollback evidence. They are outside the maintained build/test
+workflow; use the 26.3 runner below. The 26.2 instance is not started or changed
+by the Oracle 25/27 setup.
+
+The 26.3 launcher, `servers/Paper-26.3/1MB-minecraft.sh`, uses the shared installed
+JDK resolver in `scripts/oracle_jdks.py` and requires Oracle Java 27. On macOS,
+the resolver runs `/usr/libexec/java_home -F -v 27`, or validates the explicit
+installed home in `ONE_MB_TEST_JAVA_HOME`. It checks the actual major version
+and Oracle vendor and never downloads a JDK or falls back to another vendor.
+New Oracle 27 patch installations require no launcher edits.
 Its active server JAR is `Paper-26.3-207.jar`, channel `STABLE`, SHA-256
 `2df3b846f70716907d380915cc026667a9cadedf99b1ec680b0c5ff0e6132526`.
-The root POM pins the same build/API and checksum. Compile and unit-test with
-JDK 25.0.5, retaining Java 25 bytecode.
+The root POM pins the same build/API and checksum. Maven and compilation of
+plugin and test sources use Oracle JDK 25, retaining Java 25 bytecode. Unit and
+integration tests run in Oracle JDK 27 forks. See [the build guide](build.md).
 Paper's minimum runtime is Java 25; Java 27 is this project's selected test
 runtime, not a Paper minimum. Stable build 207 was selected on 2026-10-20.
 Its API dependency is `26.3.build.207-stable`.
@@ -49,14 +59,13 @@ bundled. DiscordSRV remains inactive in `plugins-disabled/`.
 Build the clean source, then run:
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.5.jdk/Contents/Home
-export PATH="$JAVA_HOME/bin:$PATH"
-mvn clean verify
+./mvnw clean verify
 python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ./scripts/smoke-paper-26.3.py target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
 ```
 
-The smoke runner selects JDK 27 independently of the compiler environment. It
+The smoke runner validates and selects Oracle JDK 27 independently of the
+compiler environment and records its actual home, version and vendor. It
 locks the local instance, verifies that it is stopped, backs up only its old
 LootChest JAR, installs the exact candidate, and invokes the maintained launcher.
 It requires clean source metadata, the exact Paper target and checksum, all saved
