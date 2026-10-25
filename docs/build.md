@@ -181,7 +181,9 @@ performed.
 
 This checklist applies to the verified JAR from `563e4ca`, using the artifact
 and checksum recorded above. All items remain pending. Record the results
-against that exact JAR before release approval.
+against that exact JAR before release approval. Use the
+[step-by-step plan below](#step-by-step-manual-gameplay-test-plan-for-563e4ca)
+to execute and record these checks in a later test session.
 
 - [ ] **Clients and permissions:** Test Java and Floodgate/Bedrock accounts.
   Preserve usernames and Bedrock prefixes; use actual server UUIDs for permission
@@ -218,3 +220,357 @@ setup. See the [manual approval checklist](releases/paper-26.3-stable.md#remaini
 and [CMI in-game notes](releases/compatibility-2026-10-20.md#in-game-approval)
 for the existing test context. Adding this checklist does not record gameplay
 approval or change the verified artifact.
+
+## Step-by-step manual gameplay test plan for 563e4ca
+
+This plan is for later execution. Every gameplay case remains pending; adding
+these instructions does not run tests, start a server, deploy an artifact, or
+record release approval. Use the existing verified
+`target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar` from `563e4ca`, with SHA-256
+`ae6aad1457388f12e79738dd96a84685fa90bda67a7196f497b5166540a775a6`.
+Do not rebuild it for this plan.
+
+The intended fixture is the isolated Paper 26.3 build 207 server under
+`servers/Paper-26.3/`, running on installed Oracle Java 27. Server preparation
+and startup require a separate authorized session; this plan supplies no launch
+or deployment commands. Leave `servers/Paper-26.2/` and the shared server at
+`/Users/floris/MinecraftServer/test-1mb-3.14-mc-26.3` untouched.
+
+Commands with `/` are in-game commands unless stated otherwise. Console commands
+omit `/`. Replace `<PLAYER>` with the exact online username, preserving any
+Floodgate prefix, and `<BOX>` with the recorded test Lootbox name. Replace
+`<ADMIN_UUID>` only with the administrator's authoritative server UUID from
+trusted local records. Do not use a nickname, generate a UUID from a name, or
+query an external identity service. See the [command reference](commands.md).
+
+### 1. Confirm the candidate and record the baseline
+
+Once the isolated fixture is separately available, connect with a Java 26.3
+client to `127.0.0.1:32931` as the test administrator and run:
+
+```text
+/lc info
+/lc audit
+/lc list
+/lc tp newtest1
+```
+
+Expected: version `2.5.9.3-230`, build `230`, source `563e4ca23c34` without a
+dirty marker, Paper 26.3 build 207 `STABLE`, and API `26.3.build.207-stable`.
+The Java 25 value in plugin build information describes the bytecode target;
+the fixture runtime must be Oracle Java 27. The recorded integration versions
+are CMI `9.8.11.0` and CMILib `1.6.1.0`.
+
+Save the initial audit and list output. Use a clear test area near the existing
+fixtures and create new names beginning with `qa563_`. Preserve the original
+fixtures, including `newtest1`.
+
+### 2. Establish administrator and ordinary-player roles
+
+Use a non-OP ordinary player with no LootChest administration permissions or
+Bolt bypass. If a fresh test administrator needs temporary access, use this
+console command with their actual server UUID:
+
+```text
+lp user <ADMIN_UUID> permission settemp lootchest.admin true 1h deny
+```
+
+Expected: the temporary permission applies to that UUID. If the temporary grant
+already exists, inspect it instead of replacing it. Record whether this session
+created the grant so cleanup removes only that grant. The command follows the
+[LuckPerms permission command syntax](https://github.com/LuckPerms/wiki/blob/master/pages/Permission-Commands.md).
+
+Repeat the player-facing cases with a Floodgate/Bedrock account when a suitable
+fixture is available. The current fixture has no Geyser/Floodgate setup, so mark
+Bedrock coverage **BLOCKED**, not passed, until that setup is separately provided.
+
+### 3. Create a deterministic test Lootbox
+
+Place a single chest containing eight diamonds and one renamed, enchanted tool.
+If Bolt automatically locks it, run `/bolt unlock` and select the chest before
+ordinary-player tests. While looking at the filled chest, run:
+
+```text
+/lc create qa563_chest
+```
+
+In the editor, verify the saved contents and set every occupied reward slot to
+100% chance. Close the editor, then run:
+
+```text
+/lc randomspawn qa563_chest 0
+/lc maxfilledslots qa563_chest 0
+/lc setprotection qa563_chest 0
+/lc settime qa563_chest 10
+/lc setholo qa563_chest <gold>QA 563 Chest
+/lc respawn qa563_chest
+/lc getname
+/lc audit qa563_chest
+```
+
+Expected: creation opens the editor, the targeted block is `qa563_chest`, the
+reward template matches the recorded contents, and the audit shows no new
+problem. The box stays at its chosen location. `settime` takes minutes and
+immediately respawns the box; each deliberate respawn creates a new reward roll.
+
+### 4. Verify command permissions
+
+As the ordinary player, run:
+
+```text
+/lc info
+/lc create qa563_denied
+/lc edit qa563_chest
+/lc give qa563_chest <PLAYER>
+/lc respawn qa563_chest
+/lc reload
+```
+
+Expected: `/lc info` succeeds. The administration commands are denied without
+creating a definition, opening an editor, delivering rewards, respawning the
+box, or reloading the plugin. The ordinary player can open the unlocked box
+when its LootChest protection period is disabled.
+
+### 5. Exercise collection, breaking, and timed respawn
+
+As the ordinary player, take only part of the contents and close the inventory.
+With the recorded fixture configuration, the box remains with the leftovers.
+Empty it and close again: the physical container and its effects disappear.
+The fixture enables natural destruction, so count any configured empty-container
+item drop separately from reward items.
+
+As the administrator, run:
+
+```text
+/lc respawn qa563_chest
+```
+
+Break the box in survival mode and count the drops. Expected: remaining rewards
+drop once, the physical box disappears, and its saved definition remains.
+Then run:
+
+```text
+/lc settime qa563_chest 1
+```
+
+Empty and close the newly spawned box promptly. Wait without forcing another
+spawn. Expected: one replacement appears about one minute after the forced
+spawn, with the saved reward template and effects. Finish with:
+
+```text
+/lc audit qa563_chest
+/lc settime qa563_chest 10
+```
+
+### 6. Repeat the lifecycle for every supported container
+
+Create separately named `qa563_` fixtures and repeat create, edit, open, collect,
+break, respawn, and reload for all 28 supported variants:
+
+- Chest, trapped chest, and barrel.
+- Uncolored shulker box and all 16 colored shulker boxes.
+- Base, exposed, weathered, and oxidized copper chests, each waxed and unwaxed.
+
+Use `/lc edit <BOX>` to exercise the type-selection menu as well. Expected:
+every variant registers with the correct type and completes the lifecycle
+without losing its template or duplicating rewards.
+
+Change oxidation or wax state on an already registered copper fixture, including
+a naturally oxidized case, then run:
+
+```text
+/lc reload
+/lc audit <BOX>
+```
+
+Wait for reload completion before auditing. Expected: the live container remains
+recognized, with no type mismatch or missing effects.
+
+### 7. Exercise menus and stale sessions
+
+Run:
+
+```text
+/lc edit qa563_chest
+```
+
+Visit the contents, chances, type, time, particle, and copy menus. Restrict copy
+destinations to the new `qa563_` fixtures. Exercise normal clicks, shift-click,
+drag, double-click, hotbar swaps, offhand swaps, dropping, and creative actions.
+
+Expected: control icons cannot be extracted or displaced. The contents editor
+intentionally permits item movement, and intended edits survive closing and
+reopening it. Repeat with close, quit, reconnect, and reopen.
+
+With an editor open, have a second operator run this console command:
+
+```text
+lc reload
+```
+
+After reload completes, open a fresh editor and save a distinct change. Expected:
+an older session cannot overwrite that change, reopen unexpectedly, or modify
+another Lootbox.
+
+### 8. Verify overflow, metadata, and template isolation
+
+Create `qa563_meta` using real items carrying third-party metadata, custom
+components, and a filled shulker item. Use a chest or barrel for the nested-item
+case. Record the template and make reward chances deterministic as in step 3.
+
+With an empty recipient inventory, run once:
+
+```text
+/lc give qa563_meta <PLAYER>
+```
+
+Repeat once with the recipient's inventory full. Expected: each command produces
+exactly one configured reward roll. Overflow drops at the recipient, existing
+inventory contents remain intact, and inventory plus ground totals match the
+intended rewards.
+
+Modify a delivered item, respawn the fixture, and inspect a fresh reward:
+
+```text
+/lc respawn qa563_meta
+```
+
+Expected: names, enchantments, damage, custom data/components, and nested contents
+are preserved; modifying a delivered copy does not alter the saved template.
+Repeat with AutoSell enabled and disabled in a suitable integration fixture.
+AutoSell is absent from the current fixture, so record that coverage as
+**BLOCKED** until it is separately available.
+
+### 9. Verify temporary protection and Bolt protection
+
+As the administrator, run:
+
+```text
+/lc setprotection qa563_chest 10
+/lc respawn qa563_chest
+```
+
+Immediately try opening and breaking the box as the ordinary player. Expected:
+access is denied without rewards or container removal during the protection
+window, then becomes available after expiry. Reset protection:
+
+```text
+/lc setprotection qa563_chest 0
+```
+
+As the owner, run `/bolt lock private` and select the chest. Have an untrusted,
+non-OP player attempt to open and break it. Expected: Bolt denies both actions;
+contents, container, and lifecycle state stay unchanged, and no respawn is
+scheduled by the denied action. Compare `/lc audit qa563_chest` before and after.
+Use `/bolt unlock` and select the chest afterward. See the
+[Bolt command reference](https://github.com/pop4959/Bolt/wiki/#commands).
+
+### 10. Inspect visuals, interactive messages, and CMI recovery
+
+Run:
+
+```text
+/lc list
+/lc audit qa563_chest
+/lc setholo qa563_chest <gold>QA 563 Updated
+/lc respawn qa563_chest
+```
+
+Expected: clicking a list entry opens its editor; clicking the chest name in
+targeted audit output teleports to it. Hover text and colors render correctly.
+Exactly one updated hologram appears at the intended location. Select different
+particle effects through the editor and inspect their placement and cleanup.
+
+Run the CMILib clickable-message check:
+
+```text
+/cmi ctellraw <PLAYER> <T>&aCMILib click test</T><H>&eRuns /lc info</H><C>/lc info</C>
+```
+
+Expected: the recipient sees the hover hint, and clicking runs `/lc info`.
+Compare the existing floating `ICON:` and static `SICON:` displays near
+`spawn:-15,73,-55`. Then run:
+
+```text
+/cmi hologram reload
+/lc reload
+```
+
+Expected: LootChest reload restores transient holograms discarded by the CMI
+reload, once each, without orphaned displays. Repeat `/lc reload` while standing
+still to check client refresh. See the
+[CMI in-game notes](releases/compatibility-2026-10-20.md#in-game-approval).
+
+The current fixture has `Timer_on_hologram.Show_Timer_On_Hologram` set to false.
+During the later session, temporarily enable it in the isolated configuration,
+reload, confirm the displayed countdown advances, then restore the original
+setting and reload again.
+
+### 11. Test concurrency and interruptions
+
+Respawn a counted fixture and have two ordinary players loot it simultaneously,
+including rapid clicks and competing open/break actions. Expected: total rewards
+across both players, the chest, and ground equal one spawn's contents. Count
+intentional additional respawns and `/lc give` calls as separate reward rolls.
+
+Repeat with disconnects, kicks, death, and world changes. For the kick case, use
+this console command:
+
+```text
+kick <PLAYER> QA reconnect check
+```
+
+After reconnecting or returning, run:
+
+```text
+/lc audit <BOX>
+```
+
+Expected: no stale access, duplicate effects, duplicate rewards, or broken
+lifecycle state.
+
+On a separately prepared disposable copy with recoverable backups, exercise
+shutdown during reload using console commands:
+
+```text
+lc reload
+stop
+```
+
+After separately controlled recovery, inspect `/lc info`, `/lc audit`, saved
+definitions, and reward templates. Forced termination between persistence stages
+and disk-full failures require a disposable, size-limited environment. Keep
+those cases **BLOCKED** until that environment and recovery procedure are
+prepared; an ordinary clean shutdown does not satisfy them.
+
+### 12. Clean up and record the outcome
+
+Remove the test definitions:
+
+```text
+/lc remove qa563_chest
+/lc remove qa563_meta
+```
+
+Repeat for every other recorded `qa563_` fixture. Remove test Bolt locks and
+restore configuration changes. Only if step 2 created a temporary grant for this
+session and it is still present, remove it using the console:
+
+```text
+lp user <ADMIN_UUID> permission unsettemp lootchest.admin
+```
+
+Run:
+
+```text
+/lc list
+/lc audit
+```
+
+Expected: the test definitions and displays are gone, original fixtures remain,
+and no new audit findings remain compared with the baseline.
+
+Record **PASS**, **FAIL**, or **BLOCKED** for each case, with the client type,
+exact JAR checksum, commands, reward counts, screenshots, and relevant logs.
+Release approval remains pending while any required case is failed, blocked,
+or not executed.
