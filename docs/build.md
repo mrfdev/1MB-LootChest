@@ -183,7 +183,8 @@ This checklist applies to the verified JAR from `563e4ca`, using the artifact
 and checksum recorded above. All items remain pending. Record the results
 against that exact JAR before release approval. Use the
 [step-by-step plan below](#step-by-step-manual-gameplay-test-plan-for-563e4ca)
-to execute and record these checks in a later test session.
+to execute these checks in a later test session, then record outcomes in the
+[manual gameplay results table](#manual-gameplay-results-for-563e4ca).
 
 - [ ] **Clients and permissions:** Test Java and Floodgate/Bedrock accounts.
   Preserve usernames and Bedrock prefixes; use actual server UUIDs for permission
@@ -570,7 +571,74 @@ Run:
 Expected: the test definitions and displays are gone, original fixtures remain,
 and no new audit findings remain compared with the baseline.
 
-Record **PASS**, **FAIL**, or **BLOCKED** for each case, with the client type,
+Record **PASS**, **FAIL**, or **BLOCKED** for each case in the
+[results table](#manual-gameplay-results-for-563e4ca), with the client type,
 exact JAR checksum, commands, reward counts, screenshots, and relevant logs.
 Release approval remains pending while any required case is failed, blocked,
 or not executed.
+
+## Manual gameplay results for 563e4ca
+
+This table applies only to the verified
+`target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar`, built from
+`563e4ca23c34f9a33dd54039653fe0d96f508fba` with `source.dirty=false`, SHA-256
+`ae6aad1457388f12e79738dd96a84685fa90bda67a7196f497b5166540a775a6`.
+The fixture target is isolated Paper 26.3 build 207 on installed Oracle Java 27.
+The automated results above do not complete any manual gameplay row.
+
+No manual gameplay run has been recorded. A blank result or tester/date cell
+means **not run / not recorded**, not a pass. The four prefilled **BLOCKED**
+results describe prerequisite gaps already identified in the plan; they are
+not observed gameplay failures. All manual approval items remain outstanding.
+
+Use only these recorded result values:
+
+- **PASS:** The case was executed against this exact JAR, every listed action
+  and variant met the plan's expected results, and evidence is linked.
+- **FAIL:** An executed action differed from the expected result. Record the
+  reproduction steps, expected and actual behavior, and evidence.
+- **BLOCKED:** A prerequisite prevents execution or completion. Record the
+  specific blocker and what is needed to resume the case.
+
+Step numbers refer to the [manual test plan](#step-by-step-manual-gameplay-test-plan-for-563e4ca).
+For each run, record the tester and date/time with timezone, client edition and
+version, fixture/runtime/plugin versions, exact JAR checksum, commands, reward
+counts, and links to screenshots and logs. Keep prior failure evidence when
+recording a retest. For grouped cases, record each variant or action separately
+in the linked evidence; do not mark the group PASS after testing only a subset.
+Repeat player-facing cases on Bedrock and keep those results separate from Java
+results, using additional rows if needed.
+
+| Case | Plan step and manual check | Client | Result | Tester / date | Evidence, notes, or blocker |
+| --- | --- | --- | --- | --- | --- |
+| 01 | 1: Candidate identity and initial `/lc info`, `/lc list`, `/lc audit` baseline | Java | | | Capture the reported build/source and preserve the original-fixture baseline. |
+| 02 | 2: Administrator and non-OP roles; UUID-targeted temporary permission if needed | Java | | | Record effective permissions, absence of ordinary-player bypasses, and any session-created grant. |
+| 03 | 2 and all player-facing cases: Floodgate/Bedrock identity, permissions, and gameplay | Bedrock | BLOCKED | | Current fixture has no Geyser/Floodgate setup. Requires a suitable fixture and Bedrock account; preserve the username prefix and actual server UUID. |
+| 04 | 3: Deterministic `qa563_chest` creation, editor, reward chances, and configuration | Java | | | Record the template, 100% slot chances, fixed location, and targeted audit output. |
+| 05 | 4: Public info and denied create/edit/give/respawn/reload commands | Java | | | Capture each command result and confirm denied commands have no side effects. |
+| 06 | 5: Partial collection, empty close, survival break, forced and timed respawn | Java | | | Record reward/drop totals and respawn timing; count empty-container drops separately. |
+| 07 | 6: Chest, trapped chest, and barrel lifecycle and type menu | Java | | | Record create/edit/open/collect/break/respawn/reload for all three types. |
+| 08 | 6: Uncolored and all 16 colored shulker variants | Java | | | Record the full lifecycle for each of the 17 variants. |
+| 09 | 6: All eight copper oxidation/wax variants | Java | | | Record the full lifecycle for each combination of oxidation state and wax state. |
+| 10 | 6: Registered copper oxidation/wax changes and reload | Java | | | Include natural oxidation, post-reload audit, and effect placement/cleanup. |
+| 11 | 7: Menu controls and all inventory input paths | Java | | | Cover click, shift-click, drag, double-click, hotbar, offhand, drop, and creative actions; distinguish intentional contents edits from control-icon extraction. |
+| 12 | 7: Close, quit, reconnect, and stale editor after reload | Java | | | Demonstrate that an old session cannot overwrite a fresh saved edit or affect another box. |
+| 13 | 8: `/lc give` with empty and full inventories | Java | | | Record recipient inventory plus ground totals for each deliberate reward roll and check existing items remain intact. |
+| 14 | 8: Third-party metadata, components, nested contents, and template isolation | Java | | | Compare original template, delivered copy, modified copy, and fresh reward. |
+| 15 | 8: AutoSell enabled and disabled | Java; repeat on Bedrock | BLOCKED | | AutoSell is absent from the current fixture. Requires a suitable integration fixture and evidence for both settings. |
+| 16 | 9: Temporary post-spawn protection and expiry | Java | | | Record denied open/break attempts, unchanged rewards/container, and access after expiry. |
+| 17 | 9: Bolt private lock with an untrusted non-OP player | Java | | | Compare audit before/after denied open/break; confirm no delivery, removal, or respawn scheduling. |
+| 18 | 10: Particles, hologram names/placement/cleanup, and `ICON:` versus `SICON:` | Java | | | Capture visuals before and after edits/respawns and check for duplicate or orphaned effects. |
+| 19 | 10: List/audit clicks, hover text, colors, and CMILib clickable message | Java | | | Record editor/teleport actions and the message click running `/lc info`. |
+| 20 | 10: CMI hologram reload recovery and stationary `/lc reload` | Java | | | Confirm one restored display per box and client refresh while standing still. |
+| 21 | 10: Hologram countdown with timer display temporarily enabled | Java | | | Record countdown progression and restoration of the original configuration. |
+| 22 | 11: Simultaneous looting, rapid clicks, and competing open/break actions | Two Java players; repeat with Bedrock | | | Reconcile both inventories, chest, and ground against each intentional spawn's contents. |
+| 23 | 11: Disconnect, kick, death, and world-change interruptions | Java | | | Record each interruption, reconnect/return behavior, reward totals, and final audit. |
+| 24 | 11: Shutdown during reload and recovery on a disposable copy | Java / console | | | Record shutdown/recovery logs, saved definitions/templates, and post-recovery info/audit. |
+| 25 | 11: Forced termination between persistence stages | Java / console | BLOCKED | | Requires a prepared disposable copy, recoverable backup, controlled failure point, and recovery procedure before execution. |
+| 26 | 11: Disk-full failure and recovery | Java / console | BLOCKED | | Requires a disposable, size-limited environment with backups and a recovery procedure; never fill the host filesystem. |
+| 27 | 12: Test fixtures, locks, temporary permission, and configuration cleanup | Java / console | | | Compare final list/audit to baseline; confirm original fixtures remain and session-created changes are removed. |
+
+Release approval remains pending until every required case and client variant
+has a recorded PASS with evidence. Blank results and BLOCKED cases remain
+unfinished; no PASS or FAIL gameplay outcome is asserted by adding this table.
