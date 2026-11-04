@@ -21,7 +21,7 @@ class PluginDescriptorTest {
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
 
             assertEquals(
-                    List.of("CMI", "CMILib", "Multiverse-Core", "Bolt"),
+                    List.of("CMI", "CMILib", "Multiverse-Core", "Bolt", "1MB-CMIAPI-AutoSell"),
                     descriptor.getStringList("softdepend"));
             assertEquals("op", descriptor.getString("permissions.lootchest.audit.default"));
             assertTrue(descriptor.getBoolean("permissions.lootchest.*.children.lootchest.audit"));

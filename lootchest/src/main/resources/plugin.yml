@@ -3,7 +3,7 @@ main: ${project.groupId}.Main
 version: ${project.version}-${buildNumber}
 author: Black_Eyes
 api-version: '${paperVersion}'
-softdepend: [CMI, CMILib, Multiverse-Core, Bolt]
+softdepend: [CMI, CMILib, Multiverse-Core, Bolt, 1MB-CMIAPI-AutoSell]
 description: >
              ${project.description}
 commands:

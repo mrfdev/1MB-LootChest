@@ -27,10 +27,13 @@ public class GiveCommand extends SubCommand {
 		Lootchest lc = Main.getInstance().getLootChest().get(chestName);
 		String playerName = args[2];
 		Player player = Bukkit.getPlayerExact(playerName);
-		Messages.msg(sender, "giveto", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", playerName);
         if (player != null) {
+            if (!LootChestUtils.tryFillInventory(lc, player.getInventory(), false, player)) {
+                if (sender != player) Messages.msg(sender, "AutoSellGiveBlocked", "[Player]", player.getName());
+                return;
+            }
+			Messages.msg(sender, "giveto", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", playerName);
             Messages.msg(player, "givefrom", Constants.CHEST_PLACEHOLDER, chestName, "[Player]", sender.getName());
-			LootChestUtils.fillInventory(lc, player.getInventory(), false, player);
 		}
 	}
 }

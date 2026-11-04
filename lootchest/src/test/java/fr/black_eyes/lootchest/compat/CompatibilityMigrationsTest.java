@@ -159,10 +159,30 @@ class CompatibilityMigrationsTest {
                   read_only: "<gray>My footer"
                 """);
 
+        assertTrue(CompatibilityMigrations.migrateLanguage(language));
         assertFalse(CompatibilityMigrations.migrateLanguage(language));
         assertEquals("<white>My summary", language.getString("audit.summary"));
         assertEquals("<yellow>My finding", language.getString("audit.finding"));
         assertEquals("<gray>My footer", language.getString("audit.read_only"));
+    }
+
+    @Test
+    void upgradesExistingAutoSellMessagesWithoutOverwritingCustomizations() throws Exception {
+        YamlConfiguration language = yaml("custom: keep-me\n");
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("lang.yml")) {
+            assertNotNull(stream);
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            assertTrue(CompatibilityMigrations.migrateLanguage(language));
+            for (String key : List.of("AutoSellCannotOpen", "AutoSellCannotCollect", "AutoSellBusy",
+                    "AutoSellUnavailable", "AutoSellGiveBlocked")) {
+                assertEquals(defaults.getString(key), language.getString(key), "Bundled and upgraded wording drifted");
+            }
+        }
+        language.set("AutoSellCannotOpen", "My translated AutoSell instructions");
+        assertFalse(CompatibilityMigrations.migrateLanguage(language));
+        assertEquals("My translated AutoSell instructions", language.getString("AutoSellCannotOpen"));
+        assertEquals("keep-me", language.getString("custom"));
     }
 
     @Test

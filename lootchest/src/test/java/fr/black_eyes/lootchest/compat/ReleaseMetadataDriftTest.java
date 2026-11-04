@@ -24,6 +24,7 @@ class ReleaseMetadataDriftTest {
         Properties release = loadReleaseProperties();
         assertEquals("26.3", required(release, "paper.target"));
         assertEquals("STABLE", required(release, "paper.channel"));
+        assertTrue(Integer.parseInt(required(release, "paper.build")) >= 241);
         assertTrue(required(release, "paper.api").matches("26\\.3\\.build\\.[1-9][0-9]*-stable"));
         var pom = DocumentBuilderFactory.newInstance().newDocumentBuilder()
                 .parse(projectRoot().resolve("pom.xml").toFile());

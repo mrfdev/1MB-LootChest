@@ -25,7 +25,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.black_eyes.lootchest.commands.CommandHandler;
 import fr.black_eyes.lootchest.listeners.DeleteListener;
+import fr.black_eyes.lootchest.listeners.LootRewardDropListener;
 import fr.black_eyes.lootchest.listeners.UiListener;
+import fr.black_eyes.lootchest.integrations.AutoSellGuard;
 import fr.black_eyes.lootchest.index.BlockLocationIndex;
 import fr.black_eyes.lootchest.particles.ParticleCatalog;
 import fr.black_eyes.lootchest.scheduler.TaskRegistry;
@@ -67,6 +69,7 @@ public class Main extends JavaPlugin {
 	@Getter private LootChestFiles configFiles;
 	private DeleteListener deleteListener;
 	@Getter private BuildInfo buildInfo = BuildInfo.unknown();
+	@Getter private final AutoSellGuard autoSellGuard = new AutoSellGuard();
 	@Getter private String hologramIntegrationStatus = "disabled during startup";
 	@Getter private boolean chestWorkInProgress;
 	private LootChestFiles.PreparedReload pendingReload;
@@ -336,6 +339,7 @@ public class Main extends JavaPlugin {
 		PluginManager pluginManager = Bukkit.getPluginManager();
 		deleteListener = new DeleteListener();
 		pluginManager.registerEvents(deleteListener, this);
+		pluginManager.registerEvents(new LootRewardDropListener(), this);
 		pluginManager.registerEvents(new UiListener(uiHandler), this);
 	}
 

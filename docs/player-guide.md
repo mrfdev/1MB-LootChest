@@ -9,7 +9,8 @@ Particles, announcements, and a floating name can help you spot an available box
 ## How Players Use It
 
 1. Find an available Lootbox in the world or follow a server announcement.
-2. Open it and collect the contents, or break it when that location allows it.
+2. If AutoSell is on, run `/autosell toggle` to turn it off. Then open the box
+   and collect the contents, or break it when that location allows it.
 3. The container may disappear after it is emptied or closed.
 4. Wait for its configured respawn before collecting from that location again.
 
@@ -64,6 +65,11 @@ opening an available Lootbox does not itself require a Lootbox command permissio
 ## Important Notes
 
 - A full inventory can cause directly granted rewards to drop nearby.
+- AutoSell must be off before opening a Lootbox or collecting its dropped loot.
+  If you switch it on while a Lootbox is open, taking items is blocked until you
+  turn it off again. Wait briefly if AutoSell is still saving the off setting.
+- Store the rewards you want to keep before switching AutoSell back on. Ordinary
+  reward items already in your inventory can then become eligible for selling.
 - Emptying or closing a Lootbox may remove its physical container until the next respawn.
 - A missing container is not necessarily broken; it may be waiting for its timer.
 - Particles and holograms are visual aids. The physical container and server messages

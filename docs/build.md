@@ -1,5 +1,11 @@
 # Local build and JDK setup
 
+The current candidate is build 231 on Paper 26.3 STABLE build 241. See the
+[AutoSell verification record](releases/autosell-2026-11-04.md) for the observed
+Oracle compiler/test paths, bytecode target, integrated and standalone test
+workflow, and remaining real-client gameplay checks. The older results below
+are retained as historical evidence.
+
 Run the maintained build from the repository root:
 
 ```bash

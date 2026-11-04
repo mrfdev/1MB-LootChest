@@ -15,14 +15,14 @@ the resolver runs `/usr/libexec/java_home -F -v 27`, or validates the explicit
 installed home in `ONE_MB_TEST_JAVA_HOME`. It checks the actual major version
 and Oracle vendor and never downloads a JDK or falls back to another vendor.
 New Oracle 27 patch installations require no launcher edits.
-Its active server JAR is `Paper-26.3-207.jar`, channel `STABLE`, SHA-256
-`2df3b846f70716907d380915cc026667a9cadedf99b1ec680b0c5ff0e6132526`.
+Its active server JAR is `Paper-26.3-241.jar`, channel `STABLE`, SHA-256
+`ea1081663127a4256ca8ce500899a44b896c3a834a8bfac65d1e58ee1f1bee13`.
 The root POM pins the same build/API and checksum. Maven and compilation of
 plugin and test sources use Oracle JDK 25, retaining Java 25 bytecode. Unit and
 integration tests run in Oracle JDK 27 forks. See [the build guide](build.md).
 Paper's minimum runtime is Java 25; Java 27 is this project's selected test
-runtime, not a Paper minimum. Stable build 207 was selected on 2026-10-20.
-Its API dependency is `26.3.build.207-stable`.
+runtime, not a Paper minimum. Stable build 241 was selected on 2026-11-04.
+Its API dependency is `26.3.build.241-stable`.
 
 The clone binds `127.0.0.1:32931` for Minecraft TCP; query UDP `32932` and
 RCON TCP `32933` are separately assigned but disabled. PaperScript uses session
@@ -50,6 +50,14 @@ versions. The shared server is not used:
 | LuckPerms | 5.5.81 | 5.5.85 |
 | PyroLib | 1.4.8 | 1.6.0 |
 | Bolt | absent | 1.2.20 |
+| 1MB-Lib-Core | absent | 1.0.4-834 |
+| 1MB-Lib-AutoSell | absent | 1.0.4-834 |
+
+The Core and AutoSell JARs were copied from the local 1MB-Library candidate
+artifacts on 2026-11-04 for the AutoSell integration checks. Only this isolated
+fixture was changed. The before-update server, world, plugin data, launcher
+state, JAR and build reports are preserved in
+`archive/autosell-20261104-before-changes/`.
 
 Existing PlaceholderAPI 2.12.3, Vault 1.7.3-CMI, PyroWelcomesPro 0.5.1 and
 mcMMO 2.2.049 remain. LootChest directly compiles only against the existing
@@ -61,7 +69,7 @@ Build the clean source, then run:
 ```bash
 ./mvnw clean verify
 python3 -m unittest discover -s scripts -p 'test_*.py' -v
-./scripts/smoke-paper-26.3.py target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
+./scripts/smoke-paper-26.3.py target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
 ```
 
 The smoke runner validates and selects Oracle JDK 27 independently of the
@@ -120,7 +128,7 @@ when CMI/CMILib and the rest of the integration stack are absent:
 
 ```bash
 ./scripts/smoke-paper-26.3.py --without-integrations \
-  target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
+  target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
 ```
 
 This profile temporarily moves only local optional plugin JARs into that run's

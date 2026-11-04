@@ -6,11 +6,12 @@ candidate testing happen on a `codex/<feature>` branch.
 
 ## Candidate Checklist
 
-1. Start from current `master` and create a feature branch. For this upgrade,
-   continue the existing build-229 source on `codex/paper-26.3`.
+1. Start from the current verified source and create a feature branch. Until
+   the stable migration is approved into `master`, continue from
+   `codex/lootchest-autosell-guard` (the Oracle 25/27 workflow plus AutoSell protection).
 2. Increment `revision` for a semantic release and increment `buildNumber`
    exactly once in the root `pom.xml`. This release reserves version `2.5.9.3`
-   and build `230`. Reuse that number after failures.
+   and build `231`. Reuse that number after failures.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
 5. Build from that clean commit with `./mvnw clean verify` from the repository
@@ -19,7 +20,7 @@ candidate testing happen on a `codex/<feature>` branch.
    test JVMs. It discovers installed homes dynamically without patch pins or
    automatic JDK downloads; see [the build guide](build.md). Keep the Java
    compiler release/source/target at 25 and Paper
-   at 26.3 build 207 `STABLE`, API `26.3.build.207-stable`. Preserve historical
+   at 26.3 build 241 `STABLE`, API `26.3.build.241-stable`. Preserve historical
    artifacts and reports in `archive/` before cleaning. If unrelated working changes exist, build from a clean worktree of
    the candidate commit. The package phase runs the
    release-jar policy and fails before copying the named artifact if updater,

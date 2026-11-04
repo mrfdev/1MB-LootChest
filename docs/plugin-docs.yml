@@ -8,10 +8,10 @@ player_guide: player-guide.md
 technical_readme: ../README.md
 java_target: "25"
 paper_target: "26.3"
-paper_build: "207"
+paper_build: "241"
 paper_channel: STABLE
-paper_api: 26.3.build.207-stable
+paper_api: 26.3.build.241-stable
 plugin_version: 2.5.9.3
-build_number: "230"
+build_number: "231"
 official_project: true
 repository: mrfdev/1MB-LootChest

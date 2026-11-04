@@ -39,8 +39,8 @@ def validate_target(props):
     require(props['paperVersion'] == '26.3' and props['maven.compiler.release'] == '25',
             'Expected Paper 26.3 and Java 25 compilation')
     require(props['paperChannel'] == 'STABLE', 'Compatibility testing requires Paper STABLE')
-    require(props['paperBuild'].isdigit() and int(props['paperBuild']) > 0,
-            'Paper build must be a positive reproducible pin')
+    require(props['paperBuild'].isdigit() and int(props['paperBuild']) >= 241,
+            'Paper 26.3 STABLE build 241 or newer is required')
     require(props['paperApiVersion'] == f"26.3.build.{props['paperBuild']}-stable",
             'Paper API must match the pinned stable server build')
     require(re.fullmatch(r'[0-9a-f]{64}', props['paperSha256']),
@@ -83,14 +83,15 @@ def installed_probe(plugins):
     require(not path.exists() and not path.is_symlink(), 'Remove the stale smoke probe first')
     try:
         with zipfile.ZipFile(path, 'x', zipfile.ZIP_DEFLATED) as zipped:
-            for compiled in sorted(probe_class.parent.glob('PaperRuntimeProbe*.class')):
+            for compiled in sorted(list(probe_class.parent.glob('PaperRuntimeProbe*.class'))
+                                   + list(probe_class.parent.glob('AutoSellRuntimeChecks*.class'))):
                 zipped.write(compiled, compiled.relative_to(classes))
             zipped.writestr('plugin.yml', '''name: LootChestSmokeProbe
 version: '1'
 main: fr.black_eyes.lootchest.compat.PaperRuntimeProbe
 api-version: '26.3'
 depend: [LootChest]
-softdepend: [CMI, CMILib]
+softdepend: [CMI, CMILib, 1MB-CMIAPI-AutoSell]
 commands:
   lootchestprobe:
     description: Isolated console-only compatibility checks
@@ -210,6 +211,9 @@ def run():
             'PaperScript must use the distinct LootChest session name')
     plugins = INSTANCE / 'plugins'
     identities = {path: identity(path) for path in plugins.glob('*.jar')}
+    if not args.without_integrations:
+        require('1MB-CMIAPI-AutoSell' in identities.values() and '1MB-CMIAPI-Lib' in identities.values(),
+                'The integrated AutoSell checks require the actual local AutoSell and Core fixture JARs')
     require('DiscordSRV' not in identities.values(), 'DiscordSRV must remain inactive')
     require(all(name not in ('LootChest', 'DiscordSRV') for path in (plugins / 'update').glob('*.jar')
                 for name in [identity(path)]), 'Remove pending LootChest or DiscordSRV update JARs')
@@ -268,6 +272,10 @@ def run():
             'item_metadata': 'PDC, data components and nested shulker contents preserved',
             'copper_effects': 'all eight oxidation/wax states reactivate; unrelated barrel rejected',
             'async_api': 'off-thread mutation refused before world access',
+            'autosell': ('absent; standalone opening allowed for Java and Bedrock identities'
+                         if args.without_integrations else
+                         'actual AutoSell: opening, live toggle, clicks/actions, drag, creative, break, drops, '
+                         'safe-off wait, full inventory, rename and retry; Java and Bedrock UUIDs'),
             'holograms': ('optional integration absent' if args.without_integrations else
                           'CMI registry, transient settings, text updates, timers and despawn cleanup'),
             'profile': 'standalone' if args.without_integrations else 'integrated',
@@ -328,6 +336,7 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
         command('lootchestprobe async', 'PROBE PASS async API refused before world access')
         command('lootchestprobe copper',
                 'PROBE PASS all eight copper states reactivate effects; barrel rejected')
+        command('lootchestprobe autosell', 'PROBE PASS AutoSell collection safety')
         if not without_integrations:
             command('lootchestprobe holograms', 'PROBE PASS CMI registry, transience and text updates')
         command('lc reload', 'Configuration, locale, chest data, and LootChests were reloaded.')

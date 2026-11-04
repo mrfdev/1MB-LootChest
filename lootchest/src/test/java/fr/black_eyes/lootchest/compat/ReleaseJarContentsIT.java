@@ -54,7 +54,9 @@ class ReleaseJarContentsIT {
             "fr/black_eyes/lootchest/fall_effect/v_26_2/FallingPackage.class",
             "fr/black_eyes/lootchest/v_1_21/LegacyAdapter.class",
             "fr/black_eyes/lootchest/simpleJavaPlugin/Files.class",
-            "fr/black_eyes/lootchest/compat/PaperRuntimeProbe.class"
+            "fr/black_eyes/lootchest/compat/PaperRuntimeProbe.class",
+            "fr/black_eyes/lootchest/compat/AutoSellRuntimeChecks.class",
+            "com/onemb/cmiapi/lib/RewardDeliveryDecision.class"
     })
     void policyRecognizesEveryForbiddenClassFamily(String entry) {
         assertTrue(forbiddenReason(entry).isPresent(), entry);
@@ -92,8 +94,11 @@ class ReleaseJarContentsIT {
         String lower = entry.toLowerCase(Locale.ROOT);
         String simpleName = lower.substring(lower.lastIndexOf('/') + 1);
 
-        if (simpleName.startsWith("paperruntimeprobe")) {
+        if (simpleName.startsWith("paperruntimeprobe") || simpleName.startsWith("autosellruntimechecks")) {
             return Optional.of("test-only runtime probe");
+        }
+        if (lower.startsWith("com/onemb/")) {
+            return Optional.of("optional library or test-only API fixture");
         }
         if (lower.contains("/simplejavaplugin/")) {
             return Optional.of("shaded configuration framework");

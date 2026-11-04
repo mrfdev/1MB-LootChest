@@ -44,6 +44,49 @@ After `/cmi hologram reload` or `/cmi reload holograms`, run `/lc reload`.
 CMI rebuilds its registry from permanent definitions and can discard third-party
 transient entries. A normal server restart establishes them in plugin load order.
 
+## 1MB-Library AutoSell
+
+Lootbox optionally integrates with `1MB-CMIAPI-AutoSell`. The verified runtime
+pair is `1MB-Lib-Core` and `1MB-Lib-AutoSell` version `1.0.4-834`. AutoSell's
+public `RewardDeliveryGuard.preview(Player)` and
+`prepare(Player, MANUAL_CLAIM, "LootChest")` methods are checked on the server
+thread for the actual recipient UUID on every action. No username lookup,
+player-data file read, command dispatch or cached player decision is used.
+
+AutoSell's public API is not published in a Maven repository. The small optional
+bridge resolves only those public methods and `RewardDeliveryDecision` accessors
+through AutoSell's class loader. It checks their signatures and fails closed
+when an active plugin has an incompatible API or throws an error. No library
+classes are bundled, and no private AutoSell or Paper internals are used in
+production. The runtime test probe alone seeds temporary synthetic profiles.
+
+While AutoSell is on, opening, inventory interactions, breaking, `/lc give`, and
+direct player delivery are refused before moving loot. The opening message says:
+
+> You cannot open this LootChest yet because AutoSell is on. Run "/autosell toggle" to turn it off, then try again.
+
+The check repeats for clicks, shift-click, drag, double-click, number keys,
+offhand, dropping and creative actions in an already open Lootbox. AutoSell's
+pending safe-off save or transaction also blocks collection until the player
+retries and the provider allows it. No automatic reward retry or automatic
+delivery mode is used. Give-command success messages are sent only after an
+allowed delivery.
+
+Loot dropped by breaking, direct-delivery overflow, or dropping while the
+Lootbox is open carries a persistent marker on the **item entity**. The reward's
+ItemStack, PDC and components are unchanged. Players with AutoSell on cannot pick
+up marked loot; repeated pickup messages are limited to one every two seconds.
+While AutoSell is installed and enabled, merging marked drops into ordinary
+drops and hopper pickup of marked drops are blocked to preserve that identity.
+Ordinary chests and unmarked drops are unaffected. Without AutoSell, normal
+collection and hopper behavior remain available.
+
+This is protection at collection time. After a player safely takes loot, they
+must store it before deliberately enabling AutoSell again. Items dropped outside
+the Lootbox after collection, existing ground items from older versions, and
+third-party plugins that replace item entities do not acquire this marker.
+Normal loot despawn timers and other players' authorized collection still apply.
+
 ## Bolt
 
 Bolt `1.2.20` is the supported 1MoreBlock block-protection integration. Bolt is a

@@ -4,7 +4,7 @@ Lootbox is the custom 1MoreBlock edition of LootChest. It creates repeatable,
 staff-configured loot containers with randomized contents, respawn timers,
 announcements, particles, and CMI holograms.
 
-The maintained target is **Paper 26.3 build 207 (STABLE)** with **Java 25 bytecode**,
+The maintained target is **Paper 26.3 build 241 (STABLE)** with **Java 25 bytecode**,
 built using **Oracle JDK 25** and tested locally on **Oracle JDK 27**. Paper requires
 Java 25 or newer. Stable 26.3 is the target for future development and tests;
 manual gameplay approval is still required before promoting a release live.
@@ -15,13 +15,13 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 
 | Component | Target |
 | --- | --- |
-| Server | Paper 26.3 build 207 (`STABLE`) |
-| Paper API | `26.3.build.207-stable` |
+| Server | Paper 26.3 build 241 (`STABLE`) |
+| Paper API | `26.3.build.241-stable` |
 | Java bytecode | Java 25 |
 | Maven and compiler JDK | Installed Oracle JDK 25 |
 | Unit, integration and Paper test JDK | Installed Oracle JDK 27 |
 | Plugin version | `2.5.9.3` |
-| Candidate build | `230` |
+| Candidate build | `231` |
 | Main command | `/lootchest`, alias `/lc` |
 | Holograms | Optional: CMI `9.8.11.0` and CMILib `1.6.1.0` |
 
@@ -35,6 +35,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
   be spawned safely without an additional payload are shown in the editor.
 - Automatic fallback when a saved particle is unavailable after an upgrade.
 - Bolt-compatible protected-container handling through Paper event cancellation.
+- AutoSell checks before opening or collecting loot, including items dropped from a Lootbox.
 - MiniMessage formatting for locale, console, menu, notification, and hologram text.
 - Persistent chest definitions in `plugins/LootChest/data.yml`.
 
@@ -49,6 +50,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Local build and JDK setup](docs/build.md)
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [AutoSell protection and Paper 241 verification](docs/releases/autosell-2026-11-04.md)
 - [October 2026 compatibility checks and in-game test steps](docs/releases/compatibility-2026-10-20.md)
 
 Lootbox does not currently expose or require PlaceholderAPI placeholders.
@@ -75,10 +77,11 @@ The earlier 26.2 rollback source is `v2.5.9.2-paper-26.2`; see the
 `servers/Paper-26.2/` remains intact beside `servers/Paper-26.3/`.
 
 Until this stable migration is gameplay-approved and promoted to `master`,
-start future work from `codex/paper-26.3` so development keeps the stable pins:
+start future work from `codex/lootchest-autosell-guard` so development keeps the
+Oracle toolchain, AutoSell protection and current stable pins:
 
 ```bash
-git switch codex/paper-26.3
+git switch codex/lootchest-autosell-guard
 git switch -c codex/<short-feature-name>
 ```
 
@@ -142,7 +145,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.3.jar
 The current compatibility candidate is:
 
 ```text
-target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
+target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
 ```
 
 The current live-approved release is:
@@ -182,7 +185,7 @@ Run the repeatable local smoke test against the exact clean candidate:
 
 ```bash
 ./scripts/smoke-paper-26.3.py \
-  target/1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
+  target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
 ```
 
 The runner uses the maintained `servers/Paper-26.3/1MB-minecraft.sh` launcher

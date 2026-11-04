@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import org.bukkit.configuration.ConfigurationSection;
@@ -11,6 +12,12 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 /** Deterministic migrations for legacy LootChest YAML files. */
 public final class CompatibilityMigrations {
+    private static final Map<String, String> AUTOSELL_MESSAGES = Map.of(
+            "AutoSellCannotOpen", "<#f38ba8>You cannot open this LootChest yet because AutoSell is on. Run <#89dceb>\"/autosell toggle\"<#f38ba8> to turn it off, then try again.",
+            "AutoSellCannotCollect", "<#f38ba8>You cannot collect this loot while AutoSell is on. Run <#89dceb>\"/autosell toggle\"<#f38ba8> to turn it off, then try again.",
+            "AutoSellBusy", "<#f9e2af>AutoSell is finishing a transaction or saving its off setting. Your loot has not been taken. Please try again shortly.",
+            "AutoSellUnavailable", "<#f38ba8>AutoSell safety could not be checked, so this loot stays protected. Please ask staff for help.",
+            "AutoSellGiveBlocked", "<#f38ba8>Loot was not given to [Player] because the AutoSell safety check blocked collection. The player has been told how to retry.");
     private static final String CHANCES_LORE = "Menu.chances.lore";
     private static final String HELP = "help";
     private static final String OLD_AUDIT_HELP =
@@ -62,6 +69,9 @@ public final class CompatibilityMigrations {
 
     public static boolean migrateLanguage(FileConfiguration language) {
         boolean changed = false;
+        for (var entry : AUTOSELL_MESSAGES.entrySet()) {
+            if (!language.isSet(entry.getKey())) changed |= set(language, entry.getKey(), entry.getValue());
+        }
         String chancesLore = language.getString(CHANCES_LORE);
         if (chancesLore != null && chancesLore.contains("%")) {
             changed |= set(language, CHANCES_LORE, chancesLore.replace("%", ""));

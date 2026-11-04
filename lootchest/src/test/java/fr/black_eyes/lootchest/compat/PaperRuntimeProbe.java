@@ -71,6 +71,10 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                     verifyCopperReactivation();
                     getLogger().info("PROBE PASS all eight copper states reactivate effects; barrel rejected");
                 }
+                case "autosell" -> {
+                    AutoSellRuntimeChecks.run(this, LootChestAPI.getLootChest(FIXTURE));
+                    getLogger().info("PROBE PASS AutoSell collection safety");
+                }
                 case "holograms", "despawned", "timer" -> {
                     check(Bukkit.getPluginManager().isPluginEnabled("CMI")
                                     && Bukkit.getPluginManager().isPluginEnabled("CMILib"),

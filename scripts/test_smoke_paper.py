@@ -46,7 +46,7 @@ class StableSmokeTest(unittest.TestCase):
             root = Path(directory)
             compiled = root / 'lootchest/target/test-classes/fr/black_eyes/lootchest/compat'
             compiled.mkdir(parents=True)
-            names = ('PaperRuntimeProbe.class', 'PaperRuntimeProbe$CmiChecks.class')
+            names = ('PaperRuntimeProbe.class', 'PaperRuntimeProbe$CmiChecks.class', 'AutoSellRuntimeChecks.class')
             for name in names:
                 (compiled / name).write_bytes(b'test-class')
             (compiled / 'UnrelatedTest.class').write_bytes(b'exclude')
@@ -59,13 +59,14 @@ class StableSmokeTest(unittest.TestCase):
                             self.assertEqual(
                                 {'plugin.yml'} | {'fr/black_eyes/lootchest/compat/' + n for n in names},
                                 set(jar.namelist()))
-                            self.assertIn(b'softdepend: [CMI, CMILib]', jar.read('plugin.yml'))
+                            self.assertIn(b'softdepend: [CMI, CMILib, 1MB-CMIAPI-AutoSell]', jar.read('plugin.yml'))
                         raise RuntimeError('simulated failure')
             self.assertFalse((plugins / 'LootChestSmokeProbe.jar').exists())
 
     def test_unstable_or_mismatched_coordinates_are_rejected(self):
         for key, value in [('paperChannel', 'ALPHA'), ('paperChannel', 'BETA'),
                            ('paperVersion', '26.2'), ('paperBuild', '+'),
+                           ('paperBuild', '207'), ('paperBuild', '240'),
                            ('paperApiVersion', '26.3.build.174-beta'),
                            ('paperApiVersion', '26.3.build.999-stable'),
                            ('maven.compiler.release', '27'), ('paperSha256', '')]:

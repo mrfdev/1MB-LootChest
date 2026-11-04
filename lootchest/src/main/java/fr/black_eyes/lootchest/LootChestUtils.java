@@ -22,6 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BlockIterator;
+import fr.black_eyes.lootchest.listeners.LootRewardDropListener;
 
 import static fr.black_eyes.lootchest.Constants.DATA_CHEST_PATH;
 
@@ -159,6 +160,14 @@ public class LootChestUtils  {
 	 * @param p the Player to give the lootchest to, if null, the lootchest is put in the inventory
 	 */
     public static void fillInventory(Lootchest lc, final Inventory inv, final boolean clear, final Player p) {
+        tryFillInventory(lc, inv, clear, p);
+    }
+
+    /** Returns false before touching any inventory when recipient safety refuses delivery. */
+    public static boolean tryFillInventory(Lootchest lc, final Inventory inv, final boolean clear, final Player p) {
+        if (p != null && !Main.getInstance().getAutoSellGuard().allowCollection(p)) {
+            return false;
+        }
         if (clear) {
             inv.clear();
         }
@@ -174,7 +183,8 @@ public class LootChestUtils  {
 	                    inv.setItem(i, item);
 	                }
 	                else if (p != null && p.getInventory().firstEmpty() == -1 && item != null) {
-                            p.getWorld().dropItem(p.getLocation(), item);
+                            LootRewardDropListener.mark(
+                                    p.getWorld().dropItem(p.getLocation(), item));
                     }
 	                else if (item != null) {
 						inv.addItem(item);
@@ -194,9 +204,8 @@ public class LootChestUtils  {
 				}
 			}
 		}
+        return true;
     }
-	
-	
 
 	/**
 	 * Get the name of a menu from the config file

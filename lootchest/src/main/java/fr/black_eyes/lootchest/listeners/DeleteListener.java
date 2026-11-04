@@ -31,10 +31,13 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -125,6 +128,11 @@ public class DeleteListener implements Listener  {
 			return;
 		}
 
+		if (!Main.getInstance().getAutoSellGuard().allowCollection(player, "AutoSellCannotOpen")) {
+			event.setCancelled(true);
+			return;
+		}
+
 		if (Main.configs.radiusWithoutMonstersForOpeningChest <= 0) {
 			return;
 		}
@@ -145,6 +153,33 @@ public class DeleteListener implements Listener  {
 					"CantOpenLootchestBecauseMonster",
 					"[Number]",
 					Integer.toString(nearbyMonsters));
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onLootClick(InventoryClickEvent event) {
+		if (event.getWhoClicked() instanceof Player player
+				&& findLootChestContainer(event.getView().getTopInventory()) != null
+				&& (Main.getInstance().isChestWorkInProgress()
+				|| !Main.getInstance().getAutoSellGuard().allowCollection(player))) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onLootDrag(InventoryDragEvent event) {
+		if (event.getWhoClicked() instanceof Player player
+				&& findLootChestContainer(event.getView().getTopInventory()) != null
+				&& (Main.getInstance().isChestWorkInProgress()
+				|| !Main.getInstance().getAutoSellGuard().allowCollection(player))) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onLootDrop(PlayerDropItemEvent event) {
+		if (findLootChestContainer(event.getPlayer().getOpenInventory().getTopInventory()) != null) {
+			LootRewardDropListener.mark(event.getItemDrop());
 		}
 	}
 
@@ -316,11 +351,15 @@ public class DeleteListener implements Listener  {
 		if (!(block.getState() instanceof Container container)) {
 			return;
 		}
+		if (!Main.getInstance().getAutoSellGuard().allowCollection(event.getPlayer())) {
+			event.setCancelled(true);
+			return;
+		}
 
 		event.setCancelled(true);
 		ChestLifecycle.collectBreakContents(
 				container.getInventory(),
-				item -> block.getWorld().dropItemNaturally(block.getLocation(), item));
+				item -> LootRewardDropListener.mark(block.getWorld().dropItemNaturally(block.getLocation(), item)));
 		if(Main.configs.destroyNaturallyInsteadOfRemovingChest) {
 			lootChestLocation.getWorld().dropItemNaturally(
 					lootChestLocation,

@@ -16,6 +16,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +26,8 @@ class DeleteListenerEventContractTest {
     void lifecycleGuardsRespectEarlierProtectionCancellations() throws ReflectiveOperationException {
         assertHighestIgnoringCancelled("onPlayerInteract", PlayerInteractEvent.class);
         assertHighestIgnoringCancelled("onBeforeOpenInventory", InventoryOpenEvent.class);
+        assertHighestIgnoringCancelled("onLootClick", InventoryClickEvent.class);
+        assertHighestIgnoringCancelled("onLootDrag", InventoryDragEvent.class);
         assertHighestIgnoringCancelled("onChestBreak", BlockBreakEvent.class);
         assertHighestIgnoringCancelled("onEntityExplosion", EntityExplodeEvent.class);
         assertHighestIgnoringCancelled("onBlockExplosion", BlockExplodeEvent.class);
