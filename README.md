@@ -66,17 +66,21 @@ The `origin` remote is the canonical 1MB repository
 (`mrfdev/1MB-LootChest`). The original project is available as `upstream` for
 careful comparison only; do not build releases from an upstream branch.
 
-The current live-approved Paper 26.2 baseline is build 225, preserved by the
-`1mb-lootchest-v2.5.9.1-build225-approved` tag. Build 224 is the immediately
-previous rollback release. Older snapshots remain tagged for history but are not
-development baselines.
+The latest gameplay-approved source is build 230 on Paper 26.3 build 207,
+commit `3dc612feb28e`, preserved on `master` and by the
+`1mb-lootchest-v2.5.9.3-build230-approved` tag. Its
+[approval record](docs/releases/compatibility-2026-10-20.md#approval-record)
+identifies the exact tested JAR. Approval and source promotion did not deploy it
+to a live server. The previous approved Paper 26.2 build 225 remains a rollback
+artifact; older snapshots and build 224 are historical releases.
 
-The Paper 26.3 stable migration continues build 229 on `codex/paper-26.3`.
-The earlier 26.2 rollback source is `v2.5.9.2-paper-26.2`; see the
+Build 231 adds the Oracle 25/27 workflow, AutoSell protection and Paper 26.3
+build 241 pins. Its automated checks passed; manual gameplay approval remains
+pending. The earlier 26.2 snapshot is `v2.5.9.2-paper-26.2`; see the
 [snapshot evidence](docs/releases/paper-26.2-snapshot.md). The stopped instance at
 `servers/Paper-26.2/` remains intact beside `servers/Paper-26.3/`.
 
-Until this stable migration is gameplay-approved and promoted to `master`,
+Until build 231 is gameplay-approved and promoted to `master`,
 start future work from `codex/lootchest-autosell-guard` so development keeps the
 Oracle toolchain, AutoSell protection and current stable pins:
 
@@ -148,10 +152,10 @@ The current compatibility candidate is:
 target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
 ```
 
-The current live-approved release is:
+The latest gameplay-approved release is preserved separately from the candidate:
 
 ```text
-target/1MB-LootChest-v2.5.9.1-225-CMI-j25-26.2.jar
+1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar
 ```
 
 The final rollback build containing direct WorldGuard random-spawn filtering is:

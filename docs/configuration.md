@@ -120,6 +120,20 @@ messages. Notification text supports MiniMessage plus `[Chest]`, `[World]`, `[x]
 are delivered only to players on the current Paper server; this edition has no
 proxy or cross-server broadcast mode.
 
+## AutoSell Collection Messages
+
+When `1MB-CMIAPI-AutoSell` is enabled, collection checks apply automatically;
+there is no Lootbox configuration toggle or permission bypass for this guard.
+Customize `AutoSellCannotOpen`, `AutoSellCannotCollect`, `AutoSellBusy`,
+`AutoSellUnavailable`, and `AutoSellGiveBlocked` in `lang.yml`. Missing keys are
+added on upgrade while existing translations are preserved.
+
+Marked ground rewards cannot be collected by hoppers while AutoSell is enabled,
+independently of `PreventHopperPlacingUnderLootChest`. See the
+[integration reference](integrations.md#1mb-library-autosell) for the guard's
+scope and [troubleshooting](troubleshooting.md#autosell-blocks-loot-collection)
+for retry and recovery guidance.
+
 ## Reload and Restart Behavior
 
 Use `/lc reload` for `config.yml`, `lang.yml`, and `data.yml`. It rebuilds the

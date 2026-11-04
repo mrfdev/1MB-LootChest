@@ -1,13 +1,17 @@
 # Release Process
 
-`master` receives only manually approved builds. The current upgrade candidate
-targets Paper 26.3; the historical live approval remains Paper 26.2. Development and
-candidate testing happen on a `codex/<feature>` branch.
+`master` receives only manually approved builds. Its latest approved source is
+build 230, commit `3dc612feb28e`, tested on Paper 26.3 build 207 and tagged
+`1mb-lootchest-v2.5.9.3-build230-approved`. See the
+[approval record](releases/compatibility-2026-10-20.md#approval-record) for its
+artifact identity. Build 231 on Paper 26.3 build 241 is the current candidate;
+its manual gameplay approval remains pending. Development and candidate testing
+happen on a `codex/<feature>` branch. Source approval and deployment are separate.
 
 ## Candidate Checklist
 
 1. Start from the current verified source and create a feature branch. Until
-   the stable migration is approved into `master`, continue from
+   build 231 is approved into `master`, continue from
    `codex/lootchest-autosell-guard` (the Oracle 25/27 workflow plus AutoSell protection).
 2. Increment `revision` for a semantic release and increment `buildNumber`
    exactly once in the root `pom.xml`. This release reserves version `2.5.9.3`
@@ -45,6 +49,11 @@ candidate testing happen on a `codex/<feature>` branch.
    holograms, and every supported container type. Automated coverage separately
    locks Paper 26.3's chest, trapped chest, barrel, 17 shulker boxes, and all
    eight copper oxidation/wax states.
+   For build 231, repeat opening, active-inventory actions, breaking, `/lc give`
+   and ground-loot pickup with AutoSell on, off, and still saving its off setting.
+   Include full inventories and Java/Bedrock accounts, and confirm blocked
+   actions move no loot before a successful manual retry. See the
+   [AutoSell verification record](releases/autosell-2026-11-04.md).
 
 Tag an automatically verified upgrade with
 `1mb-lootchest-v<version>-build<build>-paper-26.3` and push the feature branch.
@@ -64,9 +73,11 @@ After manual gameplay approval:
 5. Retain the immediately previous approved jar in `archive/` as the rollback
    artifact.
 
-The live jar, source commit reported by `/lc info`, `master` commit, and approval
-tag must all identify the same source. A dirty build can be used for early
-development checks, but it is never an approval candidate.
+The approved JAR, source commit reported by `/lc info`, release source on
+`master`, and approval tag must identify the same source. Later documentation-only
+commits do not change the approved artifact identity. Deployment must use that
+exact approved JAR and checksum. A dirty build can be used for early development
+checks, but it is never an approval candidate.
 
 ## Rollback
 

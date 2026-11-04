@@ -2,9 +2,38 @@
 
 ## Lootbox Does Not Enable
 
-Confirm Paper 26.3 build 207 (`STABLE`) and Java 27 first. Compilation remains on JDK `25.0.5` with Java 25 bytecode. `UnsupportedClassVersionError` means the Java
-runtime is too old. Remove duplicate LootChest/Lootbox jars and inspect the first
+Confirm the maintained Paper 26.3 build 241 (`STABLE`) target and the actual
+server Java version first. Paper requires Java 25 or newer; the project tests
+on installed Oracle JDK 27 and compiles with dynamically selected Oracle JDK 25
+to Java 25 bytecode. `UnsupportedClassVersionError` means the runtime is too old
+for the class named in the error. See [the build guide](build.md) for JDK
+selection. Remove duplicate LootChest/Lootbox jars and inspect the first
 LootChest exception in `logs/latest.log` rather than later shutdown noise.
+
+## AutoSell Blocks Loot Collection
+
+With `1MB-CMIAPI-AutoSell` enabled, its safety check runs before opening,
+inventory interactions, breaking, direct grants, and marked ground-loot pickup.
+The player's message determines the next step:
+
+| Message | Action |
+| --- | --- |
+| AutoSell is on | Run `/autosell toggle` once to turn it off, then retry collection. |
+| AutoSell is finishing a transaction or saving its off setting | Wait briefly and retry; repeatedly toggling can turn AutoSell back on. |
+| AutoSell safety could not be checked | Ask staff to inspect the server log and restore a compatible, working AutoSell integration. |
+| Loot was not given to a player | The recipient's check refused `/lc give`. Resolve their message first, then rerun the grant manually. |
+
+An incompatible or failing enabled provider blocks collection and logs
+`AutoSell reward safety is unavailable`. The verified Core/AutoSell pair is
+`1.0.4-834`; see [integrations](integrations.md#1mb-library-autosell). Lootbox
+rechecks the provider on the next action after recovery. Restart Paper when
+replacing integration JARs.
+
+Blocked actions move no rewards and do not schedule delivery. Ground loot still
+has normal despawn timers and can be collected by another eligible player.
+Hoppers cannot pick up marked rewards while AutoSell is enabled, even when
+`PreventHopperPlacingUnderLootChest` is disabled. These checks add no permanent
+AutoSell exemption to items after a player collects them.
 
 ## Hologram Is Missing
 
@@ -22,8 +51,9 @@ Open `/lc edit <name>` and choose from the generated particle menu. Only particl
 safe for the running Paper API are listed. If a saved value was removed or requires
 extra data, Lootbox warns once and uses `Particles.fallback_particle`.
 
-After editing particle configuration, run `/lc reload`. Restart after changing
-`Particles.enable` or `Particles.respawn_ticks`.
+After editing particle configuration, run `/lc reload`. It rebuilds the particle
+catalog and scheduled task, including changes to `Particles.enable` and
+`Particles.respawn_ticks`.
 
 ## Container Is Absent
 
@@ -33,7 +63,7 @@ spawning is enabled, check the current position with administrative tools rather
 than assuming it returned to the original block.
 
 When the log says no valid respawn location was found, review water, support block,
-height, border, region, and random-radius settings.
+height, world-border, and random-radius settings.
 
 ## Container Cannot Be Placed Nearby
 

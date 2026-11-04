@@ -39,7 +39,7 @@ shown on one visit is not guaranteed on the next visit.
 | --- | --- |
 | `/lc info` | Shows Lootbox information, version, starting commands, and documentation. |
 | `/lc locate` | Lists eligible available Lootboxes when your rank grants access. |
-| `/lc help` | Shows commands you are permitted to use. Most entries are staff tools. |
+| `/lc help` | Shows the configured command list, including staff tools that may require permissions you do not have. |
 
 All creation, editing, teleportation, forced respawn, and removal commands are
 administrative. See the
@@ -65,15 +65,29 @@ opening an available Lootbox does not itself require a Lootbox command permissio
 ## Important Notes
 
 - A full inventory can cause directly granted rewards to drop nearby.
-- AutoSell must be off before opening a Lootbox or collecting its dropped loot.
-  If you switch it on while a Lootbox is open, taking items is blocked until you
-  turn it off again. Wait briefly if AutoSell is still saving the off setting.
-- Store the rewards you want to keep before switching AutoSell back on. Ordinary
-  reward items already in your inventory can then become eligible for selling.
 - Emptying or closing a Lootbox may remove its physical container until the next respawn.
 - A missing container is not necessarily broken; it may be waiting for its timer.
 - Particles and holograms are visual aids. The physical container and server messages
   remain authoritative.
+
+## Collecting With AutoSell
+
+Keep AutoSell off while opening or breaking a Lootbox, receiving rewards from
+staff, or picking up its dropped loot. If AutoSell is on, run `/autosell toggle`
+once to turn it off, then try the action again. Switching it on while a Lootbox
+is open also blocks inventory actions until it is off again.
+
+If the message says AutoSell is finishing a transaction or saving its off setting,
+wait briefly and retry. If it says the safety check is unavailable, ask staff for
+help. A blocked action does not move the rewards; a blocked staff grant needs
+staff to run the command again after the check allows it.
+
+Dropped rewards are not reserved for you and still follow normal item despawn
+rules. Pick them up yourself while AutoSell is off; hoppers cannot collect these
+drops while the AutoSell integration is active.
+
+Store rewards you want to keep before switching AutoSell back on. Once collected,
+ordinary reward items in your inventory can become eligible for selling.
 
 ## Placeholders
 

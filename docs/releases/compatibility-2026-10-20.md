@@ -1,9 +1,34 @@
-# Paper, CMI and Oracle Java compatibility candidate, 20 October 2026
+# Paper, CMI and Oracle Java compatibility release, 20 October 2026
 
-This continues the reserved LootChest 2.5.9.3 / build 230 candidate on
-`codex/cmi-paper-oct2026`. The previous build-175 candidate and local server
-state are archived before replacement. Manual gameplay approval remains pending;
-no live or shared server was changed.
+This records LootChest 2.5.9.3 / build 230 on `codex/cmi-paper-oct2026`, approved
+and promoted to `master` on 2026-10-20. The previous build-175 candidate and
+local server state were archived before replacement. No live or shared server
+was changed. The current build-231 candidate is documented in the
+[AutoSell verification record](autosell-2026-11-04.md).
+
+## Approval record
+
+The annotated `1mb-lootchest-v2.5.9.3-build230-approved` tag records manual
+approval by mrfloris after in-game compatibility testing on 2026-10-20:
+
+| Identity | Approved value |
+| --- | --- |
+| Source commit | `3dc612feb28e0c90694ed34ddc3bfe4b338d6ff5` |
+| Artifact | `1MB-LootChest-v2.5.9.3-230-CMI-j25-26.3.jar` |
+| SHA-256 | `e8a60ac9cc22ea974bac93c8c377f6e9459f14d818ebebf71dd3cba49b1464f5` |
+| Previous approved rollback | Paper 26.2 build 225 |
+
+The approval confirmed CMI hover/click messages and floating icons; the user
+confirmed no further gameplay testing was needed for this artifact. The
+`-paper-26.3` tag's earlier pending-approval note describes the preceding
+automated verification. The later `-approved` tag records the approval outcome.
+Neither that approval nor promotion deployed the JAR live.
+
+Later Oracle toolchain verification at `563e4ca` reused build 230 with a different
+checksum; it is not the artifact approved by this tag. Build 231 likewise needs
+its own gameplay approval.
+
+## Verified target
 
 | Component | Selection |
 | --- | --- |
@@ -73,9 +98,10 @@ The separate local reload check records the observed limitation and recovery.
 
 ## Verification and evidence
 
-`mvn clean verify` uses Oracle JDK 25.0.5. The suite contains 110 unit cases and
-13 release-JAR checks, plus seven Python harness checks. The exact Oracle runtime
-is enforced by the updated smoke runner.
+The historical `mvn clean verify` run used Oracle JDK 25.0.5. Its suite passed
+110 unit cases and 13 release-JAR checks, plus seven Python harness checks.
+For current builds, use the validated `./mvnw` launcher and Oracle 25/27 workflow
+in [the build guide](../build.md).
 
 Integrated checks inspect CMI's real registry, transient settings, text writes,
 advancing timers and complete cleanup on despawn. Both integrated and standalone
@@ -98,6 +124,8 @@ prevent startup or shutdown, but no warning-suppression flags were added.
 
 ## In-game approval
 
+The steps below record the build-230 approval procedure.
+
 Connect with Minecraft Java 26.3 to `127.0.0.1:32931` on this Mac once the
 isolated server is running. `/lc tp newtest1` reaches the existing test area.
 The floating/static icon comparison is nearby at approximately `-15,73,-55`.
@@ -111,7 +139,8 @@ standing still. Test CMI's new message backend with:
 ```
 
 Then cover representative containers, menu transitions and inventory actions
-from the [release checklist](../release-process.md). The current local server
-is a Java-client fixture; Bedrock protocol compatibility and production-scale
-concurrency are not established by these automated checks. No live deployment,
-master promotion or gameplay approval is implied by this candidate.
+from the [release checklist](../release-process.md). The local server used for
+these checks was a Java-client fixture; Bedrock protocol compatibility and
+production-scale concurrency were not established by the automated probes.
+The [approval record above](#approval-record) records the subsequent manual
+decision and source promotion; no live deployment was performed.

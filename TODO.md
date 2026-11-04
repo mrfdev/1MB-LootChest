@@ -1,7 +1,11 @@
 # LootChest Paper Modernization
 
-This roadmap starts from the known-good Paper 26.2 / Java 25 CMI build on `master`.
-Each stage should leave a buildable, testable plugin and should be committed separately.
+This roadmap began with the Paper 26.2 / Java 25 CMI baseline. `master` now
+preserves the gameplay-approved build 230 on Paper 26.3 build 207. Current
+development is build 231 on Paper 26.3 build 241, with the Oracle 25/27 workflow
+and AutoSell collection protection. Its automated checks passed; manual gameplay
+approval remains pending. Each stage should leave a buildable, testable plugin
+and should be committed separately.
 
 - [x] **Release baseline discipline**
   - [x] Preserve build 196 with the `1mb-lootchest-v2.5.9.1-build196-2026-snapshot` tag.
@@ -15,6 +19,7 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Preserve manually approved build 222 with the `1mb-lootchest-v2.5.9.1-build222-approved` tag and retain build 221 for rollback.
   - [x] Preserve manually approved build 224 with the `1mb-lootchest-v2.5.9.1-build224-approved` tag and retain builds 223 and 222 for rollback.
   - [x] Preserve manually approved build 225 with the `1mb-lootchest-v2.5.9.1-build225-approved` tag and retain build 224 for rollback.
+  - [x] Preserve manually approved build 230 at `3dc612feb28e` with `1mb-lootchest-v2.5.9.3-build230-approved` and retain build 225 for rollback.
   - [x] Promote candidate builds to `master` only after Paper smoke tests and manual gameplay approval.
   - [x] Show the artifact build number, source commit, Paper target, and Java target at startup and in `/lc info`.
   - [x] Tag every live-approved artifact and retain the immediately previous rollback jar.
@@ -78,3 +83,10 @@ Each stage should leave a buildable, testable plugin and should be committed sep
   - [x] Report rejected, world-deferred, and activation-failed definitions through startup logs and `/lc audit`.
   - [x] Remove previously active physical containers before validated definitions are reloaded, and restore full block-state snapshots when a pre-commit abort occurs.
   - [x] Document validation, repair, reload, and backup-recovery behavior.
+
+- [ ] **9. Oracle toolchains and AutoSell collection protection**
+  - [x] Validate installed Oracle JDK 25 for Maven and both source compilations, and Oracle JDK 27 for tests and local Paper runs; retain Java 25 bytecode.
+  - [x] Pin Paper 26.3 build 241 STABLE and its exact API/checksum.
+  - [x] Check AutoSell before opening, inventory actions, breaking, direct grants and marked ground-loot pickup; preserve item metadata.
+  - [x] Verify build 231 from clean source with unit/integration tests, Python checks, and integrated/standalone Paper smoke profiles.
+  - [ ] Complete real Java/Bedrock client and full plugin-stack gameplay approval for the exact build-231 artifact in the [verification record](docs/releases/autosell-2026-11-04.md).

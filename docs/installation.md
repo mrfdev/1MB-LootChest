@@ -7,6 +7,8 @@
   the dynamically discovered installed Oracle JDK 25 and Java 25 bytecode.
 - The compatibility candidate `1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar`.
 - Optional CMI `9.8.11.0` and CMILib `1.6.1.0` when holograms are required.
+- Optional `1MB-CMIAPI-AutoSell`; collection protection was verified with
+  `1MB-Lib-Core` and `1MB-Lib-AutoSell` `1.0.4-834`.
 
 DecentHolograms is not a supported backend for this build.
 Lootbox continues without holograms when CMI or CMILib is absent.
@@ -31,16 +33,26 @@ Lootbox continues without holograms when CMI or CMILib is absent.
 5. Start Paper and inspect `logs/latest.log` for LootChest errors.
 6. Run `/lc reload` and `/lc respawnall`, then verify representative container types.
 
-The current live-approved source is preserved by the
-`1mb-lootchest-v2.5.9.1-build225-approved` tag. Build 224 is retained as the
-immediately previous rollback point.
+The latest gameplay-approved source is build 230, commit `3dc612feb28e`, preserved
+on `master` and by `1mb-lootchest-v2.5.9.3-build230-approved`. Its exact JAR and
+checksum are in the [approval record](releases/compatibility-2026-10-20.md#approval-record).
+Build 231 remains a candidate awaiting gameplay approval. Keep the approved
+build-230 JAR separate from the later toolchain verification JAR that reused
+build 230; their source commits and checksums differ. The prior approved
+Paper 26.2 build 225 is also retained for rollback with its matching server/data
+backup.
+
+When AutoSell is installed, players must turn it off before opening, breaking,
+receiving or picking up Lootbox rewards. A pending transaction or off-setting
+save also delays collection. New messages are added to `lang.yml` while existing
+translations are preserved. See [AutoSell troubleshooting](troubleshooting.md#autosell-blocks-loot-collection).
 
 Saved particle names are validated against the running Paper API. Removed or typed
 particles use `Particles.fallback_particle` and produce a concise warning.
 
 ## Building from Source
 
-Build candidates on a `codex/<feature>` branch. Until the stable migration is
+Build candidates on a `codex/<feature>` branch. Until build 231 is
 approved into `master`, use `codex/lootchest-autosell-guard` as the development base. The root
 `pom.xml` is the release source of truth. Increment `buildNumber` exactly once for each shipped
 jar, then use the validated Oracle 25 compiler and Oracle 27 test workflow:
@@ -58,5 +70,5 @@ does not compile or package version-specific Minecraft internals. Follow the
 [release process](release-process.md) before promoting a candidate to `master`.
 Run the same named jar through `scripts/smoke-paper-26.3.py`; it selects JDK 27
 for the project-local instance. Keep compilation on installed Oracle JDK 25 with
-`--release 25`. The stable migration continues the existing 26.3 branch;
-see [the migration record](releases/paper-26.3-stable.md) and [local setup](test-server.md).
+`--release 25`. See [the current candidate record](releases/autosell-2026-11-04.md)
+and [local setup](test-server.md).

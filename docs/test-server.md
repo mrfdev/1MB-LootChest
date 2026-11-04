@@ -109,6 +109,14 @@ original block, inventory, configured type and effects are restored afterward.
 Each first boot verifies and recreates an existing probe fixture, so subsequent
 runs exercise new chest creation as well as loading saved definitions.
 
+With integrations present, the same test-only probe uses the actual Core/AutoSell
+`1.0.4-834` JARs and synthetic Java/Bedrock player UUIDs. It covers AutoSell on/off
+changes, pending off-setting saves, opening, inventory actions, breaking, marked
+drop pickup, full inventories and direct grants. Refused actions must leave
+rewards unchanged and a safe manual retry must succeed. It does not execute a
+real sale or economy payout. See the [AutoSell verification record](releases/autosell-2026-11-04.md)
+for the completed runs and remaining client checks.
+
 If an interrupted probe left an unregistered chest at that exact location, it
 can recover only a chest containing its two exact test items and no other loot.
 Any other occupied location or inactive saved definition fails closed.

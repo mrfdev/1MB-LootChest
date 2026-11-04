@@ -4,7 +4,11 @@ The current candidate is build 231 on Paper 26.3 STABLE build 241. See the
 [AutoSell verification record](releases/autosell-2026-11-04.md) for the observed
 Oracle compiler/test paths, bytecode target, integrated and standalone test
 workflow, and remaining real-client gameplay checks. The older results below
-are retained as historical evidence.
+are retained as historical evidence. In particular, `563e4ca` reused build 230
+after the [approved build-230 artifact](releases/compatibility-2026-10-20.md#approval-record)
+was tagged at `3dc612feb28e`; approval applies only to that tag's source and
+checksum. The pending `563e4ca` checklist below does not revoke that approval or
+serve as the current build-231 results table.
 
 Run the maintained build from the repository root:
 

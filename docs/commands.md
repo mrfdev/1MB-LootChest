@@ -1,8 +1,10 @@
 # Commands
 
-The registered command is `/lootchest`; `/lc` is its short alias. Subcommands use
-the matching `lootchest.<subcommand>` permission. `/lc info` is public; all other
-permissions default to server operators unless explicitly granted.
+The registered command is `/lootchest`; `/lc` is its short alias. Action
+subcommands use the matching `lootchest.<subcommand>` permission. `/lc info`
+defaults to everyone; other command permissions default to server operators
+unless explicitly granted. `/lc` and `/lc help` display help without a permission
+check.
 
 | Command | Context | Description |
 | --- | --- | --- |
@@ -12,7 +14,7 @@ permissions default to server operators unless explicitly granted.
 | `/lc create <name>` | Player | Register the filled supported container being targeted and open its editor. Names cannot contain spaces, control characters, or periods, and rejected saved names remain reserved. |
 | `/lc edit <name>` | Player | Open the graphical editor. |
 | `/lc copy <source> <destination>` | Console/player | Copy settings and rewards into an existing Lootbox. |
-| `/lc give <name> <player>` | Console/player | Roll that Lootbox's configured contents into an online player's inventory. |
+| `/lc give <name> <player>` | Console/player | Roll that Lootbox's configured contents into an online player's inventory after the recipient's AutoSell safety check allows delivery; overflow drops nearby. |
 | `/lc getname` | Player | Identify the targeted Lootbox. |
 | `/lc list` | Console/player | List loaded internal Lootbox names. In-game names are clickable and open their editor. |
 | `/lc locate` | Console/player | List available boxes with natural location announcements enabled. |
@@ -37,5 +39,13 @@ container type, particle, copying, and per-box message toggles. Text supplied
 to `/lc setholo` accepts MiniMessage colors such as `<gold>` and hex colors such as
 `<#f9e2af>`.
 
-Command names and internal chest names are tab-completed when the sender has the
-corresponding permission.
+Help displays the configured list from `lang.yml`, including commands the sender
+cannot execute. Subcommand names are offered by tab completion to every sender;
+argument suggestions, including internal chest names, require the corresponding
+subcommand permission. Execution checks that permission or an administrative
+override.
+
+`/lc give` sends success messages only after allowed delivery. If AutoSell is on,
+busy, or unavailable, no rewards are moved and the recipient receives guidance.
+The sender must run the command again after the recipient can collect safely;
+Lootbox does not queue an automatic retry. See [integration behavior](integrations.md#1mb-library-autosell).
