@@ -1,11 +1,13 @@
 # Local build and JDK setup
 
-The current candidate is build 231 on Paper 26.3 STABLE build 241. See the
-[AutoSell verification record](releases/autosell-2026-11-04.md) for the observed
-Oracle compiler/test paths, bytecode target, integrated and standalone test
-workflow, and remaining real-client gameplay checks. The older results below
-are retained as historical evidence. In particular, `563e4ca` reused build 230
-after the [approved build-230 artifact](releases/compatibility-2026-10-20.md#approval-record)
+The current candidate is build 231 on Paper 26.3 STABLE build 241. The
+[2026-11-17 verification](#oracle-jdk-patch-verification-on-2026-11-17) records
+the latest automated results. The
+[AutoSell verification record](releases/autosell-2026-11-04.md) covers the
+integration workflow and remaining real-client gameplay checks. The older
+results below are retained as historical evidence. In particular, `563e4ca`
+reused build 230 after the
+[approved build-230 artifact](releases/compatibility-2026-10-20.md#approval-record)
 was tagged at `3dc612feb28e`; approval applies only to that tag's source and
 checksum. The pending `563e4ca` checklist below does not revoke that approval or
 serve as the current build-231 results table.
@@ -127,6 +129,40 @@ and [Surefire toolchain selection](https://maven.apache.org/surefire/maven-suref
 The [Paper Java installation guidance](https://docs.papermc.io/misc/java-install/)
 was checked through its live documentation index; the project's Oracle vendor
 selection and Java 27 test runtime are explicit local requirements.
+
+## Oracle JDK patch verification on 2026-11-17
+
+The full suite ran from clean commit `86500e0da2dad97356102ab139a74d6af09d9d5a`
+for version `2.5.9.3`, build `231`. Both Paper smoke profiles used the same
+freshly built `target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar` with
+SHA-256 `b0202f250cfcf248197e100eb8eeaaae27ff98b075a528cc08ad9d7458d9ab99`.
+
+| Process | Observed JDK home | Version and vendor |
+| --- | --- | --- |
+| Maven 3.10.1 (`bin/java`), plugin and test compiler (`bin/javac`) | `/Library/Java/JavaVirtualMachines/jdk-25.0.5.1.jdk/Contents/Home` | `25.0.5.1`, Oracle Corporation |
+| Surefire, Failsafe, child Java and Paper (`bin/java`) | `/Library/Java/JavaVirtualMachines/jdk-27.0.1.1.jdk/Contents/Home` | `27.0.1.1`, Oracle Corporation |
+
+These homes record the installations used for this run.
+[Dynamic JDK discovery](#installed-jdk-selection) resolves and validates the
+installed Oracle JDK 25 and 27 homes on every invocation.
+
+| Check | Result |
+| --- | --- |
+| `./mvnw clean verify` | 119 Surefire unit tests and 16 Failsafe integration tests passed with zero failures, errors or skips. JUnit reports and runtime assertions confirmed Oracle 27.0.1.1. |
+| Java bytecode | Oracle 25.0.5.1 compiled both sets of sources with `--release 25`. All 84 production and 28 test class files have major 69, minor 0. |
+| Python harness suite | All 24 launcher, JDK discovery and Paper smoke harness tests passed. |
+| Integrated Paper 26.3 STABLE build 241 | Passed two cold boots with CMI hologram and Core/AutoSell `1.0.4-834` checks. Evidence at `target/smoke-paper-26.3/20261117-233559/result.json`. |
+| Standalone Paper 26.3 STABLE build 241 | Passed two cold boots with the optional plugins absent. Evidence at `target/smoke-paper-26.3/20261117-233737/result.json`. |
+
+Both smoke profiles confirmed HotSpot VM build `27.0.1.1+4-22`, activated all
+36 saved LootChests, and audited zero issues. They verified item metadata and
+persistence across restart, malformed reload rejection and recovery, copper
+effects, and off-thread mutation refusal. The server shut down cleanly after
+each boot and released its ports. The standalone runner restored all 13 optional
+plugin JARs with their original checksums.
+
+Local Maven version, test and bytecode verification, and Python test output are
+under `.scratch/java-patch-check-20261117-233527/`.
 
 ## Clean verification of 563e4ca on 2026-10-25
 
