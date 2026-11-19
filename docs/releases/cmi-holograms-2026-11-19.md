@@ -18,10 +18,11 @@ Production and the disposable server both reported Oracle HotSpot
 
 ## Version warning and deferred chests
 
-Maven embeds the tested CMI and CMILib versions in `lootchest-build.properties`.
-LootChest reads both enabled plugins' versions and checks CMI's hologram
-manager before comparing the pair. Build 231 warns once per startup when the
-pair differs from `9.8.11.0` with `1.6.1.0` and continues using the available
+Maven embeds the root POM's tested versions in `lootchest-build.properties`,
+which `BuildInfo.load()` reads. `Main.startCmiHolograms()` requires both
+dependencies enabled and a CMI hologram manager, then compares their exact
+`PluginMeta` versions with the tested pair. Build 231 warns once per startup
+when the pair differs from `9.8.11.0` with `1.6.1.0` and continues using the available
 manager. The separate saved-chest startup path defers definitions whose world
 is unavailable before they can create blocks or holograms.
 
@@ -50,10 +51,11 @@ above the chest. The runner now seeds that setting when creating a fixture.
 | Shutdown | Zero LootChest holograms and countdown tasks after LootChest disabled while CMI was still enabled. The client removed its display before disconnect. |
 | Cold restart | 26 registry entries again, with the same four definitions deferred. Vanilla rendered exactly one representative countdown with advancing text. |
 
-The client packet trace saw at most one representative text-display entity
-at a time across both connections. Build 231 logged one warning per boot,
-including the boot where `/lc reload` ran. Those warnings coexist with the
-successful integration checks.
+The client packet trace received all 26 fixture labels as the viewer moved
+into tracking range on boot one. It saw at most one text-display entity at a
+time per position and received a removal for each added display. On both
+stops, the client received the final removal before disconnect. Build 231
+logged one warning per boot across both startup and reload cycles.
 
 ## Candidate metadata
 
@@ -62,3 +64,20 @@ and retains the original `9.8.11.0` with `1.6.1.0` pair. Mixing the versions
 across the two pairs still triggers the warning. The maintained compile target
 is Paper API `26.3.build.241-stable` and Java 25 bytecode. Full gameplay
 approval is separate from this hologram validation.
+
+| Candidate build evidence | Value |
+| --- | --- |
+| Source | `c3cd1da41071`, clean |
+| Artifact | `1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar` |
+| SHA-256 | `fd2e004993a326572b41994f7e74f7b659743033ddbea3acf7f5f8215ff53bb0` |
+| Maven and compiler | Oracle JDK `25.0.5.1`, `/Library/Java/JavaVirtualMachines/jdk-25.0.5.1.jdk/Contents/Home` |
+| Test forks and Paper | Oracle JDK `27.0.1.1`, `/Library/Java/JavaVirtualMachines/jdk-27.0.1.1.jdk/Contents/Home` |
+| Bytecode | Java 25, class major 69 for all 84 plugin and 29 test classes |
+| Automated suites | 120 unit tests, 16 integration tests and 27 launcher and smoke-runner tests passed |
+| Paper 256 compatibility smoke | Both cold boots passed with the production CMI pair. The probe matched each of the 26 hologram positions to its chest, and LootChest emitted zero untested-pair warnings. |
+| Paper 241 integrated smoke | Both cold boots passed with CMI `9.8.11.0`, CMILib `1.6.1.0` and AutoSell `1.0.4-834`. |
+| Paper 241 standalone smoke | Both cold boots passed with optional plugins absent. The runner restored the local optional JARs afterward. |
+
+The local evidence is under `.scratch/cmi-production-pair/evidence/`, including
+both deployed-artifact boot logs, the client screenshots and packet trace,
+the older-pair control, and the candidate build and smoke logs.
