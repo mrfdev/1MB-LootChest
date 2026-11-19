@@ -25,8 +25,8 @@
   and smoke-harness checks. Verify actual compiler/test JVM paths, versions and
   vendors, plus Java 25 class major 69 for plugin and test classes. Preserve
   previous artifacts/reports before cleaning when needed as historical evidence.
-- Root `pom.xml` owns release metadata. Version `2.5.9.3`, build `231` is
-  reserved for the AutoSell guard update; reuse it after failures.
+- Root `pom.xml` owns release metadata. Version `2.5.9.3`, build `232` is
+  reserved for the CMI compatibility update; reuse it after failures.
 - Follow `docs/release-process.md` and `docs/test-server.md`. Preserve
   `servers/Paper-26.2/`; only launch isolated instances under
   `servers/Paper-26.3/` for this migration.

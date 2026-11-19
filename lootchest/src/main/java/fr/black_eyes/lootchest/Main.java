@@ -318,13 +318,11 @@ public class Main extends JavaPlugin {
 					"[Cmi]", cmiVersion,
 					"[CmiLib]", cmiLibVersion);
 			if (!cmiVersionWarningLogged
-					&& !"unknown".equals(buildInfo.cmiTestedVersion())
-					&& (!buildInfo.cmiTestedVersion().equals(cmiVersion)
-					|| !buildInfo.cmiLibTestedVersion().equals(cmiLibVersion))) {
+					&& !buildInfo.cmiTestedPairs().isEmpty()
+					&& !buildInfo.isTestedCmiPair(cmiVersion, cmiLibVersion)) {
 				cmiVersionWarningLogged = true;
 				getLogger().warning("CMI holograms are running with an unvalidated version pair. "
-						+ "This build is supported with CMI " + buildInfo.cmiTestedVersion()
-						+ " and CMILib " + buildInfo.cmiLibTestedVersion() + ".");
+						+ "Tested CMI/CMILib pairs: " + String.join(", ", buildInfo.cmiTestedPairs()) + ".");
 			}
 		} catch (RuntimeException | LinkageError e) {
 			configs.usehologram = false;

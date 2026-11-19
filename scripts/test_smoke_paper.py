@@ -1,6 +1,7 @@
 """Offline regression checks for the stable server smoke runner's fail-closed gates."""
 import importlib.util
 from pathlib import Path
+import re
 import sys
 import unittest
 import tempfile
@@ -72,6 +73,40 @@ class StableSmokeTest(unittest.TestCase):
                            ('maven.compiler.release', '27'), ('paperSha256', '')]:
             with self.subTest(key=key, value=value), self.assertRaises(RuntimeError):
                 SMOKE.validate_target(dict(self.props, **{key: value}))
+
+    def test_cmi_fixture_has_distinct_active_positions_and_four_deferred_definitions(self):
+        fixture = SMOKE.cmi_fixture()
+        names = re.findall(r'^  ([a-z0-9_]+):$', fixture, re.MULTILINE)
+        self.assertEqual(30, len(names))
+        self.assertEqual(30, len(set(names)))
+        positions = re.findall(r'      world: ([^\n]+)\n      x: ([-0-9]+)\n      y: 200\n      z: ([-0-9]+)',
+                               fixture)
+        active = {position for position in positions if position[0] == 'spawn'}
+        self.assertEqual(26, len(active))
+        self.assertIn(('spawn', '8', '-40'), active)
+        self.assertEqual(4, sum(position[0] == 'unloaded_halloween_fixture' for position in positions))
+
+    def test_cmi_runtime_refuses_a_wrong_plugin_or_pair_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            jar = Path(directory) / 'named-9.8.11.2.jar'
+            with zipfile.ZipFile(jar, 'w') as zipped:
+                zipped.writestr('plugin.yml', "name: CMI\r\nversion: '9.8.11.0'\r\n")
+            self.assertEqual(SMOKE.sha256(jar), SMOKE.require_plugin_version(jar, 'CMI', '9.8.11.0'))
+            with self.assertRaisesRegex(RuntimeError, 'Expected CMI version 9.8.11.2'):
+                SMOKE.require_plugin_version(jar, 'CMI', '9.8.11.2')
+            with self.assertRaisesRegex(RuntimeError, 'Expected CMILib plugin'):
+                SMOKE.require_plugin_version(jar, 'CMILib', '9.8.11.0')
+
+    def test_cmi_profile_validates_archived_artifact_without_matching_the_checkout(self):
+        release = {'paper.target': '26.3', 'paper.build': '241', 'paper.channel': 'STABLE',
+                   'paper.api': '26.3.build.241-stable', 'java.target': '25',
+                   'source.commit': 'fe314dd3b3ea', 'source.dirty': 'false',
+                   'build.number': '231', 'plugin.version': '2.5.9.3'}
+        SMOKE.validate_cmi_artifact(release)
+        for key, value in (('paper.channel', 'BETA'), ('paper.api', '26.3.build.256-stable'),
+                           ('java.target', '27'), ('source.commit', 'unknown'), ('build.number', '')):
+            with self.subTest(key=key), self.assertRaises(RuntimeError):
+                SMOKE.validate_cmi_artifact(dict(release, **{key: value}))
 
     def test_restart_comparison_ignores_only_the_respawn_clock(self):
         fixture = ('chests:\n  sample:\n    lastreset: 1000\n    inventory:\n'

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke the pinned project-local Paper 26.3 instance, never the shared server."""
+"""Smoke local Paper 26.3 with the maintained or a fresh CMI test fixture."""
 import datetime
 import argparse
 from contextlib import contextmanager
@@ -18,11 +18,14 @@ import time
 import xml.etree.ElementTree as ET
 import zipfile
 
-from oracle_jdks import java_properties, resolve_jdk
+from oracle_jdks import JAVA_OPTION_VARIABLES, java_properties, resolve_jdk
 
 ROOT = Path(__file__).resolve().parent.parent
 INSTANCE = ROOT / 'servers/Paper-26.3'
 ANSI = re.compile(r'\x1b\[[0-9;?]*[ -/]*[@-~]')
+CMI_ACTIVE = 26
+CMI_DEFERRED = 4
+CMI_UNTESTED = 'CMI holograms are running with an unvalidated version pair.'
 
 
 def require(condition, message):
@@ -140,14 +143,20 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def free_ports(ports):
+def free_ports(ports, *, allow_time_wait=False):
     held = []
     try:
         for port in ports:
             for kind in (socket.SOCK_STREAM, socket.SOCK_DGRAM):
                 sock = socket.socket(socket.AF_INET, kind)
                 held.append(sock)
+                if allow_time_wait and kind == socket.SOCK_STREAM:
+                    # A disconnected witness can leave a closed TCP connection
+                    # in TIME_WAIT. A new listener must still bind successfully.
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.bind(('0.0.0.0', port))
+                if allow_time_wait and kind == socket.SOCK_STREAM:
+                    sock.listen()
     finally:
         for sock in held:
             sock.close()
@@ -163,34 +172,202 @@ def stopped():
             'Local instance has open files or its stopped state cannot be verified')
 
 
+def cmi_fixture():
+    lines = ['chests:']
+    for number in range(CMI_ACTIVE + CMI_DEFERRED):
+        name = 'stable_smoke_metadata' if number == 0 else f'cmi_smoke_{number:02}'
+        deferred = number >= CMI_ACTIVE
+        world = 'unloaded_halloween_fixture' if deferred else 'spawn'
+        label = 'Smoke Chest Alpha' if number == 0 else f'Smoke Chest {number:02}'
+        x, z = (8, -40) if number == 0 else (24 + 4 * ((number - 1) % 5),
+                                               -48 + 4 * ((number - 1) // 5))
+        # Write all persisted fields before inventory. LootChest replaces the
+        # inventory section when saving, so it remains last after both boots.
+        lines.extend((f'  {name}:', '    type: CHEST', '    direction: SOUTH',
+                      f'    holo: {label}', '    time: 60', '    randomradius: 0',
+                      '    position:', f'      world: {world}', f'      x: {x}',
+                      '      y: 200', f'      z: {z}', '      pitch: 0.0', '      yaw: 0.0',
+                      '    chance:', "      '0': 100", '    fall: false', '    respawn_cmd: false',
+                      '    respawn_natural: false', '    take_message: false', '    protectionTime: 0',
+                      '    lastreset: 0', '    particle: Disabled', '    maxFilledSlots: 0',
+                      '    inventory:', "      '0':", '        ==: org.bukkit.inventory.ItemStack',
+                      '        DataVersion: 5023', '        id: minecraft:cobblestone',
+                      '        count: 1', '        schema_version: 1'))
+    return '\n'.join(lines) + '\n'
+
+
+def require_plugin_version(jar, name, version):
+    require(identity(jar) == name, f'Expected {name} plugin: {jar}')
+    with zipfile.ZipFile(jar) as zipped:
+        descriptor = zipped.read('plugin.yml').decode()
+    match = re.search(r'^version:\s*[\'\"]?([0-9.]+)[\'\"]?\s*$', descriptor, re.MULTILINE)
+    require(match and version == match[1], f'Expected {name} version {version} in {jar}')
+    return sha256(jar)
+
+
+def validate_cmi_artifact(release):
+    # The focused profile accepts an archived artifact even when the checkout
+    # has since advanced. Validate the artifact's own compile coordinates.
+    build = release.get('paper.build', '')
+    require(release.get('paper.target') == '26.3' and release.get('paper.channel') == 'STABLE'
+            and build.isdigit() and int(build) >= 241
+            and release.get('paper.api') == f'26.3.build.{build}-stable'
+            and release.get('java.target') == '25',
+            'Expected artifact metadata for stable Paper 26.3 and Java 25')
+    require(re.fullmatch(r'[0-9a-f]{12,40}', release.get('source.commit', ''))
+            and release.get('source.dirty') in ('true', 'false')
+            and release.get('build.number', '').isdigit()
+            and re.fullmatch(r'[0-9]+(?:\.[0-9]+){2,}', release.get('plugin.version', '')),
+            'Expected a version, build number and Git source in artifact metadata')
+
+
+def run_cmi_smoke(args, jdk, jar, artifact_sha, release, runtime):
+    require(args.paper_build.isdigit() and int(args.paper_build) >= 241
+            and re.fullmatch(r'[0-9a-f]{7,40}', args.paper_commit)
+            and re.fullmatch(r'[0-9a-f]{64}', args.paper_sha256),
+            'Supply the exact stable Paper build, Git hash and published SHA-256')
+    require(sha256(args.paper_jar) == args.paper_sha256, 'Paper server checksum mismatch')
+    cmi_sha = require_plugin_version(args.cmi_jar, 'CMI', args.cmi_version)
+    cmilib_sha = require_plugin_version(args.cmilib_jar, 'CMILib', args.cmilib_version)
+    env = {name: value for name, value in os.environ.items() if name not in JAVA_OPTION_VARIABLES}
+    stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+    logdir = ROOT / 'target/smoke-paper-26.3' / f'cmi-{stamp}'
+    fixtures = INSTANCE / 'disposable-cmi'
+    require(fixtures.resolve() == fixtures, 'Refuse a symlinked fixture directory')
+    instance = fixtures / stamp
+    ports = (32951, 32952, 32953)
+    with (ROOT / 'servers/.lootchest-paper-26.3-smoke.lock').open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        free_ports(ports, allow_time_wait=True)
+        logdir.mkdir(parents=True)
+        print(f'[smoke] CMI fixture: {instance}\n[smoke] Evidence: {logdir}', flush=True)
+        plugins = instance / 'plugins'
+        data_dir = plugins / 'LootChest'
+        data_dir.mkdir(parents=True)
+        paper = instance / f'Paper-26.3-{args.paper_build}.jar'
+        for source, copy, digest in ((args.paper_jar, paper, args.paper_sha256),
+                                     (args.cmi_jar, plugins / 'CMI.jar', cmi_sha),
+                                     (args.cmilib_jar, plugins / 'CMILib.jar', cmilib_sha),
+                                     (jar, plugins / jar.name, artifact_sha)):
+            shutil.copy2(source, copy)
+            require(sha256(copy) == digest, f'Fixture JAR checksum mismatch: {copy}')
+        # Only reuse the upstream Minecraft binary. Paperclip verifies its own
+        # expected checksum. Worlds and plugin directories are generated fresh.
+        vanilla = INSTANCE / 'cache/mojang_26.3.jar'
+        if vanilla.is_file():
+            (instance / 'cache').mkdir()
+            shutil.copy2(vanilla, instance / 'cache' / vanilla.name)
+        (instance / 'eula.txt').write_text('eula=true\n')
+        (instance / 'server.properties').write_text(
+            f'server-ip=127.0.0.1\nserver-port={ports[0]}\nquery.port={ports[1]}\nrcon.port={ports[2]}\n'
+            'enable-rcon=false\nenable-query=false\nmanagement-server-enabled=false\n'
+            f'online-mode={str(not args.client_witness).lower()}\nenforce-secure-profile=false\nwhite-list=true\n'
+            'view-distance=4\nsimulation-distance=4\nlevel-name=spawn\nlevel-seed=1\n'
+            'level-type=minecraft:flat\n'
+            'generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1}]}\n'
+            'generate-structures=false\nspawn-protection=0\n'
+            'pause-when-empty-seconds=-1\ndifficulty=peaceful\n')
+        if args.client_witness:
+            (instance / 'whitelist.json').write_text(json.dumps([
+                {'name': 'LootChestViewer', 'uuid': 'fdd9ca9a-9b6e-3cdd-bf8b-6e543c330610'},
+            ]) + '\n')
+        (data_dir / 'config.yml').write_text(
+            'UseHologram: true\nHologram_distance_to_chest: 1.2\nParticles:\n  enable: false\n'
+            'Timer_on_hologram:\n  Show_Timer_On_Hologram: true\n'
+            "  Hours_Separator: 'h '\n  Minutes_Separator: 'm '\n  Seconds_Separator: 's'\n"
+            "  Format: '%Hologram %Hours%Hsep%Minutes%Msep%Seconds%Ssep'\n")
+        (data_dir / 'data.yml').write_text(cmi_fixture())
+        (logdir / 'lootchest-build.properties').write_text(''.join(f'{key}={value}\n'
+                                                                for key, value in release.items()))
+        (logdir / 'java-version.txt').write_text(''.join(f'{key}={value}\n'
+                                                       for key, value in runtime.items()))
+        saved = []
+        with installed_probe(plugins):
+            for boot in (1, 2):
+                raw = logdir / f'boot-{boot}.raw.log'
+                with raw.open('w') as output:
+                    run_boot(output, raw, boot, env, None, release, plugins, False,
+                             runtime['java.vm.version'], instance=instance,
+                             launch=[str(jdk / 'bin/java'), '-Xms512M', '-Xmx1536M',
+                                     '-Dlootchest.smoke=true', '-jar', paper.name, 'nogui'],
+                             cmi_profile=args)
+                data = (data_dir / 'data.yml').read_text()
+                (logdir / f'data-after-boot-{boot}.yml').write_text(data)
+                saved.append(persisted_definitions(data))
+                free_ports(ports, allow_time_wait=True)
+                for file in (plugins / 'CMI').rglob('*'):
+                    if file.is_file() and file.name.lower() in ('holograms.yml', 'holograms.yaml'):
+                        require('lootchest-' not in file.read_text().lower(), 'CMI persisted a LootChest hologram')
+        require(saved[0] == saved[1], 'Saved definitions changed across the cold restart')
+        (logdir / 'result.json').write_text(json.dumps({
+            'result': 'PASS', 'profile': 'cmi-holograms', 'artifact': jar.name, 'sha256': artifact_sha,
+            'source': release['source.commit'], 'dirty': release['source.dirty'],
+            'paper': f'26.3-{args.paper_build}-STABLE ({args.paper_commit})',
+            'paper_sha256': args.paper_sha256, 'compiled_against': release['paper.api'],
+            'cmi': args.cmi_version, 'cmi_sha256': cmi_sha,
+            'cmilib': args.cmilib_version, 'cmilib_sha256': cmilib_sha,
+            'java_home': str(jdk), 'java_version': runtime['java.version'],
+            'java_vendor': runtime['java.vendor'], 'instance': str(instance), 'ports': ports,
+            'startup': f'{CMI_ACTIVE} active / {CMI_ACTIVE + CMI_DEFERRED} saved; '
+                       f'{CMI_DEFERRED} deferred for an unloaded world',
+            'cold_boots': 2,
+            'holograms': 'exact registry membership after startup, reload, respawn and cold restart; '
+                         'countdown changed in place; zero after despawn and before CMI shutdown',
+            'untested_pair_warning': args.expect_untested_warning,
+            'client_witness': [path.read_text().strip() for path in sorted(logdir.glob('*.observed.txt'))],
+        }, indent=2) + '\n')
+        print(f'[smoke] PASS; CMI lifecycle, cold restart, and clean stops. Evidence: {logdir}', flush=True)
+
+
 def run():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('jar', type=Path)
-    parser.add_argument('--without-integrations', action='store_true',
-                        help='Temporarily archive optional plugin JARs and test the standalone fallback')
+    profile = parser.add_mutually_exclusive_group()
+    profile.add_argument('--without-integrations', action='store_true',
+                         help='Temporarily archive optional plugin JARs and test the standalone fallback')
+    profile.add_argument('--cmi-holograms', action='store_true',
+                         help='Verify an exact CMI pair and Paper build with a fresh synthetic fixture')
+    for name in ('paper-jar', 'cmi-jar', 'cmilib-jar'):
+        parser.add_argument(f'--{name}', type=Path)
+    for name in ('paper-build', 'paper-commit', 'paper-sha256', 'cmi-version', 'cmilib-version'):
+        parser.add_argument(f'--{name}')
+    parser.add_argument('--client-witness', action='store_true',
+                        help='Allow the loopback LootChestViewer and pause between CMI stages')
+    parser.add_argument('--expect-untested-warning', action='store_true',
+                        help='Require the unvalidated-pair warning with this artifact and runtime pair')
     args = parser.parse_args()
+    cmi_options = (args.paper_jar, args.paper_build, args.paper_commit, args.paper_sha256,
+                   args.cmi_jar, args.cmi_version, args.cmilib_jar, args.cmilib_version)
+    if args.cmi_holograms and not all(cmi_options):
+        parser.error('the CMI profile needs all Paper and CMI/CMILib coordinates')
+    if not args.cmi_holograms and (any(cmi_options) or args.client_witness or args.expect_untested_warning):
+        parser.error('the Paper and CMI coordinate overrides require --cmi-holograms')
     jdk = resolve_jdk(27, 'ONE_MB_TEST_JAVA_HOME')
     runtime_properties = java_properties(jdk)
     require(INSTANCE.is_dir() and INSTANCE.resolve() == INSTANCE,
             'Prepare the separate project-local Paper-26.3 directory first')
-    props = {n.tag.rsplit('}', 1)[-1]: n.text for n in
-             ET.parse(ROOT / 'pom.xml').getroot().find('{*}properties')}
-    validate_target(props)
     jar = args.jar.resolve()
     artifact_sha = sha256(jar)
     with zipfile.ZipFile(jar) as zipped:
         release = properties(zipped.read('lootchest-build.properties').decode())
     require(identity(jar) == 'LootChest', 'Candidate must be the LootChest plugin')
+    require(jar.name == release['artifact.name'], 'Artifact filename mismatch')
+    require(release['source.dirty'] == 'false' or os.environ.get('LOOTCHEST_ALLOW_DIRTY') == '1',
+            'Build from a clean commit; LOOTCHEST_ALLOW_DIRTY=1 is for development only')
+    if args.cmi_holograms:
+        validate_cmi_artifact(release)
+        run_cmi_smoke(args, jdk, jar, artifact_sha, release, runtime_properties)
+        return
+    props = {n.tag.rsplit('}', 1)[-1]: n.text for n in
+             ET.parse(ROOT / 'pom.xml').getroot().find('{*}properties')}
+    validate_target(props)
     expected = {'plugin.version': 'revision', 'build.number': 'buildNumber',
                 'paper.target': 'paperVersion', 'paper.build': 'paperBuild',
                 'paper.channel': 'paperChannel', 'paper.api': 'paperApiVersion',
                 'java.target': 'maven.compiler.release', 'cmi.tested': 'cmiTestedVersion',
-                'cmilib.tested': 'cmiLibTestedVersion'}
+                'cmilib.tested': 'cmiLibTestedVersion', 'cmi.tested.additional': 'cmiAdditionalTestedPairs'}
     for embedded, prop in expected.items():
         require(release[embedded] == props[prop], f'Metadata mismatch: {embedded}')
-    require(jar.name == release['artifact.name'], 'Artifact filename mismatch')
-    require(release['source.dirty'] == 'false' or os.environ.get('LOOTCHEST_ALLOW_DIRTY') == '1',
-            'Build from a clean commit; LOOTCHEST_ALLOW_DIRTY=1 is for development only')
     server_jar = INSTANCE / f"Paper-26.3-{props['paperBuild']}.jar"
     require(sha256(server_jar) == props['paperSha256'], 'Paper server checksum mismatch')
     require(sorted(INSTANCE.glob('Paper-*.jar')) == [server_jar],
@@ -283,10 +460,69 @@ def run():
         print(f'[smoke] PASS; restart, persistence, clean stops and ports released. Evidence: {logdir}', flush=True)
 
 
-def run_boot(output, raw, boot, env, props, release, plugins, without_integrations, runtime_vm_version):
+def run_cmi_lifecycle(command, log, wait_for, evidence, boot, profile):
+    startup = f'Activated {CMI_ACTIVE} of {CMI_ACTIVE + CMI_DEFERRED} saved LootChests'
+    deferred = f'{CMI_DEFERRED} because a world is unavailable, and failed 0 unexpectedly.'
+    registry = f'PROBE PASS CMI registry, transience and text updates ({CMI_ACTIVE} holograms)'
+    wait_for(startup)
+    require(any(startup in line and f'rejected 0 malformed, deferred {deferred}' in line
+                for line in log().splitlines()), 'Unexpected saved-chest activation result')
+    command('execute in minecraft:overworld run forceload add 0 -48 47 -17', 'force load')
+    command(f'lootchestprobe holograms {CMI_ACTIVE}', registry)
+    command(f'lootchestprobe timer {CMI_ACTIVE}', 'PROBE PASS CMI timer updates and cleanup')
+
+    def witness(stage):
+        if not profile.client_witness:
+            return
+        phase = f'boot-{boot}-{stage}'
+        (evidence / 'client-stage.txt').write_text(phase + '\n')
+        print(f'[smoke] Client witness stage: {phase}', flush=True)
+        observation = evidence / f'{phase}.observed.txt'
+        deadline = time.monotonic() + 360
+        while time.monotonic() < deadline:
+            if observation.is_file() and observation.read_text().strip():
+                return
+            time.sleep(0.5)
+        raise RuntimeError(f'No gameplay observation recorded for {phase}')
+
+    if profile.client_witness:
+        if boot == 1:
+            command('execute in minecraft:overworld run fill 3 199 -45 13 199 -32 minecraft:smooth_stone',
+                    'Successfully filled')
+        (evidence / 'client-stage.txt').write_text(f'boot-{boot}-join\n')
+        print('[smoke] Waiting for LootChestViewer on loopback port 32951', flush=True)
+        wait_for('LootChestViewer joined the game', timeout=360)
+        if boot == 1:
+            command('minecraft:gamemode creative LootChestViewer', 'Creative Mode')
+        command('minecraft:tp LootChestViewer 8.5 200 -36.5 180 -3', 'Teleported LootChestViewer')
+    witness('startup' if boot == 1 else 'cold-restart')
+    command('lc reload', f'Reload completed with inactive saved definitions: 0 rejected, '
+                        f'{CMI_DEFERRED} world-deferred, and 0 failed.')
+    command(f'lootchestprobe holograms {CMI_ACTIVE}', registry)
+    if boot == 1:
+        witness('reload')
+    command('lc despawnall', 'All LootChests were despawned.')
+    command('lootchestprobe despawned', 'PROBE PASS CMI registry empty after despawn')
+    if boot == 1:
+        witness('despawned')
+    command('lc respawnall', 'All LootChests were respawned.')
+    command(f'lootchestprobe holograms {CMI_ACTIVE}', registry)
+    if boot == 1:
+        witness('respawned')
+    audit_offset = len(log())
+    command('lc audit', 'Read-only audit complete')
+    require(f'present {CMI_ACTIVE} | absent 0 | wrong 0 | unavailable 0 | issues {CMI_DEFERRED}'
+            in log()[audit_offset:]
+            and f'world-deferred {CMI_DEFERRED} | activation-failed 0' in log()[audit_offset:],
+            'Active fixtures must have no lifecycle issues and exactly four world-deferred definitions')
+    command('lootchestprobe arm-shutdown', 'PROBE PASS CMI shutdown check armed')
+
+
+def run_boot(output, raw, boot, env, props, release, plugins, without_integrations, runtime_vm_version,
+             *, instance=INSTANCE, launch=None, cmi_profile=None):
     process = None
     try:
-        process = subprocess.Popen([str(INSTANCE / '1MB-minecraft.sh')], cwd=INSTANCE,
+        process = subprocess.Popen(launch or [str(instance / '1MB-minecraft.sh')], cwd=instance,
                                    env=env, stdin=subprocess.PIPE, stdout=output,
                                    stderr=subprocess.STDOUT, text=True, start_new_session=True)
 
@@ -312,6 +548,24 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
 
         # Paper prints the major version before the VM's exact runtime build.
         wait_for(f'Running Java 27 (Java HotSpot(TM) 64-Bit Server VM {runtime_vm_version}')
+        if cmi_profile:
+            build = cmi_profile.paper_build
+            wait_for(f'This server is running Paper version 26.3-{build}-')
+            require(re.search(rf'^.*This server is running Paper version 26\.3-{build}-[^ ]*'
+                              rf'@{cmi_profile.paper_commit}[0-9a-f]* .*'
+                              rf'Implementing API version 26\.3\.build\.{build}-stable',
+                              log(), re.MULTILINE), 'Paper runtime build, Git hash or stable API mismatch')
+            wait_for('[LootChest] Plugin loaded')
+            wait_for('Done (')
+            command('lc info', f"Build {release['build.number']} | {release['artifact.name']}")
+            wait_for(f"Paper release 26.3 build {release['paper.build']} {release['paper.channel']}")
+            wait_for(f"Source {release['source.commit']}" + ('-dirty' if release['source.dirty'] == 'true' else ''))
+            wait_for(f'Using CMI holograms: CMI {cmi_profile.cmi_version} / CMILib {cmi_profile.cmilib_version}')
+            run_cmi_lifecycle(command, log, wait_for, raw.parent, boot, cmi_profile)
+            stop_boot(process, command, log, raw, cmi=True)
+            require(log().count(CMI_UNTESTED) == int(cmi_profile.expect_untested_warning),
+                    'Unexpected number of CMI unvalidated-pair warnings')
+            return
         wait_for(f"This server is running Paper version 26.3-{props['paperBuild']}-")
         wait_for(f"Implementing API version {props['paperApiVersion']}")
         wait_for('[LootChest] Plugin loaded')
@@ -375,15 +629,8 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
         command('lc audit', 'No lifecycle inconsistencies were found.')
         require('unavailable 0 | issues 0' in log()[audit_offset:],
                 'Audit must inspect loaded fixture chunks, with zero issues')
-        command('save-all flush', 'Saved the game')
-        command('stop', '[LootChest] Disabling LootChest')
-        require(process.wait(timeout=60) == 0, 'Server exited with a failure status')
-        text = log()
-        require('All RegionFile I/O tasks to complete' in text,
-                'Paper 26.3 region save completion missing')
-        errors = r'PROBE FAIL|NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|Error occurred while (?:enabling|disabling) LootChest|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception|LootChest holograms disabled|CommandException'
-        require(not re.search(errors, text), f'Compatibility failure; inspect {raw}')
-        activated = re.findall(r'Activated (\d+) of (\d+) saved LootChests', text)
+        stop_boot(process, command, log, raw)
+        activated = re.findall(r'Activated (\d+) of (\d+) saved LootChests', log())
         require(activated and all(int(a) > 0 and a == b for a, b in activated),
                 'All existing saved chests must activate')
     finally:
@@ -396,6 +643,19 @@ def run_boot(output, raw, boot, env, props, release, plugins, without_integratio
                 os.killpg(process.pid, signal.SIGTERM)
                 process.wait(timeout=15)
         raw.with_name(f'boot-{boot}.log').write_text(ANSI.sub('', raw.read_text(errors='replace')))
+
+
+def stop_boot(process, command, log, raw, cmi=False):
+    command('save-all flush', 'Saved the game')
+    command('stop', '[LootChest] Disabling LootChest')
+    require(process.wait(timeout=60) == 0, 'Server exited with a failure status')
+    text = log()
+    require('All RegionFile I/O tasks to complete' in text, 'Paper 26.3 region save completion missing')
+    errors = r'PROBE FAIL|NoClassDefFoundError|NoSuchMethodError|ClassNotFoundException|UnsupportedClassVersionError|Error occurred while (?:enabling|disabling) LootChest|Exception.*fr\.black_eyes|fr\.black_eyes.*Exception|LootChest holograms disabled|CommandException'
+    require(not re.search(errors, text), f'Compatibility failure; inspect {raw}')
+    if cmi:
+        require('PROBE PASS CMI registry and LootChest tasks empty before CMI disable' in text,
+                'Shutdown probe did not verify CMI registry and task cleanup')
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <revision>2.5.9.3</revision>
-        <buildNumber>231</buildNumber>
+        <buildNumber>232</buildNumber>
         <paperVersion>26.3</paperVersion>
         <paperBuild>241</paperBuild>
         <paperChannel>STABLE</paperChannel>
@@ -30,6 +30,7 @@
         <cmiLibApiVersion>1.5.9.6</cmiLibApiVersion>
         <cmiTestedVersion>9.8.11.0</cmiTestedVersion>
         <cmiLibTestedVersion>1.6.1.0</cmiLibTestedVersion>
+        <cmiAdditionalTestedPairs>9.8.11.2/1.6.1.3</cmiAdditionalTestedPairs>
         <junitVersion>6.0.3</junitVersion>
         <lombokVersion>1.18.46</lombokVersion>
     </properties>

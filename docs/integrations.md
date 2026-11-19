@@ -8,14 +8,15 @@ This 1MoreBlock edition creates transient CMI holograms. They are not written in
 CMI's permanent hologram files. When CMI is missing, disabled, or its hologram
 manager fails, Lootbox disables holograms safely while keeping containers active.
 
-The Paper 26.3 integration pair used for automated smoke testing is:
+The tested CMI and CMILib versions are matched as exact pairs.
 
-| Component | Version |
-| --- | --- |
-| CMI runtime | `9.8.11.0` |
-| CMILib runtime | `1.6.1.0` |
-| Public CMI API used to compile | `9.8.6.4` |
-| Public CMILib API used to compile | `1.5.9.6` |
+| CMI runtime | CMILib runtime | Paper 26.3 smoke builds |
+| --- | --- | --- |
+| `9.8.11.0` | `1.6.1.0` | 241 and 256 |
+| `9.8.11.2` | `1.6.1.3` | 256 |
+
+The public CMI `9.8.6.4` and CMILib `1.5.9.6` APIs are used to compile.
+See the [Paper 256 verification record](releases/cmi-holograms-2026-11-19.md).
 
 CMI and CMILib are Maven `provided` dependencies and Paper soft dependencies.
 Neither jar is bundled into Lootbox. Both may be omitted when holograms are not
@@ -23,9 +24,9 @@ needed; chests, loot, particles, commands, data, reload, and respawn continue to
 work. `/lc info` reports whether the integration is active and the actual runtime
 versions.
 
-Other CMI/CMILib version pairs are unvalidated. Lootbox warns once at startup when
-the installed pair differs from the supported pair, then attempts to use the
-public hologram API. An API or linkage failure disables only holograms.
+Lootbox warns once per plugin startup for any untested CMI/CMILib combination
+and attempts to use the public hologram API. An API or linkage failure disables
+only holograms.
 
 Restart Paper after installing or replacing CMI/CMILib so plugin load order and
 hologram hooks are established normally.

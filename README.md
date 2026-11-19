@@ -21,9 +21,9 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 | Maven and compiler JDK | Installed Oracle JDK 25 |
 | Unit, integration and Paper test JDK | Installed Oracle JDK 27 |
 | Plugin version | `2.5.9.3` |
-| Candidate build | `231` |
+| Candidate build | `232` |
 | Main command | `/lootchest`, alias `/lc` |
-| Holograms | Optional: CMI `9.8.11.0` and CMILib `1.6.1.0` |
+| Holograms | Optional, with either [tested CMI/CMILib pair](docs/integrations.md#cmi-and-cmilib) |
 
 ## Features
 
@@ -50,6 +50,7 @@ Player documentation: [Lootbox on docs.1moreblock.com](https://docs.1moreblock.c
 - [Local build and JDK setup](docs/build.md)
 - [Integrations](docs/integrations.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [CMI hologram verification on Paper 256](docs/releases/cmi-holograms-2026-11-19.md)
 - [AutoSell protection and Paper 241 verification](docs/releases/autosell-2026-11-04.md)
 - [October 2026 compatibility checks and in-game test steps](docs/releases/compatibility-2026-10-20.md)
 
@@ -74,9 +75,10 @@ identifies the exact tested JAR. Approval and source promotion did not deploy it
 to a live server. The previous approved Paper 26.2 build 225 remains a rollback
 artifact; older snapshots and build 224 are historical releases.
 
-Build 231 adds the Oracle 25/27 workflow, AutoSell protection and Paper 26.3
-build 241 pins. Its automated checks passed; manual gameplay approval remains
-pending. The earlier 26.2 snapshot is `v2.5.9.2-paper-26.2`; see the
+Build 231 added the Oracle 25/27 workflow, AutoSell protection and Paper 26.3
+build 241 pins. Build 232 adds the CMI/CMILib pair verified on Paper build 256.
+Manual gameplay approval remains pending. The earlier 26.2 snapshot is
+`v2.5.9.2-paper-26.2`; see the
 [snapshot evidence](docs/releases/paper-26.2-snapshot.md). The stopped instance at
 `servers/Paper-26.2/` remains intact beside `servers/Paper-26.3/`.
 
@@ -149,7 +151,7 @@ target/1MB-LootChest-v<version>-<build>-CMI-j25-26.3.jar
 The current compatibility candidate is:
 
 ```text
-target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
+target/1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar
 ```
 
 The latest gameplay-approved release is preserved separately from the candidate:
@@ -189,7 +191,7 @@ Run the repeatable local smoke test against the exact clean candidate:
 
 ```bash
 ./scripts/smoke-paper-26.3.py \
-  target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
+  target/1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar
 ```
 
 The runner uses the maintained `servers/Paper-26.3/1MB-minecraft.sh` launcher

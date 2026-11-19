@@ -5,8 +5,9 @@
 - Paper 26.3 build 241 from the `STABLE` channel.
 - Java 25 or newer; the local test runtime remains Java 27. Compile with
   the dynamically discovered installed Oracle JDK 25 and Java 25 bytecode.
-- The compatibility candidate `1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar`.
-- Optional CMI `9.8.11.0` and CMILib `1.6.1.0` when holograms are required.
+- The compatibility candidate `1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar`.
+- Optional CMI and CMILib when holograms are required. See the
+  [tested version pairs](integrations.md#cmi-and-cmilib).
 - Optional `1MB-CMIAPI-AutoSell`; collection protection was verified with
   `1MB-Lib-Core` and `1MB-Lib-AutoSell` `1.0.4-834`.
 
@@ -36,7 +37,7 @@ Lootbox continues without holograms when CMI or CMILib is absent.
 The latest gameplay-approved source is build 230, commit `3dc612feb28e`, preserved
 on `master` and by `1mb-lootchest-v2.5.9.3-build230-approved`. Its exact JAR and
 checksum are in the [approval record](releases/compatibility-2026-10-20.md#approval-record).
-Build 231 remains a candidate awaiting gameplay approval. Keep the approved
+Build 232 remains a candidate awaiting gameplay approval. Keep the approved
 build-230 JAR separate from the later toolchain verification JAR that reused
 build 230; their source commits and checksums differ. The prior approved
 Paper 26.2 build 225 is also retained for rollback with its matching server/data
@@ -70,5 +71,5 @@ does not compile or package version-specific Minecraft internals. Follow the
 [release process](release-process.md) before promoting a candidate to `master`.
 Run the same named jar through `scripts/smoke-paper-26.3.py`; it selects JDK 27
 for the project-local instance. Keep compilation on installed Oracle JDK 25 with
-`--release 25`. See [the current candidate record](releases/autosell-2026-11-04.md)
-and [local setup](test-server.md).
+`--release 25`. See [local setup](test-server.md) for the standard and CMI
+compatibility smoke profiles.

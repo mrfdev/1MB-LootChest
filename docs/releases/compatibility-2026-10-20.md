@@ -3,7 +3,7 @@
 This records LootChest 2.5.9.3 / build 230 on `codex/cmi-paper-oct2026`, approved
 and promoted to `master` on 2026-10-20. The previous build-175 candidate and
 local server state were archived before replacement. No live or shared server
-was changed. The current build-231 candidate is documented in the
+was changed. The later build-231 candidate is documented in the
 [AutoSell verification record](autosell-2026-11-04.md).
 
 ## Approval record

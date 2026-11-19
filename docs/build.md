@@ -1,16 +1,15 @@
 # Local build and JDK setup
 
-The current candidate is build 231 on Paper 26.3 STABLE build 241. The
+The current candidate is build 232 on Paper 26.3 STABLE build 241. The
 [2026-11-17 verification](#oracle-jdk-patch-verification-on-2026-11-17) records
-the latest automated results. The
+the prior build 231 results. The
 [AutoSell verification record](releases/autosell-2026-11-04.md) covers the
 integration workflow and remaining real-client gameplay checks. The older
 results below are retained as historical evidence. In particular, `563e4ca`
 reused build 230 after the
 [approved build-230 artifact](releases/compatibility-2026-10-20.md#approval-record)
 was tagged at `3dc612feb28e`; approval applies only to that tag's source and
-checksum. The pending `563e4ca` checklist below does not revoke that approval or
-serve as the current build-231 results table.
+checksum. The pending `563e4ca` checklist below applies to that older checkout.
 
 Run the maintained build from the repository root:
 

@@ -4,8 +4,9 @@
 build 230, commit `3dc612feb28e`, tested on Paper 26.3 build 207 and tagged
 `1mb-lootchest-v2.5.9.3-build230-approved`. See the
 [approval record](releases/compatibility-2026-10-20.md#approval-record) for its
-artifact identity. Build 231 on Paper 26.3 build 241 is the current candidate;
-its manual gameplay approval remains pending. Development and candidate testing
+artifact identity. Build 232 is the current candidate, compiled against Paper
+26.3 build 241 with additional CMI compatibility coverage on Paper build 256.
+Manual gameplay approval remains pending. Development and candidate testing
 happen on a `codex/<feature>` branch. Source approval and deployment are separate.
 
 ## Candidate Checklist
@@ -15,7 +16,7 @@ happen on a `codex/<feature>` branch. Source approval and deployment are separat
    `codex/lootchest-autosell-guard` (the Oracle 25/27 workflow plus AutoSell protection).
 2. Increment `revision` for a semantic release and increment `buildNumber`
    exactly once in the root `pom.xml`. This release reserves version `2.5.9.3`
-   and build `231`. Reuse that number after failures.
+   and build `232` for the CMI compatibility update. Reuse that number after failures.
 3. Implement and locally verify the focused change.
 4. Commit the candidate source on the feature branch.
 5. Build from that clean commit with `./mvnw clean verify` from the repository
@@ -49,7 +50,7 @@ happen on a `codex/<feature>` branch. Source approval and deployment are separat
    holograms, and every supported container type. Automated coverage separately
    locks Paper 26.3's chest, trapped chest, barrel, 17 shulker boxes, and all
    eight copper oxidation/wax states.
-   For build 231, repeat opening, active-inventory actions, breaking, `/lc give`
+   For AutoSell protection, repeat opening, active-inventory actions, breaking, `/lc give`
    and ground-loot pickup with AutoSell on, off, and still saving its off setting.
    Include full inventories and Java/Bedrock accounts, and confirm blocked
    actions move no loot before a successful manual retry. See the

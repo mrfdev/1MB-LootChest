@@ -37,7 +37,8 @@ AutoSell exemption to items after a player collects them.
 
 ## Hologram Is Missing
 
-- Confirm CMI `9.8.11.0` and CMILib `1.6.1.0` enabled before LootChest.
+- Confirm CMI and CMILib both enabled before LootChest. Check their versions
+  against the [tested pairs](integrations.md#cmi-and-cmilib).
 - Confirm `UseHologram: true`.
 - Run `/lc reload`, then `/lc respawnall`.
 - Run `/lc info` and check the `Holograms` status line.

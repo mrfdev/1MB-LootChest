@@ -110,9 +110,9 @@ per-chest `fall` values are migrated to `false` when data is saved.
 Available timer substitutions are `%Hours`, `%Minutes`, `%Seconds`, `%Hsep`, `%Msep`,
 `%Ssep`, and `%Hologram`.
 
-The supported hologram runtime is CMI `9.8.11.0` with CMILib `1.6.1.0`. When
-either optional dependency is unavailable, Lootbox keeps all non-hologram
-features active and reports the integration state through `/lc info`.
+When either optional dependency is unavailable, Lootbox keeps all non-hologram
+features active and reports the integration state through `/lc info`. See the
+[tested CMI/CMILib pairs](integrations.md#cmi-and-cmilib).
 
 `respawn_notify` controls natural, command, bulk, world-only, and collection
 messages. Notification text supports MiniMessage plus `[Chest]`, `[World]`, `[x]`,
