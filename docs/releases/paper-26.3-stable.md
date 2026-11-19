@@ -2,7 +2,7 @@
 
 This is the historical Paper build-175 migration record. The later build-230 artifact
 on Paper 207 received [gameplay approval on 2026-10-20](compatibility-2026-10-20.md#approval-record).
-Current development targets Paper 241 with [LootChest build 231](autosell-2026-11-04.md).
+[LootChest build 231](autosell-2026-11-04.md) moved the maintained target to Paper 241.
 Keep the evidence and pending checks below associated with this earlier run.
 
 Verified on 2026-10-11. Build 230 replaces the development target from build

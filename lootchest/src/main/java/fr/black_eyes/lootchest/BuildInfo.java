@@ -2,6 +2,8 @@ package fr.black_eyes.lootchest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -18,12 +20,15 @@ public record BuildInfo(
 		String javaTarget,
 		String cmiApiVersion,
 		String cmiLibApiVersion,
-		String cmiTestedVersion,
-		String cmiLibTestedVersion,
+		List<String> cmiTestedPairs,
 		String artifactName
 ) {
 	private static final String RESOURCE = "lootchest-build.properties";
 	private static final String UNKNOWN = "unknown";
+
+	public BuildInfo {
+		cmiTestedPairs = List.copyOf(cmiTestedPairs);
+	}
 
 	public static BuildInfo load(Logger logger) {
 		Properties properties = new Properties();
@@ -45,8 +50,7 @@ public record BuildInfo(
 					value(properties, "java.target"),
 					value(properties, "cmi.api"),
 					value(properties, "cmilib.api"),
-					value(properties, "cmi.tested"),
-					value(properties, "cmilib.tested"),
+					loadCmiTestedPairs(properties),
 					value(properties, "artifact.name"));
 		} catch (IOException | IllegalArgumentException exception) {
 			logger.warning("Build metadata could not be read: " + exception.getMessage());
@@ -57,7 +61,11 @@ public record BuildInfo(
 	public static BuildInfo unknown() {
 		return new BuildInfo(
 				UNKNOWN, UNKNOWN, UNKNOWN, false, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
-				UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN);
+				UNKNOWN, UNKNOWN, List.of(), UNKNOWN);
+	}
+
+	public boolean isTestedCmiPair(String cmiVersion, String cmiLibVersion) {
+		return cmiTestedPairs.contains(cmiVersion + "/" + cmiLibVersion);
 	}
 
 	public String sourceDisplay() {
@@ -66,5 +74,20 @@ public record BuildInfo(
 
 	private static String value(Properties properties, String key) {
 		return properties.getProperty(key, UNKNOWN).trim();
+	}
+
+	private static List<String> loadCmiTestedPairs(Properties properties) {
+		List<String> pairs = new ArrayList<>();
+		String cmi = value(properties, "cmi.tested");
+		String cmiLib = value(properties, "cmilib.tested");
+		if (!UNKNOWN.equals(cmi) && !UNKNOWN.equals(cmiLib)) {
+			pairs.add(cmi + "/" + cmiLib);
+		}
+		for (String pair : properties.getProperty("cmi.tested.additional", "").split(",")) {
+			if (!pair.isBlank()) {
+				pairs.add(pair.strip());
+			}
+		}
+		return pairs;
 	}
 }

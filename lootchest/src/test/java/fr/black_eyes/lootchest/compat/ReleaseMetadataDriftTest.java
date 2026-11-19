@@ -10,15 +10,43 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import fr.black_eyes.lootchest.BuildInfo;
+
 class ReleaseMetadataDriftTest {
+    @Test
+    void hologramCompatibilityRequiresAnExactTestedPair() throws IOException {
+        Properties release = loadReleaseProperties();
+        String primaryCmi = required(release, "cmi.tested");
+        String primaryCmiLib = required(release, "cmilib.tested");
+        BuildInfo build = BuildInfo.load(Logger.getLogger(ReleaseMetadataDriftTest.class.getName()));
+        String integrations = Files.readString(projectRoot().resolve("docs/integrations.md"));
+        var additionalPairs = Arrays.stream(required(release, "cmi.tested.additional").split(","))
+                .map(String::strip).toList();
+
+        assertTrue(build.isTestedCmiPair(primaryCmi, primaryCmiLib));
+        for (String pair : additionalPairs) {
+            String[] versions = pair.split("/", -1);
+            assertEquals(2, versions.length, pair);
+            assertTrue(build.isTestedCmiPair(versions[0], versions[1]), pair);
+            assertEquals(primaryCmiLib.equals(versions[1]) || additionalPairs.contains(primaryCmi + "/" + versions[1]),
+                    build.isTestedCmiPair(primaryCmi, versions[1]));
+            assertEquals(primaryCmi.equals(versions[0]) || additionalPairs.contains(versions[0] + "/" + primaryCmiLib),
+                    build.isTestedCmiPair(versions[0], primaryCmiLib));
+            assertContains(integrations, "| `" + versions[0] + "` | `" + versions[1] + "` |",
+                    "documented additional CMI/CMILib pair");
+        }
+    }
+
     @Test
     void maintainedReleaseRequiresStable263AndRetainsJava25() throws Exception {
         Properties release = loadReleaseProperties();
@@ -78,10 +106,7 @@ class ReleaseMetadataDriftTest {
                 "README Java target");
         assertContains(readme, "| Plugin version | `" + version + "` |", "README version");
         assertContains(readme, "| Candidate build | `" + build + "` |", "README build");
-        assertContains(readme,
-                "| Holograms | Optional: CMI `" + cmiTested + "` and CMILib `"
-                        + cmiLibTested + "` |",
-                "README CMI runtime pair");
+        assertContains(readme, "(docs/integrations.md#cmi-and-cmilib)", "README CMI runtime pairs");
         assertContains(readme, "target/" + artifact, "README candidate artifact");
 
         String installation = Files.readString(root.resolve("docs/installation.md"));
@@ -89,25 +114,17 @@ class ReleaseMetadataDriftTest {
                 + " from the `" + paperChannel + "` channel", "installation Paper release");
         assertContains(installation, "`" + artifact + "`", "installation artifact");
         assertContains(installation, "Paper API `" + paperApi + "`", "installation Paper API");
-        assertContains(installation,
-                "Optional CMI `" + cmiTested + "` and CMILib `" + cmiLibTested + "`",
-                "installation CMI runtime pair");
+        assertContains(installation, "(integrations.md#cmi-and-cmilib)", "installation CMI runtime pairs");
 
         String integrations = Files.readString(root.resolve("docs/integrations.md"));
-        assertContains(integrations, "| CMI runtime | `" + cmiTested + "` |",
-                "integrations CMI runtime");
-        assertContains(integrations, "| CMILib runtime | `" + cmiLibTested + "` |",
-                "integrations CMILib runtime");
+        assertContains(integrations, "| `" + cmiTested + "` | `" + cmiLibTested + "` |",
+                "integrations default CMI runtime pair");
 
         String configuration = Files.readString(root.resolve("docs/configuration.md"));
-        assertContains(configuration,
-                "CMI `" + cmiTested + "` with CMILib `" + cmiLibTested + "`",
-                "configuration CMI runtime pair");
+        assertContains(configuration, "(integrations.md#cmi-and-cmilib)", "configuration CMI runtime pairs");
 
         String troubleshooting = Files.readString(root.resolve("docs/troubleshooting.md"));
-        assertContains(troubleshooting,
-                "Confirm CMI `" + cmiTested + "` and CMILib `" + cmiLibTested + "`",
-                "troubleshooting CMI runtime pair");
+        assertContains(troubleshooting, "(integrations.md#cmi-and-cmilib)", "troubleshooting CMI runtime pairs");
 
         String publicManifest = Files.readString(root.resolve("docs/plugin-docs.yml"));
         assertContains(publicManifest, "java_target: \"" + javaTarget + "\"", "docs Java target");

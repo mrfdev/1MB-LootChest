@@ -69,7 +69,7 @@ Build the clean source, then run:
 ```bash
 ./mvnw clean verify
 python3 -m unittest discover -s scripts -p 'test_*.py' -v
-./scripts/smoke-paper-26.3.py target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
+./scripts/smoke-paper-26.3.py target/1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar
 ```
 
 The smoke runner validates and selects Oracle JDK 27 independently of the
@@ -136,7 +136,7 @@ when CMI/CMILib and the rest of the integration stack are absent:
 
 ```bash
 ./scripts/smoke-paper-26.3.py --without-integrations \
-  target/1MB-LootChest-v2.5.9.3-231-CMI-j25-26.3.jar
+  target/1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar
 ```
 
 This profile temporarily moves only local optional plugin JARs into that run's
@@ -144,6 +144,37 @@ backup and restores them even after a failed check. Their configuration and
 database directories remain in place. It requires `/lc info` to report the
 optional hologram integration unavailable while the same loot, reload, metadata,
 async guard, restart and persistence checks pass.
+
+### CMI compatibility smoke
+
+Use the CMI profile to check a specific Paper build and two dependency JARs in
+a fresh loopback instance. Supply the Paper build, commit and SHA-256 from
+[PaperMC Fill](https://docs.papermc.io/misc/downloads-service/) and use licensed
+CMI and official CMILib JARs. The profile creates 26 active definitions and four
+definitions in an unloaded synthetic world. It uses freshly generated worlds
+and configuration under `servers/Paper-26.3/disposable-cmi/`.
+
+```bash
+./scripts/smoke-paper-26.3.py --cmi-holograms \
+  --paper-jar /path/to/Paper-26.3-256.jar --paper-build 256 \
+  --paper-commit 1eda666 --paper-sha256 c86baf83b1fb0eb0d572f39484c242210896c6adf9cc9342d5c16c4de70c9bdc \
+  --cmi-jar /path/to/CMI-9.8.11.2.jar --cmi-version 9.8.11.2 \
+  --cmilib-jar /path/to/CMILib1.6.1.3.jar --cmilib-version 1.6.1.3 \
+  target/1MB-LootChest-v2.5.9.3-232-CMI-j25-26.3.jar
+```
+
+Run `./mvnw clean verify` first to compile the test probe. Use the artifact's
+original filename and pass `--expect-untested-warning` when reproducing the
+warning with an older artifact. The runner verifies the installed versions,
+exact CMI registry membership, countdown updates, despawn, reload, respawn,
+two cold boots, and removal before CMI disables. Results and both boot logs
+are saved under `target/smoke-paper-26.3/`.
+
+Add `--client-witness` for in-game checks. Join `127.0.0.1:32951` on each boot
+as `LootChestViewer`. The runner moves the player to the representative chest
+and writes each observation stage to `client-stage.txt` in the run's evidence
+directory. After checking the stage in game, record the observation in
+`<stage>.observed.txt` in the same directory to advance the run.
 
 Before changing the local server pin, hold `servers/.lootchest-paper-26.3-smoke.lock`,
 verify stopped state and ports, and archive the old server JAR, PaperScript state

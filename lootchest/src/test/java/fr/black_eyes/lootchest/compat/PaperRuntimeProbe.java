@@ -19,6 +19,9 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -53,7 +56,8 @@ public final class PaperRuntimeProbe extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof ConsoleCommandSender) || args.length != 1) {
+        if (!(sender instanceof ConsoleCommandSender) || args.length == 0 || args.length > 2
+                || args.length == 2 && !Set.of("holograms", "timer").contains(args[0])) {
             return false;
         }
         try {
@@ -75,13 +79,13 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                     AutoSellRuntimeChecks.run(this, LootChestAPI.getLootChest(FIXTURE));
                     getLogger().info("PROBE PASS AutoSell collection safety");
                 }
-                case "holograms", "despawned", "timer" -> {
+                case "holograms", "despawned", "timer", "arm-shutdown" -> {
                     check(Bukkit.getPluginManager().isPluginEnabled("CMI")
                                     && Bukkit.getPluginManager().isPluginEnabled("CMILib"),
                             "The integrated probe requires both optional plugins");
                     // Resolve CMI classes only on this integrated path so the
                     // same probe also loads with no optional plugins installed.
-                    CmiChecks.run(this, args[0]);
+                    CmiChecks.run(this, args[0], args.length == 2 ? Integer.parseInt(args[1]) : null);
                 }
                 case "async" -> {
                     // Intentionally call the plugin's fail-closed API from a
@@ -266,9 +270,14 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                     "Copper reactivation made its hologram persistent for " + state);
         }
 
-        private static void run(PaperRuntimeProbe probe, String operation) throws InvalidConfigurationException {
+        private static void run(PaperRuntimeProbe probe, String operation, Integer expectedCount)
+                throws InvalidConfigurationException {
             var manager = com.Zrips.CMI.CMI.getInstance().getHologramManager();
             check(manager != null && Main.configs.usehologram, "CMI integration is unavailable");
+            if (operation.equals("arm-shutdown")) {
+                armShutdown(probe);
+                return;
+            }
             Set<String> expected = new HashSet<>();
             for (Lootchest chest : LootChestAPI.getAllLootChests().values()) {
                 String name = PREFIX + chest.getName();
@@ -291,6 +300,16 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                     check(!registered.getSettings().isSaveToFile(), "Transient hologram became persistent: " + name);
                     check(registered.getWorldName().equals(chest.getActualLocation().getWorld().getName()),
                             "Hologram world changed: " + name);
+                    if (expectedCount != null) {
+                        var expectedLocation = chest.getActualLocation().clone()
+                                .add(0.5, Main.configs.Hologram_distance_to_chest + 0.5, 0.5);
+                        var actualLocation = registered.getLocation();
+                        check(actualLocation != null && actualLocation.distanceSquared(expectedLocation) < 1e-12,
+                                "Wrong CMI hologram position for " + name + ": " + actualLocation
+                                        + ", expected " + expectedLocation);
+                        check(Main.getInstance().getTaskRegistry().hasTask("hologram-timer:" + chest.getName()),
+                                "Active fixture has no countdown task: " + name);
+                    }
                 } else {
                     check(snapshot.containerState() != ContainerState.UNAVAILABLE,
                             "Cannot inspect hologram ownership in an unloaded fixture chunk: " + detail);
@@ -310,7 +329,13 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                 return;
             }
             check(!expected.isEmpty(), "Integrated smoke did not exercise any holograms");
+            check(expectedCount == null || actual.size() == expectedCount,
+                    "Expected " + expectedCount + " active CMI holograms, got " + actual.size());
             Lootchest fixture = Objects.requireNonNull(LootChestAPI.getLootChest(FIXTURE));
+            if (operation.equals("timer")) {
+                verifyTimer(probe, fixture);
+                return;
+            }
             var registered = Objects.requireNonNull(manager.getByName(PREFIX + FIXTURE));
             String originalText = fixture.getHologram().getText();
             String changed = "<#55ff55>CMI text-update probe";
@@ -323,11 +348,44 @@ public final class PaperRuntimeProbe extends JavaPlugin {
             } finally {
                 fixture.getHologram().setText(originalText);
             }
-            if (operation.equals("timer")) {
-                verifyTimer(probe, fixture);
-            } else {
-                probe.getLogger().info("PROBE PASS CMI registry, transience and text updates");
-            }
+            probe.getLogger().info("PROBE PASS CMI registry, transience and text updates ("
+                    + actual.size() + " holograms)");
+        }
+
+        private static void armShutdown(PaperRuntimeProbe probe) {
+            var cmi = com.Zrips.CMI.CMI.getInstance();
+            var manager = cmi.getHologramManager();
+            var lootChest = Main.getInstance();
+            var active = List.copyOf(LootChestAPI.getAllLootChests().values());
+            var logger = probe.getLogger();
+            check(!active.isEmpty() && manager.getHolograms().values().stream()
+                            .anyMatch(hologram -> hologram.getName().startsWith(PREFIX)),
+                    "Shutdown test requires live LootChest holograms");
+            // Paper fires PluginDisableEvent before onDisable. CMI owns this
+            // test listener so it can observe the registry after the dependent
+            // probe and LootChest stop, but before CMI does its own cleanup.
+            Bukkit.getPluginManager().registerEvent(PluginDisableEvent.class, new Listener() {},
+                    EventPriority.MONITOR, (listener, event) -> {
+                        if (((PluginDisableEvent) event).getPlugin() != cmi) {
+                            return;
+                        }
+                        try {
+                            check(!lootChest.isEnabled() && cmi.isEnabled(),
+                                    "Shutdown listener did not observe the expected disable order");
+                            check(manager.getHolograms().values().stream()
+                                            .noneMatch(hologram -> hologram.getName().startsWith(PREFIX)),
+                                    "CMI retained LootChest holograms after LootChest shutdown");
+                            for (Lootchest chest : active) {
+                                check(!chest.getHologram().isActive()
+                                                && !lootChest.getTaskRegistry().hasTask("hologram-timer:" + chest.getName()),
+                                        "LootChest retained a hologram or countdown at shutdown: " + chest.getName());
+                            }
+                            logger.info("PROBE PASS CMI registry and LootChest tasks empty before CMI disable");
+                        } catch (Throwable failure) {
+                            logger.log(Level.SEVERE, "PROBE FAIL CMI shutdown", failure);
+                        }
+                    }, cmi);
+            logger.info("PROBE PASS CMI shutdown check armed");
         }
 
         private static void verifyTimer(PaperRuntimeProbe probe, Lootchest fixture)
@@ -336,20 +394,20 @@ public final class PaperRuntimeProbe extends JavaPlugin {
             boolean previousTimer = previousConfig.timerShowTimer;
             check(previousConfig.timerFormat.contains("%Seconds"),
                     "The smoke timer format must expose seconds");
-            YamlConfiguration timerConfiguration = new YamlConfiguration();
-            timerConfiguration.loadFromString(Main.getInstance().getConfigFiles().getConfig().saveToString());
-            timerConfiguration.set("Timer_on_hologram.Show_Timer_On_Hologram", true);
-            Config timerConfig = new Config(timerConfiguration);
-            timerConfig.usehologram = previousConfig.usehologram;
-            timerConfig.worldborderCheckForSpawn = previousConfig.worldborderCheckForSpawn;
-            // Start a timer only for this disposable fixture. Never rewrite the
-            // saved configuration or mutate its immutable snapshot. This entire
-            // replacement and restoration runs in one server-thread operation.
-            try {
-                Main.configs = timerConfig;
-                fixture.getHologram().setLoc(fixture.getActualLocation());
-            } finally {
-                Main.configs = previousConfig;
+            if (!previousTimer) {
+                YamlConfiguration timerConfiguration = new YamlConfiguration();
+                timerConfiguration.loadFromString(Main.getInstance().getConfigFiles().getConfig().saveToString());
+                timerConfiguration.set("Timer_on_hologram.Show_Timer_On_Hologram", true);
+                Config timerConfig = new Config(timerConfiguration);
+                timerConfig.usehologram = previousConfig.usehologram;
+                timerConfig.worldborderCheckForSpawn = previousConfig.worldborderCheckForSpawn;
+                // Start a temporary timer without rewriting the saved config.
+                try {
+                    Main.configs = timerConfig;
+                    fixture.getHologram().setLoc(fixture.getActualLocation());
+                } finally {
+                    Main.configs = previousConfig;
+                }
             }
             String timerKey = "hologram-timer:" + FIXTURE;
             check(Main.getInstance().getTaskRegistry().hasTask(timerKey), "Fixture timer was not registered");
@@ -364,24 +422,34 @@ public final class PaperRuntimeProbe extends JavaPlugin {
                                     "Timer replaced or lost its registered hologram");
                             List<String> later = List.copyOf(hologram.getPages().getLines());
                             check(!first.equals(later), "Timer text did not advance");
+                            check(first.size() == 1 && later.size() == 1
+                                            && !first.getFirst().equals(Messages.legacy(fixture.getHolo()))
+                                            && !later.getFirst().equals(Messages.legacy(fixture.getHolo())),
+                                    "Expected a countdown on both reads: " + first + " and " + later);
                             check(later.stream().noneMatch(line -> line.contains("%Seconds")
                                             || line.contains("%Hologram")),
                                     "Timer left unresolved placeholders");
-                            fixture.getHologram().setLoc(fixture.getActualLocation());
+                            if (!previousTimer) {
+                                fixture.getHologram().setLoc(fixture.getActualLocation());
+                            }
                             check(Main.getInstance().getTaskRegistry().hasTask(timerKey) == previousTimer,
                                     "Temporary timer state was not restored");
-                            probe.getLogger().info("PROBE PASS CMI timer updates and cleanup");
+                            probe.getLogger().info("PROBE PASS CMI timer updates and cleanup: " + first + " -> " + later);
                         } catch (Throwable failure) {
                             probe.getLogger().log(Level.SEVERE, "PROBE FAIL timer", failure);
                         } finally {
-                            fixture.getHologram().setLoc(fixture.getActualLocation());
+                            if (!previousTimer) {
+                                fixture.getHologram().setLoc(fixture.getActualLocation());
+                            }
                         }
                     }, 45L);
                 } catch (Throwable failure) {
-                    fixture.getHologram().setLoc(fixture.getActualLocation());
+                    if (!previousTimer) {
+                        fixture.getHologram().setLoc(fixture.getActualLocation());
+                    }
                     probe.getLogger().log(Level.SEVERE, "PROBE FAIL timer", failure);
                 }
-            }, 2L);
+            }, 22L);
         }
     }
 
